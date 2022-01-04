@@ -58,6 +58,8 @@
             this.saveGalaxyBtn = new System.Windows.Forms.ToolStripButton();
             this.closeEditorBtn = new System.Windows.Forms.ToolStripButton();
             this.glLevelView = new OpenTK.GLControl();
+            this.ObjectNotesTitle = new System.Windows.Forms.Label();
+            this.ObjectNotesText = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage4.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -113,6 +115,8 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.ObjectNotesText);
+            this.tabPage1.Controls.Add(this.ObjectNotesTitle);
             this.tabPage1.Controls.Add(this.dataGridView1);
             this.tabPage1.Controls.Add(this.toolStrip3);
             this.tabPage1.Controls.Add(this.objectsListTreeView);
@@ -132,10 +136,11 @@
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersVisible = false;
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(330, 471);
+            this.dataGridView1.Size = new System.Drawing.Size(330, 377);
             this.dataGridView1.TabIndex = 11;
             this.dataGridView1.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.dataGridView1_CellPainting);
             this.dataGridView1.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellValueChanged);
+            this.dataGridView1.RowEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_RowEnter);
             // 
             // toolStrip3
             // 
@@ -367,6 +372,24 @@
             this.glLevelView.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glLevelView_MouseWheel);
             this.glLevelView.Resize += new System.EventHandler(this.glLevelView_Resize);
             // 
+            // ObjectNotesTitle
+            // 
+            this.ObjectNotesTitle.AutoSize = true;
+            this.ObjectNotesTitle.Location = new System.Drawing.Point(6, 620);
+            this.ObjectNotesTitle.Name = "ObjectNotesTitle";
+            this.ObjectNotesTitle.Size = new System.Drawing.Size(29, 12);
+            this.ObjectNotesTitle.TabIndex = 12;
+            this.ObjectNotesTitle.Text = "説明";
+            // 
+            // ObjectNotesText
+            // 
+            this.ObjectNotesText.Location = new System.Drawing.Point(8, 635);
+            this.ObjectNotesText.Multiline = true;
+            this.ObjectNotesText.Name = "ObjectNotesText";
+            this.ObjectNotesText.ReadOnly = true;
+            this.ObjectNotesText.Size = new System.Drawing.Size(328, 71);
+            this.ObjectNotesText.TabIndex = 13;
+            // 
             // EditorWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -428,5 +451,7 @@
         private OpenTK.GLControl glLevelView;
         private System.Windows.Forms.ToolStripLabel toolStripLabel3;
         private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.TextBox ObjectNotesText;
+        private System.Windows.Forms.Label ObjectNotesTitle;
     }
 }

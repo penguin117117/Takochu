@@ -25,6 +25,7 @@ namespace Takochu.ui.EditorWindowSys
     [ToDo]
     1. Implement a function to translate data names.
     2. Reflect the changed data in the actual object.(Only partially works. rot,pos,scale)
+    3. このクラスは機能が増えすぎて汚くなってきているのでリファクタリングをする必要がある。
 
     By penguin117117
     ********************************************************************************************************************
@@ -34,7 +35,13 @@ namespace Takochu.ui.EditorWindowSys
     {
         private static bool _isChanged = false;
         public static bool IsChanged { get => _isChanged;  }
-        
+
+        public List<string> Obj_argNotes { get => _obj_argNote; }
+
+        public Dictionary<string,string> Obj_argDisplayNames { get => _obj_argDisplayNames; }
+
+        private Dictionary<string,string> _obj_argDisplayNames;
+        private List<string> _obj_argNote;
         private DataColumn cLeft, cRight;
         private AbstractObj _abstObj;
         private readonly DataGridView _dataGridView;
@@ -49,7 +56,8 @@ namespace Takochu.ui.EditorWindowSys
         {
             _dataGridView = dataGridView;
             _abstObj = abstObj;
-            
+            _obj_argNote = new List<string>();
+            _obj_argDisplayNames = new Dictionary<string, string>();
         }
 
         public static void IsChangedClear() 
@@ -65,7 +73,7 @@ namespace Takochu.ui.EditorWindowSys
         {
             Initialize();
             NullCheck();
-
+            
             DataTable dt = new DataTable();
 
             SetColumn(ref dt);
@@ -120,35 +128,66 @@ namespace Takochu.ui.EditorWindowSys
             
             foreach (var ObjEntry in _abstObj.mEntry)
             {
-                var DisplayName = BCSV.HashToFieldName(ObjEntry.Key);
-                if (DisplayName.Length > "Obj_arg".Length) 
-                {
-                    if (DisplayName.Length == "Obj_arg".Length + 1) 
-                    {
-                        var argIndexTest = DisplayName.IndexOf("Obj_arg");
-                        if (argIndexTest != -1) 
-                        {
-                            var test = DisplayName.Skip("Obj_arg".Length).ToArray();
-                            Console.WriteLine(test[0]);
-                            var argIndex = Int32.Parse(test[0].ToString());
-                            if (ObjDB.UsesObjArg(_abstObj.mName, argIndex))
-                            {
-                                var actorfield = ObjDB.GetFieldFromActor(ObjDB.GetActorFromObjectName(_abstObj.mName), argIndex);
-                                DisplayName = actorfield.Name;
-                            }
-                        }
-                        
-                        
-                    }
-                        
-                }
+                var oldDisplayName = BCSV.HashToFieldName(ObjEntry.Key);
+
+                var newDisplayName = Set_ObjargNameFromObjectDB(oldDisplayName);
+                
 
                 var row = dt.NewRow();
                 {
-                    row.SetField(cLeft, DisplayName); row.SetField(cRight, ObjEntry.Value);
+                    row.SetField(cLeft, newDisplayName); row.SetField(cRight, ObjEntry.Value);
                 }
                 dt.Rows.Add(row);
+                _obj_argDisplayNames.Add(newDisplayName,oldDisplayName);
             }
+        }
+
+        public int GetObj_argNo(string displayName) 
+        {
+            int Obj_argNo = -1;
+            if (displayName.Length <= "Obj_arg".Length)
+                return Obj_argNo;
+
+            if (displayName.Length != "Obj_arg".Length + 1)
+                return Obj_argNo;
+
+            var argIndexTest = displayName.IndexOf("Obj_arg");
+
+            if (argIndexTest == -1)
+                return Obj_argNo;
+
+            var argNo_CharArray = displayName.Skip("Obj_arg".Length).ToArray();
+
+            Console.WriteLine(argNo_CharArray[0]);
+
+            var success = Int32.TryParse(argNo_CharArray[0].ToString(),out int parseObj_argNo);
+            if (success) return parseObj_argNo;
+            return Obj_argNo;
+        }
+
+        private string Set_ObjargNameFromObjectDB(string displayName) 
+        {
+            int argIndex = GetObj_argNo(displayName);
+            if (argIndex == -1) 
+                return displayName;
+
+            string note = string.Empty;
+
+            if (ObjDB.UsesObjArg(_abstObj.mName, argIndex))        
+            {
+                
+                var actorfield = ObjDB.GetFieldFromActor(ObjDB.GetActorFromObjectName(_abstObj.mName), argIndex);
+                displayName = actorfield.Name;
+                note = actorfield.Notes;
+                Console.WriteLine(note);
+            }
+            _obj_argNote.Add(note);
+
+
+
+
+
+            return displayName;
         }
 
         public void ChangeValue(int rowIndex, object value)

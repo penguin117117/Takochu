@@ -289,11 +289,19 @@ namespace Takochu.ui
 
             //オブジェクトのプロパティに変更がある場合警告を表示します
             //Display a warning when there are changes to the object's properties
-            DialogResult dr;
+            DialogResult dialogResult;
             if (EditorWindowSys.DataGridViewEdit.IsChanged) 
             {
-                dr = Translate.GetMessageBox.Show(MessageBoxText.ChangesNotSaved,MessageBoxCaption.Error,MessageBoxButtons.YesNo);
-                if ((dr == DialogResult.No) || (dr == DialogResult.Cancel)) { e.Cancel = true; return; }
+                dialogResult = Translate.GetMessageBox.Show(
+                    MessageBoxText.ChangesNotSaved,
+                    MessageBoxCaption.Error,
+                    MessageBoxButtons.YesNo
+                    );
+                if ((dialogResult == DialogResult.No) || (dialogResult == DialogResult.Cancel)) 
+                {
+                    e.Cancel = true;
+                    return; 
+                }
             }
 
             mGalaxy.Close();
@@ -1065,7 +1073,25 @@ namespace Takochu.ui
 
         }
 
-        
+        private void dataGridView1_RowEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            ObjectNotesText.Text = string.Empty;
+
+            var dgv = (DataGridView)sender;
+            
+            var selectidRowDisplayName = dgv.Rows[e.RowIndex].Cells[0].Value.ToString();
+            Console.WriteLine(selectidRowDisplayName);
+            var originalName = dataGridViewEdit.Obj_argDisplayNames[selectidRowDisplayName];
+            Console.WriteLine("OriginalName: " + originalName);
+            var objindex = dataGridViewEdit.GetObj_argNo(/*selectidRowDisplayName*/originalName);
+            if (objindex == -1) return;
+
+            Console.WriteLine("ObjIndex: " + objindex);
+            if (dataGridViewEdit.Obj_argNotes == null) return;
+
+            //Console.WriteLine(dataGridViewEdit.Obj_argNotes.Count);
+            ObjectNotesText.Text = dataGridViewEdit.Obj_argNotes[objindex];
+        }
 
         private void glLevelView_Resize(object sender, EventArgs e)
         {
