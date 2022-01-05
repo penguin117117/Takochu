@@ -118,6 +118,7 @@
     <Compile Include="fmt\GST.cs" />
     <Compile Include="fmt\MSBF.cs" />
     <Compile Include="fmt\MSBT.cs" />
+    <Compile Include="fmt\SectionData\INF1.cs" />
     <Compile Include="io\ExternalFile.cs" />
     <Compile Include="io\FilesystemBase.cs" />
     <Compile Include="io\RARCFile.cs" />
@@ -368,7 +369,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="fmt\SectionData\" />
     <Folder Include="smg\obj\parameters\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
