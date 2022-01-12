@@ -708,67 +708,7 @@ namespace Takochu.ui
             m_PixelFactorY = ((2f * (float)Math.Tan(k_FOV / 2f)) / (float)(glLevelView.Height));
         }
 
-        private void UpdateCamera()
-        {
-            Vector3 up;
 
-            if (Math.Cos(m_CamRotation.Y) < 0)
-            {
-                m_UpsideDown = true;
-                up = new Vector3(0.0f, -1.0f, 0.0f);
-            }
-            else
-            {
-                m_UpsideDown = false;
-                up = new Vector3(0.0f, 1.0f, 0.0f);
-            }
-
-            m_CamPosition.X = m_CamDistance * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-            m_CamPosition.Y = m_CamDistance * (float)Math.Sin(m_CamRotation.Y);
-            m_CamPosition.Z = m_CamDistance * (float)Math.Sin(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-
-            Vector3 skybox_target;
-            skybox_target.X = -(float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-            skybox_target.Y = -(float)Math.Sin(m_CamRotation.Y);
-            skybox_target.Z = -(float)Math.Sin(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-
-            Vector3.Add(ref m_CamPosition, ref m_CamTarget, out m_CamPosition);
-
-            m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
-            m_SkyboxMatrix = Matrix4.LookAt(Vector3.Zero, skybox_target, up);
-            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
-        }
-
-        private void UpdateCamera(Vector3 v3)
-        {
-            Vector3 up;
-            m_CamRotation = new Vector2(v3.X,v3.Y);
-            if (Math.Cos(m_CamRotation.Y) < 0)
-            {
-                m_UpsideDown = true;
-                up = new Vector3(0.0f, -1.0f, 0.0f);
-            }
-            else
-            {
-                m_UpsideDown = false;
-                up = new Vector3(0.0f, 1.0f, 0.0f);
-            }
-
-            m_CamPosition.X = m_CamDistance * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-            m_CamPosition.Y = m_CamDistance * (float)Math.Sin(m_CamRotation.Y);
-            m_CamPosition.Z = m_CamDistance * (float)Math.Sin(v3.Z) * (float)Math.Cos(m_CamRotation.Y);
-
-            Vector3 skybox_target = v3;
-            //skybox_target.X = -(float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-            //skybox_target.Y = -(float)Math.Sin(m_CamRotation.Y);
-            //skybox_target.Z = -(float)Math.Sin(v3.Z) * (float)Math.Cos(m_CamRotation.Y);
-
-            Vector3.Add(ref m_CamPosition, ref m_CamTarget, out m_CamPosition);
-            
-            m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
-            m_SkyboxMatrix = Matrix4.LookAt(Vector3.One, skybox_target, up);
-            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
-        }
 
         private void glLevelView_Paint(object sender, PaintEventArgs e)
         {
@@ -853,6 +793,71 @@ namespace Takochu.ui
             glLevelView.SwapBuffers();
         }
 
+        /// <summary>
+        /// カメラ定義関数
+        /// </summary>
+        private void UpdateCamera()
+        {
+            Vector3 up;
+
+            if (Math.Cos(m_CamRotation.Y) < 0)
+            {
+                m_UpsideDown = true;
+                up = new Vector3(0.0f, -1.0f, 0.0f);
+            }
+            else
+            {
+                m_UpsideDown = false;
+                up = new Vector3(0.0f, 1.0f, 0.0f);
+            }
+
+            m_CamPosition.X = m_CamDistance * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
+            m_CamPosition.Y = m_CamDistance * (float)Math.Sin(m_CamRotation.Y);
+            m_CamPosition.Z = m_CamDistance * (float)Math.Sin(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
+
+
+
+            Vector3.Add(ref m_CamPosition, ref m_CamTarget, out m_CamPosition);
+
+            //ビュー行列生成
+            m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
+
+            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
+        }
+
+        private void UpdateCamera(Vector3 v3)
+        {
+            Vector3 up;
+            m_CamRotation = new Vector2(v3.X, v3.Y);
+            if (Math.Cos(m_CamRotation.Y) < 0)
+            {
+                m_UpsideDown = true;
+                up = new Vector3(0.0f, -1.0f, 0.0f);
+            }
+            else
+            {
+                m_UpsideDown = false;
+                up = new Vector3(0.0f, 1.0f, 0.0f);
+            }
+
+            m_CamPosition.X = m_CamDistance * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
+            m_CamPosition.Y = m_CamDistance * (float)Math.Sin(m_CamRotation.Y);
+            m_CamPosition.Z = m_CamDistance * (float)Math.Sin(v3.Z) * (float)Math.Cos(m_CamRotation.Y);
+
+            Vector3 skybox_target = v3;
+            //skybox_target.X = -(float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
+            //skybox_target.Y = -(float)Math.Sin(m_CamRotation.Y);
+            //skybox_target.Z = -(float)Math.Sin(v3.Z) * (float)Math.Cos(m_CamRotation.Y);
+
+            Vector3.Add(ref m_CamPosition, ref m_CamTarget, out m_CamPosition);
+
+            m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
+            m_SkyboxMatrix = Matrix4.LookAt(Vector3.One, skybox_target, up);
+            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
+        }
+
+        private float _rotateSpeed = 0.002f;
+        private float _moveSpeed = 0.001f;
         private void glLevelView_MouseMove(object sender, MouseEventArgs e)
         {
             float xdelta = (float)(e.X - m_LastMouseMove.X);
@@ -868,13 +873,13 @@ namespace Takochu.ui
                     if (m_UpsideDown)
                         xdelta = -xdelta;
 
-                    m_CamRotation.X -= xdelta * 0.002f;
-                    m_CamRotation.Y -= ydelta * 0.002f;
+                    m_CamRotation.X -= xdelta * _rotateSpeed;
+                    m_CamRotation.Y -= ydelta * _rotateSpeed;
                 }
                 else if (m_MouseDown == MouseButtons.Left)
                 {
-                    xdelta *= 0.005f;
-                    ydelta *= 0.005f;
+                    xdelta *= _moveSpeed;
+                    ydelta *= _moveSpeed;
 
                     m_CamTarget.X -= xdelta * (float)Math.Sin(m_CamRotation.X);
                     m_CamTarget.X -= ydelta * (float)Math.Cos(m_CamRotation.X) * (float)Math.Sin(m_CamRotation.Y);
