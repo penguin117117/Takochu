@@ -142,6 +142,9 @@
     <Compile Include="rnd\ColorCubeRenderer.cs" />
     <Compile Include="rnd\ColorWireRenderer.cs" />
     <Compile Include="rnd\ColorWireShapeData\ColorWireCube.cs" />
+    <Compile Include="rnd\ColorWireShapeData\ColorWireCylinder.cs" />
+    <Compile Include="rnd\ColorWireShapeData\ColorWireBowl.cs" />
+    <Compile Include="rnd\ColorWireShapeData\ColorWireSphere.cs" />
     <Compile Include="rnd\ColorWireShapeData\IColorWireShape.cs" />
     <Compile Include="rnd\ModelCache.cs" />
     <Compile Include="rnd\ModelSubstitutor.cs" />
