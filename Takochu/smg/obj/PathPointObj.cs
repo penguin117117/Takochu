@@ -5,21 +5,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Takochu.calc;
 using Takochu.fmt;
 using Takochu.rnd;
 
 namespace Takochu.smg.obj
 {
-    public class PathPointObj
+    public class PathPointObj : AbstractObj
     {
-        public PathPointObj(PathObj parent, BCSV.Entry entry)
+        public PathPointObj(PathObj parent, BCSV.Entry entry) : base(entry)
         {
-            mEntry = entry;
             mParent = parent;
+            mParentZone = parent.mParentZone;
 
             mID = mEntry.Get<short>("id");
 
-            mPosition = new Vector3
+            mPoint0 = new Vector3
             {
                 X = mEntry.Get<float>("pnt0_x"),
                 Y = mEntry.Get<float>("pnt0_y"),
@@ -48,21 +49,26 @@ namespace Takochu.smg.obj
             }
         }
 
-        public void Save()
+        public override void Save()
         {
             mEntry.Set("id", mID);
 
-            mEntry.Set("pnt0_x", mPosition.X);
-            mEntry.Set("pnt0_y", mPosition.Y);
-            mEntry.Set("pnt0_z", mPosition.Z);
+            mEntry.Set("pnt0_x", mPoint0.X);
+            mEntry.Set("pnt0_y", mPoint0.Y);
+            mEntry.Set("pnt0_z", mPoint0.Z);
 
-            mEntry.Set("pnt0_x", mPoint1.X);
-            mEntry.Set("pnt0_y", mPoint1.Y);
-            mEntry.Set("pnt0_z", mPoint1.Z);
+            mEntry.Set("pnt1_x", mPoint1.X);
+            mEntry.Set("pnt1_y", mPoint1.Y);
+            mEntry.Set("pnt1_z", mPoint1.Z);
 
-            mEntry.Set("pnt0_x", mPoint2.X);
-            mEntry.Set("pnt0_y", mPoint2.Y);
-            mEntry.Set("pnt0_z", mPoint2.Z);
+            mEntry.Set("pnt2_x", mPoint2.X);
+            mEntry.Set("pnt2_y", mPoint2.Y);
+            mEntry.Set("pnt2_z", mPoint2.Z);
+
+            for (int i = 0; i < 8; i++)
+            {
+                mEntry.Set($"point_arg{i}", mPointArgs[i]);
+            }
         }
 
         public void Render(int pointNo, OpenTK.Graphics.Color4 color, RenderMode mode)
@@ -72,7 +78,7 @@ namespace Takochu.smg.obj
             switch (pointNo)
             {
                 case 0:
-                    point = mPosition;
+                    point = mPoint0;
                     break;
                 case 1:
                     point = mPoint1;
@@ -95,15 +101,43 @@ namespace Takochu.smg.obj
             GL.PopMatrix();
         }
 
+        public override void Reload_mValues()
+        {
+            mPoint0 =
+                    new Vector3(
+                        ObjectTypeChange.ToFloat(mEntry.Get("pnt0_x")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("pnt0_y")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("pnt0_z"))
+                    );
+
+            mPoint1 =
+                        new Vector3(
+                            ObjectTypeChange.ToFloat(mEntry.Get("pnt1_x")),
+                            ObjectTypeChange.ToFloat(mEntry.Get("pnt1_y")),
+                            ObjectTypeChange.ToFloat(mEntry.Get("pnt1_z"))
+                        );
+
+            mPoint2 =
+                    new Vector3(
+                        ObjectTypeChange.ToFloat(mEntry.Get("pnt2_x")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("pnt2_y")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("pnt2_z"))
+                    );
+
+            for (int i = 0; i < 8; i++)
+            {
+                mPointArgs[i] = ObjectTypeChange.ToInt32(mEntry.Get($"point_arg{i}"));
+            }
+        }
+
         public override string ToString()
         {
             return $"[{mParent.mID}] {mParent.mName} (Point {mID}) ({mParent.mZone.mZoneName})";
         }
 
-        public BCSV.Entry mEntry;
-        PathObj mParent;
+        public PathObj mParent;
         short mID;
-        public Vector3 mPosition;
+        public Vector3 mPoint0;
         public Vector3 mPoint1;
         public Vector3 mPoint2;
 

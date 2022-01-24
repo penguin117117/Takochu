@@ -9,71 +9,209 @@ using Takochu.fmt;
 using Takochu.smg.obj;
 using Takochu.smg;
 using ObjDB = Takochu.smg.ObjectDB;
-
+using Takochu.util;
+using System.Drawing;
 
 namespace Takochu.ui.EditorWindowSys
 {
     /*
     ********************************************************************************************************************
     In progress. 2021/12～
-    Create a class to display the properties of an object in the data grid view.
-    Specifically, you can generate a data table to put into the data source of the data grid view in the editor window.
-
-    [Implemented features]
-    1. Viewing Object Properties
+    Create a data grid view to display the properties of the object in the data grid view.
 
     [ToDo]
-    1. Implement a function to translate data names.
-    2. Reflect the changed data in the actual object.(Only partially works. rot,pos,scale)
+    1. Add specific controls to the DataGrid view by referring to the object database.
+       オブジェクトデータベースを参照して特定のコントロールを、データグリッドビューに追加する。
 
+    
     By penguin117117
     ********************************************************************************************************************
     */
 
+    /// <summary>
+    /// エディターウィンドウのオブジェクト専用のデータグリッドビューを生成します。
+    /// </summary>
     public class DataGridViewEdit
     {
-        private static bool _isChanged = false;
-        public static bool IsChanged { get => _isChanged;  }
-        
-        private DataColumn cLeft, cRight;
-        private AbstractObj _abstObj;
         private readonly DataGridView _dataGridView;
-        private DataTable _dt;
+        private readonly AbstractObj _abstObj;
+        private readonly int _maxHeight,_minHeight,_defHeight;
+        
+        private static bool _isChanged = false;
 
         /// <summary>
-        /// Set "DataGridView" to display the properties of the object displayed in the editor window.
+        /// オブジェクトの値が変更されているかを取得します。
         /// </summary>
-        /// <param name="dataGridView">Specify the target "DataGridView".</param>
-        /// <param name="abstObj">Specify the "AbstractObj" class or the XXXXObj class that inherits from the "AbstractObj" class.</param>
-        public DataGridViewEdit(DataGridView dataGridView, AbstractObj abstObj)
+        public static bool IsChanged { get => _isChanged; }
+
+
+        /// <summary>
+        /// エディターウィンドウのオブジェクト専用のデータグリッドビューを生成します。
+        /// </summary>
+        /// <param name="editorWindowDatagridView">エディターウィンドウのオブジェクト専用のデータグリッドビュー</param>
+        /// <param name="abstractObj"><see cref="AbstractObj"/>を継承しているObject<br/>例：<see cref="LevelObj"/>など</param>
+        public DataGridViewEdit(DataGridView editorWindowDatagridView, AbstractObj abstractObj)
         {
-            _dataGridView = dataGridView;
-            _abstObj = abstObj;
+            _dataGridView = editorWindowDatagridView;
+            _abstObj = abstractObj;
+
+            
+
+            //データグリッドビューの最大値最小値を初回読み込み時のみ設定します。
+            if (_dataGridView.MaximumSize == new Size(0, 0)) 
+            {
+                _dataGridView.MaximumSize = _dataGridView.Size;
+                _dataGridView.MinimumSize = new Size(_dataGridView.Width, _dataGridView.RowTemplate.Height);
+            }
+            
+
+            if (_defHeight == default || _defHeight == 0) 
+            {
+                _defHeight = _dataGridView.Size.Height;
+                _minHeight = _dataGridView.MinimumSize.Height;
+                _maxHeight = _dataGridView.MaximumSize.Height;
+            }
+            
+            _dataGridView.RowHeadersVisible = false;
+            _dataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             
         }
 
-        public static void IsChangedClear() 
+        /// <summary>
+        /// データグリッドビューの設定をしてデータグリッドビューを取得します。
+        /// </summary>
+        /// <returns></returns>
+        public DataGridView GetDataTable()
+        {
+            Initialize();
+            NullCheck();
+            SetColumn();
+            SetRow();
+
+            
+
+            
+            var change = (_dataGridView.Rows.Count+1) * _dataGridView.RowTemplate.Height;
+
+            if (change < _maxHeight && change > _minHeight)
+            {
+                _dataGridView.Height = change;
+                _dataGridView.ScrollBars = ScrollBars.None;
+            }
+            else if (change > _maxHeight)
+            {
+                _dataGridView.Height = _maxHeight;
+                _dataGridView.ScrollBars = ScrollBars.Both;
+            }
+            else if (change < _minHeight) 
+            {
+                _dataGridView.Height = _minHeight;
+            }
+
+            Console.WriteLine($"{_defHeight} : {_maxHeight} : {_minHeight}");
+            return _dataGridView;
+        }
+
+        public DataGridView GetDataTable(Camera camera)
+        {
+            Initialize();
+            NullCheck();
+            SetColumn();
+            SetRow();
+
+            // here comes the tricky part
+            List<string> unusedTypes = CameraUtil.GetUnusedEntriesByCameraType(camera.mType);
+
+            foreach(string type in unusedTypes)
+            {
+                FindAndRemove(type);
+            }
+
+            return _dataGridView;
+        }
+
+        public void FindAndRemove(string type)
+        {
+            for (int i = 0; i < _dataGridView.Rows.Count; i++)
+            {
+                DataGridViewRow row = _dataGridView.Rows[i];
+
+                if (row.Cells[0].Value.ToString() == type)
+                {
+                    Console.WriteLine($"found unused {row.Cells[0].Value}");
+                    _dataGridView.Rows.RemoveAt(i);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// データ変更のフラグをキャンセルします。<br/>
+        /// データは元にはもどりません。
+        /// </summary>
+        public static void IsChangedClear()
         {
             _isChanged = false;
         }
 
         /// <summary>
-        /// Create and retrieve a data table.
+        /// データグリッドビューの値が変更された際に呼び出します。
         /// </summary>
-        /// <returns><see cref="DataTable"/></returns>
-        public DataTable GetDataTable()
+        /// <param name="rowIndex"></param>
+        /// <param name="value"></param>
+        public void ChangeValue(int rowIndex, object value)
         {
-            Initialize();
-            NullCheck();
+            var Keys = _abstObj.mEntry.Keys;
+            var Name = BCSV.HashToFieldName(Keys.ElementAt(rowIndex));
+            
+            if (value == null)  return;
 
-            DataTable dt = new DataTable();
+            //Do not allow the object name to be changed.
+            if (Name == "name") return;
 
-            SetColumn(ref dt);
-            SetRow(ref dt);
+            Change_mValues(Name, value);
+            
+        }
 
-            _dt = dt;
+        private void Change_mValues(string name, object value)
+        {
+            Console.WriteLine($"Change_mValues: {name}");
+            
+            if (IsObj_args(name)) 
+            {
+                if (value is string) ;
+                var ChangedInt32 = Convert.ToInt32(value);
+                if (value.ToString() == "True" || value.ToString() == "False")
+                {
+                    if (ChangedInt32 < 1) value = 0;
+                    else value = ChangedInt32;
+                    Console.WriteLine(value);
+                }
+            }
+            _abstObj.mEntry.Set(name, value);
+            _abstObj.Reload_mValues();
+            _isChanged = true;
 
-            return dt;
+        }
+
+        /// <summary>
+        /// Obj_argX (Xは0～7)であるかどうかをチェックします。
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        private bool IsObj_args(string name) 
+        {
+            if (name.Length != "Obj_arg".Length + 1) return false;
+
+            if (name.IndexOf("Obj_arg") == -1) return false;
+            
+            return true;
+        }
+
+        private void NullCheck()
+        {
+            if (_abstObj == null)
+                throw new Exception("GalaxyObject is null");
         }
 
         private void Initialize()
@@ -86,173 +224,98 @@ namespace Takochu.ui.EditorWindowSys
             _dataGridView.AllowUserToResizeColumns = false;
         }
 
-        private void NullCheck()
+        private void SetColumn()
         {
-            if (_abstObj == null)
-                throw new Exception("GalaxyObject is null");
+            _dataGridView.Columns.Clear();
+            _dataGridView.Columns.Add("PropertyName", "PropertyName");
+            _dataGridView.Columns.Add("PropertyValue", "PropertyValue");
+
+
+            /*
+             * 表示名を編集不可にする。
+             * ※変更すると保存の際に影響があるため
+             * 値のソートを不可にする。
+             */
+            _dataGridView.Columns["PropertyName"].ReadOnly = true;
+            _dataGridView.Columns["PropertyValue"].SortMode  = DataGridViewColumnSortMode.NotSortable;
         }
 
-        private void SetColumn(ref DataTable dt)
+        private void SetRow()
         {
-            cLeft = dt.Columns.Add("Name");
+            foreach (var ObjEntry in _abstObj.mEntry.Select((Value, Index) => (Value, Index)))
             {
-                cLeft.DataType = Type.GetType("System.String");
-                cLeft.ColumnName = "Info";
-                cLeft.ReadOnly = true;
-                cLeft.Unique = true;
-                cLeft.AutoIncrement = false;
-            }
+                var typename = "";
+                var DisplayName = BCSV.HashToFieldName(ObjEntry.Value.Key);
+                var actorValue = string.Empty;
 
-
-            cRight = dt.Columns.Add("Value");
-            {
-                cRight.DataType = Type.GetType("System.Object");
-                cRight.ColumnName = "Value";
-                cRight.ReadOnly = false;
-                cRight.Unique = false;
-                cRight.AutoIncrement = false;
-            }
-        }
-
-        private void SetRow(ref DataTable dt)
-        {
-            //Console.WriteLine(ObjDB.GetActorFromObjectName(_abstObj.mName).ActorName);
-            
-            foreach (var ObjEntry in _abstObj.mEntry)
-            {
-                var DisplayName = BCSV.HashToFieldName(ObjEntry.Key);
-                if (DisplayName.Length > "Obj_arg".Length) 
+                if (IsObj_args(DisplayName)) 
                 {
-                    if (DisplayName.Length == "Obj_arg".Length + 1) 
+                    var Obj_argNo = DisplayName.Skip("Obj_arg".Length).ToArray();
+                    var argIndex = Int32.Parse(Obj_argNo[0].ToString());
+
+                    if (ObjDB.UsesObjArg(_abstObj.mName, argIndex))
                     {
-                        var argIndexTest = DisplayName.IndexOf("Obj_arg");
-                        if (argIndexTest != -1) 
-                        {
-                            var test = DisplayName.Skip("Obj_arg".Length).ToArray();
-                            Console.WriteLine(test[0]);
-                            var argIndex = Int32.Parse(test[0].ToString());
-                            if (ObjDB.UsesObjArg(_abstObj.mName, argIndex))
-                            {
-                                var actorfield = ObjDB.GetFieldFromActor(ObjDB.GetActorFromObjectName(_abstObj.mName), argIndex);
-                                DisplayName = actorfield.Name;
-                            }
-                        }
-                        
-                        
+                        var actorfield = ObjDB.GetFieldFromActor(ObjDB.GetActorFromObjectName(_abstObj.mName), argIndex);
+                        DisplayName = actorfield.Name;
+                        typename = actorfield.Type;
+                        actorValue = actorfield.Value;
                     }
-                        
                 }
 
-                var row = dt.NewRow();
+                //データグリッドビューに追加するコントロールの設定
+                DataGridViewTextBoxCell tbcCell = new DataGridViewTextBoxCell
                 {
-                    row.SetField(cLeft, DisplayName); row.SetField(cRight, ObjEntry.Value);
+                    Value = DisplayName
+                };
+
+
+                DataGridViewTextBoxCell tbcCell2 = new DataGridViewTextBoxCell
+                {
+                    Value = ObjEntry.Value.Value
+                };
+
+                //データグリッドビューにコントロールを追加
+                DataGridViewRow row = new DataGridViewRow();
+
+                switch (typename)
+                {
+                    case "checkbox":
+                        row.Cells.Add(tbcCell);
+                        DataGridViewCheckBoxCell cbCell = new DataGridViewCheckBoxCell();
+                        bool isConversion = Convert.ToBoolean(ObjEntry.Value.Value);
+                        cbCell.Value = isConversion;
+                        row.Cells.Add(cbCell);
+                        break;
+                    case "list":
+                        row.Cells.Add(tbcCell);
+                        DataGridViewComboBoxCell cmbCell = new DataGridViewComboBoxCell();
+                        Dictionary<int, string> dictionary = new Dictionary<int, string>();
+
+                        //List<string> combolist = new List<string>();
+                        dictionary.Add(-1, "UnuseParam");
+
+                        string str = Convert.ToString(actorValue);
+                        var strarr1 = str.Split(',');
+                        cmbCell.Items.Add("UnuseParam");
+                        for (int i = 0; i< strarr1.Length; i++) 
+                        {
+                            var strarr2 = strarr1[i].Split('=');
+                            dictionary.Add(int.Parse(strarr2[0]), strarr2[1]);
+                            //combolist.Add(strarr2[1]);
+                            cmbCell.Items.Add(strarr2[1]);
+
+                        }
+                        cmbCell.Value = dictionary[((int)ObjEntry.Value.Value)];
+                        row.Cells.Add(cmbCell);
+                        break;
+                    default:
+                        row.Cells.Add(tbcCell);
+                        row.Cells.Add(tbcCell2);
+                        break;
                 }
-                dt.Rows.Add(row);
+
+                _dataGridView.Rows.Add(row);
             }
-        }
-
-        public void ChangeValue(int rowIndex, object value)
-        {
-            var a = _abstObj.mEntry.Keys;
-            var name = BCSV.HashToFieldName(a.ElementAt(rowIndex));
-            //foreach (var t in a) 
-            //{
-            //    var str = BCSV.HashToFieldName(t);
-            //    Console.WriteLine(str);
-            //    Console.WriteLine(_abstObj.mEntry.Get(str));
-            //} 
-
-            //Do not allow the object name to be changed.
-            if (name == "name") 
-            {
-                
-                return;
-            }
-            //_abstObj.mEntry.Set(name, value);
-            //_abstObj.Reload_mValue();
-            Change_mValues(name, value);
-        }
-
-        /*
-        [HACK]
-        Not smart processing, 
-        the object does not move without changing the mValue,
-        so I have no choice but to use the switch case.
-        If you have a solution, please fix it.
-        By penguin117117
-         */
-        private void Change_mValues(string name, object value)
-        {
-            Console.WriteLine($"Change_mValues: {name}");
-            //float ftmp = GetFloat_And_Limiter(value);
-            //Console.WriteLine("mDirectory: "+ _abstObj.mDirectory);
-            //Console.WriteLine("mFile: " + _abstObj.mFile);
-            //Console.WriteLine("mFile: " + _abstObj.mName);
-
-            //foreach (var t in _abstObj.mEntry) Console.WriteLine(t.Key);
-
-            _abstObj.mEntry.Set(name, value);
-            _abstObj.Reload_mValues();
-            _isChanged = true;
-            //_abstObj.mTruePosition = new OpenTK.Vector3(GetFloat_And_Limiter(_abstObj.mEntry.Get("pos_x")), GetFloat_And_Limiter(_abstObj.mEntry.Get("pos_y")), GetFloat_And_Limiter(_abstObj.mEntry.Get("pos_z")));
-            //switch (name)
-            //{
-            //    case "pos_x":
-            //        _abstObj.mTruePosition.X = ftmp;
-            //        break;
-            //    case "pos_y":
-            //        _abstObj.mTruePosition.Y = ftmp;
-            //        break;
-            //    case "pos_z":
-            //        _abstObj.mTruePosition.Z = ftmp;
-            //        break;
-            //    case "dir_x":
-            //        _abstObj.mTrueRotation.X = ftmp;
-            //        break;
-            //    case "dir_y":
-            //        _abstObj.mTrueRotation.Y = ftmp;
-            //        break;
-            //    case "dir_z":
-            //        _abstObj.mTrueRotation.Z = ftmp;
-            //        break;
-            //    case "scale_x":
-            //        _abstObj.mScale.X = ftmp;
-            //        break;
-            //    case "scale_y":
-            //        _abstObj.mScale.Y = ftmp;
-            //        break;
-            //    case "scale_z":
-            //        _abstObj.mScale.Z = ftmp;
-            //        break;
-            //    default:
-            //        //処理設定されている物以外は値の変更を行わない。
-            //        //You cannot change any value other than the one that is set.
-            //        return;
-            //}
-            
-            //_abstObj.Save();
-        }
-
-        private bool IsStringParam(string name) 
-        {
-            switch (name) 
-            {
-                case "name":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private float GetFloat_And_Limiter(object value)
-        {
-
-            if (!float.TryParse(value.ToString(), out float ftmp)) return 0f;
-            ftmp = Convert.ToSingle(value);
-            if (ftmp > float.MaxValue) ftmp = float.MaxValue;
-            if (ftmp < float.MinValue) ftmp = float.MinValue;
-
-            return ftmp;
         }
     }
 }

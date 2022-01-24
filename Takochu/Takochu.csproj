@@ -42,13 +42,14 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\TakochuDev2\</OutputPath>
+    <OutputPath>bin\Release\TakochuDev4.0\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Takochu.ico</ApplicationIcon>
@@ -113,6 +114,7 @@
     <Compile Include="fmt\BCSV.cs" />
     <Compile Include="fmt\BMD.cs" />
     <Compile Include="fmt\BMG.cs" />
+    <Compile Include="fmt\BRK.cs" />
     <Compile Include="fmt\BTI.cs" />
     <Compile Include="fmt\CANM.cs" />
     <Compile Include="fmt\GST.cs" />
@@ -141,9 +143,9 @@
     <Compile Include="rnd\BmdRendererSys\TextureSetting.cs" />
     <Compile Include="rnd\ColorCubeRenderer.cs" />
     <Compile Include="rnd\ColorWireRenderer.cs" />
+    <Compile Include="rnd\ColorWireShapeData\ColorWireBowl.cs" />
     <Compile Include="rnd\ColorWireShapeData\ColorWireCube.cs" />
     <Compile Include="rnd\ColorWireShapeData\ColorWireCylinder.cs" />
-    <Compile Include="rnd\ColorWireShapeData\ColorWireBowl.cs" />
     <Compile Include="rnd\ColorWireShapeData\ColorWireSphere.cs" />
     <Compile Include="rnd\ColorWireShapeData\IColorWireShape.cs" />
     <Compile Include="rnd\ModelCache.cs" />
@@ -259,6 +261,9 @@
     <Compile Include="util\ProgramUtil.cs" />
     <Compile Include="util\RenderUtil.cs" />
     <Compile Include="util\SettingsUtil.cs" />
+    <Compile Include="util\TranslateSys\IMessageBoxLanguage.cs" />
+    <Compile Include="util\TranslateSys\MessageBoxLanguage\MessageBoxEnglish.cs" />
+    <Compile Include="util\TranslateSys\MessageBoxLanguage\MessageBoxJapanese.cs" />
     <Compile Include="util\Translator.cs" />
     <Compile Include="util\Updater.cs" />
     <EmbeddedResource Include="Properties\PropertyGrid_EN.resx">

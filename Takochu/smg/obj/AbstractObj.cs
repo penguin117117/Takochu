@@ -12,12 +12,17 @@ namespace Takochu.smg.obj
 {
     public class AbstractObj
     {
+        public readonly Dictionary<string, List<string>> cMultiRenderObjs = new Dictionary<string, List<string>>()
+        {
+            { "RedBlueTurnBlock", new List<string>() { "RedBlueTurnBlock", "RedBlueTurnBlockBase" } }
+        };
+
         public AbstractObj(BCSV.Entry entry)
         {
             mEntry = entry;
-            mName = Get<string>("name");
+            if (entry.ContainsKey("name"))
+                mName = Get<string>("name");
             mUnique = Program.sUniqueID++;
-            
         }
         
         public virtual void Save() { }
@@ -65,31 +70,30 @@ namespace Takochu.smg.obj
         }
 
         
+        public BCSV.Entry mEntry { get; protected set; }
+        public Zone mParentZone { get; protected set; }
 
-        public BCSV.Entry mEntry;
-        public Zone mParentZone;
-        
 
-        public Vector3 mTruePosition;
-        public Vector3 mTrueRotation;
+        public Vector3 mTruePosition { get; protected set; }
+        public Vector3 mTrueRotation { get; protected set; }
 
-        public Vector3 mPosition;
-        public Vector3 mRotation;
-        public Vector3 mScale;
+        public Vector3 mPosition { get; protected set; }
+        public Vector3 mRotation { get; protected set; }
+        public Vector3 mScale { get; protected set; }
 
-        public string mDirectory;
-        public string mLayer;
-        public string mFile;
+        public string mDirectory { get; protected set; }
+        public string mLayer { get; protected set; }
+        public string mFile { get; protected set; }
 
-        public string mName;
-        public string mType;
+        public string mName { get; protected set; }
+        public string mType { get; protected set; }
 
-        public int mUnique;
-        public RendererBase mRenderer;
-        public RendererBase mRenderer2;
+        public int mUnique { get; protected set; }
+        public RendererBase mRenderer { get; protected set; }
+        public RendererBase mRenderer2 { get; protected set; }
 
-        public int[] mObjArgs;
+        public int[] mObjArgs { get; protected set; }
 
-        
+
     }
 }

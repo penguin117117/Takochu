@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Takochu.calc;
 using Takochu.fmt;
 
 namespace Takochu.smg.obj
@@ -29,6 +30,35 @@ namespace Takochu.smg.obj
             mScale = new Vector3(Get<float>("scale_x"), Get<float>("scale_y"), Get<float>("scale_z"));
         }
 
+        public override void Reload_mValues()
+        {
+            {
+                mName = mEntry.Get("name").ToString();
+                mID = ObjectTypeChange.ToInt32(mEntry.Get("l_id"));
+            }
+
+            mTruePosition =
+                new Vector3(
+                    ObjectTypeChange.ToFloat(mEntry.Get("pos_x")),
+                    ObjectTypeChange.ToFloat(mEntry.Get("pos_y")),
+                    ObjectTypeChange.ToFloat(mEntry.Get("pos_z"))
+                );
+            mTrueRotation =
+                new Vector3(
+                    ObjectTypeChange.ToFloat(mEntry.Get("dir_x")),
+                    ObjectTypeChange.ToFloat(mEntry.Get("dir_y")),
+                    ObjectTypeChange.ToFloat(mEntry.Get("dir_z"))
+                );
+            mScale =
+                new Vector3(
+                    ObjectTypeChange.ToFloat(mEntry.Get("scale_x")),
+                    ObjectTypeChange.ToFloat(mEntry.Get("scale_y")),
+                    ObjectTypeChange.ToFloat(mEntry.Get("scale_z"))
+                );
+            mPosition = new Vector3(mTruePosition) / 100;
+            mRotation = new Vector3(mTrueRotation) / 100;
+        }
+
         public override void Save()
         {
             mEntry.Set("l_id", mID);
@@ -51,7 +81,7 @@ namespace Takochu.smg.obj
 
         public override string ToString()
         {
-            return $"[{Get<int>("l_id")}] {mName} [{mLayer}]";
+            return $"[{Get<int>("l_id")}] {ObjectDB.GetFriendlyObjNameFromObj(mName)} [{mLayer}]";
         }
     }
 }

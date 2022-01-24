@@ -10,6 +10,7 @@ using Takochu.rnd;
 using OpenTK.Graphics.OpenGL;
 using static Takochu.smg.ObjectDB;
 using Takochu.calc;
+using System.Windows.Forms;
 
 namespace Takochu.smg.obj
 {
@@ -27,6 +28,7 @@ namespace Takochu.smg.obj
      */
     class AreaObj : AbstractObj
     {
+        public static bool IsDisplay_Renderer = true;
         public AreaObj(BCSV.Entry entry, Zone parentZone, string path) : base(entry)
         {
             mParentZone = parentZone;
@@ -73,19 +75,22 @@ namespace Takochu.smg.obj
             mMapPartsID = Get<short>("MapParts_ID");
             mObjID = Get<short>("Obj_ID");
 
+            
             colorWireRenderer = new ColorWireRenderer(AreaType.Normal, mAreaShapeNo);
             mRenderer = colorWireRenderer;
             mTruePosition = AdjustmentPosition;
+
         }
 
         public override void Render(RenderMode mode)
         {
+            if (!IsDisplay_Renderer) return;
             RenderInfo inf = new RenderInfo();
             inf.Mode = mode;
 
             if (!mRenderer.GottaRender(inf))
                 return;
-
+            
             GL.PushMatrix();
             {
                 GL.Translate(mTruePosition);
@@ -104,6 +109,11 @@ namespace Takochu.smg.obj
 
         public override void Reload_mValues()
         {
+            if (mAreaShapeNo < 0)
+            {
+                Translate.GetMessageBox.Show(MessageBoxText.ShapeNoNotValid, MessageBoxCaption.Error, MessageBoxButtons.OK);
+            }
+
             //string values
             //Currently, it is not linked to ObjectDB, so it cannot be changed temporarily.
             {
@@ -131,9 +141,6 @@ namespace Takochu.smg.obj
                 {
                     mChildObjID = ObjectTypeChange.ToInt16(mEntry.Get("ChildObjId"));
                 }
-                
-                   
-                
             }
 
             //Int32 Switch
@@ -205,9 +212,9 @@ namespace Takochu.smg.obj
             if (GameUtil.IsSMG2())
                 mEntry.Set("SW_AWAKE", mSwitchAwake);
 
-            mEntry.Set("pos_x", mTruePosition.X);
-            mEntry.Set("pos_y", mTruePosition.Y);
-            mEntry.Set("pos_z", mTruePosition.Z);
+            mEntry.Set("pos_x", ObjectTypeChange.ToFloat(mEntry.Get("pos_x")));
+            mEntry.Set("pos_y", ObjectTypeChange.ToFloat(mEntry.Get("pos_y")));
+            mEntry.Set("pos_z", ObjectTypeChange.ToFloat(mEntry.Get("pos_z")));
 
             mEntry.Set("dir_x", mTrueRotation.X);
             mEntry.Set("dir_y", mTrueRotation.Y);
@@ -264,7 +271,7 @@ namespace Takochu.smg.obj
 
         public override string ToString()
         {
-            return $"[{Get<int>("l_id")}] {mName} [{mLayer}]";
+            return $"[{Get<int>("l_id")}] {ObjectDB.GetFriendlyObjNameFromObj(mName)} [{mLayer}]";
         }
     }
 }

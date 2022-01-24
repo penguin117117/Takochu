@@ -1,10 +1,21 @@
-﻿using OpenTK;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Takochu.fmt;
+using OpenTK;
+using System.Windows.Forms;
+using System.Security.Policy;
+using System.Security.Cryptography;
+using Takochu.ui;
+using static Takochu.smg.ObjectDB;
+using Takochu.util;
+using Takochu.io;
+using OpenTK.Graphics.OpenGL;
+using Takochu.rnd;
+using System.Drawing;
+using Takochu.calc;
 
 namespace Takochu.smg.obj
 {
@@ -32,6 +43,45 @@ namespace Takochu.smg.obj
 
             mObjArgs = new int[1];
             mObjArgs[0] = Get<int>("Obj_arg0");
+
+            if (ModelCache.HasRenderer(mName))
+            {
+                mRenderer = ModelCache.GetRenderer(mName);
+            }
+
+            if (Program.sGame.DoesFileExist("/ObjectData/Mario.arc"))
+            {
+                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile("/ObjectData/Mario.arc"));
+
+                if (rarc.DoesFileExist("/root/Mario.bdl"))
+                {
+                    mRenderer = new BmdRenderer(new BMD(rarc.OpenFile("/root/Mario.bdl")));
+                    ModelCache.AddRenderer(mName, (BmdRenderer)mRenderer);
+                }
+
+                rarc.Close();
+            }
+        }
+
+        public override void Render(RenderMode mode)
+        {
+            RenderInfo inf = new RenderInfo();
+            inf.Mode = mode;
+
+            if (!mRenderer.GottaRender(inf))
+                return;
+
+            GL.PushMatrix();
+            {
+                GL.Translate(mTruePosition);
+                GL.Rotate(mTrueRotation.Z, 0f, 0f, 1f);
+                GL.Rotate(mTrueRotation.Y, 0f, 1f, 0f);
+                GL.Rotate(mTrueRotation.X, 1f, 0f, 0f);
+                GL.Scale(mScale.X, mScale.Y, mScale.Z);
+            }
+            mRenderer.Render(inf);
+
+            GL.PopMatrix();
         }
 
         public override void Save()
@@ -53,12 +103,44 @@ namespace Takochu.smg.obj
             mEntry.Set("scale_z", mScale.Z);
         }
 
+        public override void Reload_mValues()
+        {
+            {
+                mMarioNo = ObjectTypeChange.ToInt32(mEntry.Get("MarioNo"));
+                mCameraID = ObjectTypeChange.ToInt32(mEntry.Get("Camera_id"));
+                mObjArgs[0] = ObjectTypeChange.ToInt32(mEntry.Get($"Obj_arg0"));
+            }
+
+            {
+                mTruePosition =
+                    new Vector3(
+                        ObjectTypeChange.ToFloat(mEntry.Get("pos_x")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("pos_y")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("pos_z"))
+                    );
+                mTrueRotation =
+                    new Vector3(
+                        ObjectTypeChange.ToFloat(mEntry.Get("dir_x")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("dir_y")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("dir_z"))
+                    );
+                mScale =
+                    new Vector3(
+                        ObjectTypeChange.ToFloat(mEntry.Get("scale_x")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("scale_y")),
+                        ObjectTypeChange.ToFloat(mEntry.Get("scale_z"))
+                    );
+                mPosition = new Vector3(mTruePosition) / 100;
+                mRotation = new Vector3(mTrueRotation) / 100;
+            }
+        }
+
         int mMarioNo;
         int mCameraID;
 
         public override string ToString()
         {
-            return $"[{mMarioNo}] {mName} [{mLayer}]";
+            return $"[{mMarioNo}] {ObjectDB.GetFriendlyObjNameFromObj(mName)} [{mLayer}]";
         }
     }
 }
