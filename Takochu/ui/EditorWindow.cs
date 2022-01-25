@@ -26,7 +26,6 @@ namespace Takochu.ui
         public EditorWindow(string galaxyName)
         {
             InitializeComponent();
-            AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
             mGalaxyName = galaxyName;
 
             if (GameUtil.IsSMG1())
@@ -73,6 +72,7 @@ namespace Takochu.ui
         
         public void LoadScenario(int scenarioNo)
         {
+            m_AreChanges = false;
             mStages.Clear();
             mZonesUsed.Clear();
             mZoneMasks.Clear();
@@ -235,8 +235,20 @@ namespace Takochu.ui
                 {
                     foreach (string layer in /*currentLayers*/TestLayers)
                     {
+                        List<StageObj> stgs;
 
-                        List<StageObj> stgs = galaxyZone.mZones[layer];
+                        if (galaxyZone.mZones.ContainsKey(layer))
+                        {
+                            stgs = galaxyZone.mZones[layer];
+                        }
+                        else if (galaxyZone.mZones.ContainsKey(layer.ToLower()))
+                        {
+                            stgs = galaxyZone.mZones[layer.ToLower()];
+                        }
+                        else
+                        {
+                            throw new Exception("EditorWindow::LoadScenario -- Invalid layers");
+                        }
 
                         mStages.Add(layer, stgs);
                     }
@@ -392,7 +404,7 @@ namespace Takochu.ui
             //オブジェクトのプロパティに変更がある場合警告を表示します
             //Display a warning when there are changes to the object's properties
             DialogResult dr;
-            if (EditorWindowSys.DataGridViewEdit.IsChanged) 
+            if (EditorWindowSys.DataGridViewEdit.IsChanged || m_AreChanges) 
             {
                 dr = Translate.GetMessageBox.Show(MessageBoxText.ChangesNotSaved,MessageBoxCaption.Error,MessageBoxButtons.YesNo);
                 if ((dr == DialogResult.No) || (dr == DialogResult.Cancel)) { e.Cancel = true; return; }
@@ -622,6 +634,8 @@ namespace Takochu.ui
         private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Cameras;
         private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Zones;
         private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Lights;
+
+        private bool m_AreChanges;
         /*
          * 0 = Opaque
          * 1 = Translucent
@@ -996,13 +1010,13 @@ namespace Takochu.ui
             m_LastMouseMove = m_LastMouseClick = e.Location;
         }
 
-        private void objectsListTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        private void ChangeToNode(TreeNode node)
         {
-            AbstractObj abstractObj = e.Node.Tag as AbstractObj;
-            
+            AbstractObj abstractObj = node.Tag as AbstractObj;
+
             if (abstractObj == null) return;
 
-            if (e.Node.Parent == null && e.Node.Text.EndsWith("Zone"))
+            if (node.Parent == null && node.Text.EndsWith("Zone"))
             {
                 StageObj stageObj = abstractObj as StageObj;
                 dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(dataGridView1, stageObj);
@@ -1034,7 +1048,7 @@ namespace Takochu.ui
                 dataGridViewEdit = null;
                 mSelectedObject = abstractObj;
 
-                switch (e.Node.Parent.Text)
+                switch (node.Parent.Text)
                 {
                     case "Objects":
                         if (!(abstractObj is LevelObj))
@@ -1096,7 +1110,7 @@ namespace Takochu.ui
                 }
 
                 // we have a path point
-                if (e.Node.Parent.Parent != null && e.Node.Parent.Parent.Text == "Paths")
+                if (node.Parent.Parent != null && node.Parent.Parent.Text == "Paths")
                 {
                     PathPointObj pathPoint = abstractObj as PathPointObj;
                     dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(dataGridView1, pathPoint);
@@ -1106,6 +1120,11 @@ namespace Takochu.ui
 
             UpdateCamera();
             glLevelView.Refresh();
+        }
+
+        private void objectsListTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            ChangeToNode(e.Node);
         }
 
         private void objectsListTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -1144,9 +1163,22 @@ namespace Takochu.ui
                 PathPointObj obj = mSelectedObject as PathPointObj;
                 PathObj path = obj.mParent;
 
+                var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+                var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+
                 GL.DeleteLists(mDispLists[0][path.mUnique], 1);
                 GL.NewList(mDispLists[0][path.mUnique], ListMode.Compile);
-                mSelectedObject.Render(RenderMode.Opaque);
+
+                GL.PushMatrix();
+                {
+                    GL.Translate(Pos_ZoneOffset);
+                    GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                    GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                    GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                }
+
+                path.Render(RenderMode.Opaque);
+                GL.PushMatrix();
                 GL.EndList();
             }
             else if (mSelectedObject.GetType() == typeof(StageObj))
@@ -1175,40 +1207,94 @@ namespace Takochu.ui
             }
             else
             {
+                var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+                var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+
                 GL.DeleteLists(mDispLists[0][mSelectedObject.mUnique], 1);
                 GL.NewList(mDispLists[0][mSelectedObject.mUnique], ListMode.Compile);
+
+                GL.PushMatrix();
+                {
+                    GL.Translate(Pos_ZoneOffset);
+                    GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                    GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                    GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                }
+
                 mSelectedObject.Render(RenderMode.Opaque);
+                GL.PopMatrix();
                 GL.EndList();
             }
 
+            m_AreChanges = true;
             glLevelView.Refresh();
             
         }
 
         private void AreaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (mCurrentScenario > 0)
+            List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
+            Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
+
+            ids.Add(mGalaxy.mName, mGalaxy.GetGalaxyZone().GetAllUniqueIDsFromObjectsOfType("AreaObj"));
+
+            foreach (string z in zones)
             {
-                ToolStripMenuItem item = (ToolStripMenuItem)sender;
-                item.Checked = !item.Checked;
-                if (item.Checked)
-                {
-                    AreaObj.IsDisplay_Renderer = true;
-                    Properties.Settings.Default.EditorWindowDisplayArea = true;
-                }
-                else 
-                {
-                    AreaObj.IsDisplay_Renderer = false;
-                    Properties.Settings.Default.EditorWindowDisplayArea = false;
-                }
-                Properties.Settings.Default.Save();
-                Scenario_ReLoad();
+                Zone zone = mGalaxy.GetZone(z);
+                ids.Add(z, zone.GetAllUniqueIDsFromObjectsOfType("AreaObj"));
             }
-            else 
+
+            if (AreaToolStripMenuItem.Checked)
             {
-                MessageBox.Show("シナリオが選択されていません","");
+                // disable areas
+                AreaToolStripMenuItem.Checked = false;
+
+                foreach (KeyValuePair<string, List<int>> kvp in ids)
+                {
+                    List<int> id_list = kvp.Value;
+
+                    foreach (int id in id_list)
+                    {
+                        GL.DeleteLists(mDispLists[0][id], 1);
+                    }
+                }
             }
-            
+            else
+            {
+                // enable areas
+                AreaToolStripMenuItem.Checked = true;
+
+                foreach (KeyValuePair<string, List<int>> kvp in ids)
+                {
+                    string zoneName = kvp.Key;
+                    List<int> id_list = kvp.Value;
+
+                    foreach (int id in id_list)
+                    {
+                        var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(zoneName);
+                        var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(zoneName);
+
+                        AreaObj area = mGalaxy.GetZone(zoneName).GetObjFromUniqueID(id) as AreaObj;
+
+                        GL.DeleteLists(mDispLists[0][area.mUnique], 1);
+                        GL.NewList(mDispLists[0][area.mUnique], ListMode.Compile);
+
+                        GL.PushMatrix();
+                        {
+                            GL.Translate(Pos_ZoneOffset);
+                            GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                            GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                            GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                        }
+
+                        area.Render(RenderMode.Opaque);
+                        GL.PopMatrix();
+                        GL.EndList();
+                    }
+                }
+            }
+
+            glLevelView.Refresh();
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -1225,6 +1311,7 @@ namespace Takochu.ui
             }
             mGalaxy.Save();
             EditorWindowSys.DataGridViewEdit.IsChangedClear();
+            m_AreChanges = false;
             OpenSaveStatusLabel.Text = "Changes Saved : SaveTime : " + DateTime.Now;
         }
 
@@ -1345,7 +1432,120 @@ namespace Takochu.ui
             }
         }
 
-       
+        private void objectsListTreeView_KeyDown(object sender, KeyEventArgs e)
+        {
+
+        }
+
+        private void objectsListTreeView_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                deleteObjNode(objectsListTreeView.SelectedNode);
+            }
+            else
+            {
+                ChangeToNode(objectsListTreeView.SelectedNode);
+            }
+            
+        }
+
+        private void pathsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
+            Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
+
+            ids.Add(mGalaxy.mName, mGalaxy.GetGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
+
+            //ids.AddRange(mGalaxy.GetGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
+
+            foreach (string z in zones)
+            {
+                Zone zone = mGalaxy.GetZone(z);
+                ids.Add(z, zone.GetAllUniqueIDsFromObjectsOfType("PathObj"));
+            }
+
+            if (pathsToolStripMenuItem.Checked)
+            {
+                // disable paths
+                pathsToolStripMenuItem.Checked = false;
+
+                foreach (KeyValuePair<string, List<int>> kvp in ids)
+                {
+                    List<int> id_list = kvp.Value;
+
+                    foreach(int id in id_list)
+                    {
+                        GL.DeleteLists(mDispLists[0][id], 1);
+                    }
+                }
+            }
+            else
+            {
+                // enable paths
+                pathsToolStripMenuItem.Checked = true;
+
+                foreach (KeyValuePair<string, List<int>> kvp in ids)
+                {
+                    string zoneName = kvp.Key;
+                    List<int> id_list = kvp.Value;
+
+                    foreach (int id in id_list)
+                    {
+                        var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(zoneName);
+                        var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(zoneName);
+
+                        PathObj path = mGalaxy.GetZone(zoneName).GetObjFromUniqueID(id) as PathObj;
+
+                        GL.DeleteLists(mDispLists[0][path.mUnique], 1);
+                        GL.NewList(mDispLists[0][path.mUnique], ListMode.Compile);
+
+                        GL.PushMatrix();
+                        {
+                            GL.Translate(Pos_ZoneOffset);
+                            GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                            GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                            GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                        }
+
+                        path.Render(RenderMode.Opaque);
+                        GL.PopMatrix();
+                        GL.EndList();
+                    }
+                }
+            }
+
+            glLevelView.Refresh();
+        }
+
+        private void deleteObjNode(TreeNode node)
+        {
+            AbstractObj obj = node.Tag as AbstractObj;
+
+            // paths and stages require additional logic to delete
+            if (obj.mType != "StageObj" && obj.mType != "PathObj" && obj.mType != "PathPointObj")
+            {
+                int id = obj.mUnique;
+                Zone z = obj.mParentZone;
+                z.DeleteObjectWithUniqueID(id);
+                GL.DeleteLists(mDispLists[0][id], 1);
+                objectsListTreeView.Nodes.Remove(node);
+                m_AreChanges = true;
+                glLevelView.Refresh();
+            }
+            else
+            {
+                Console.WriteLine("we'll implement this later...");
+            }
+        }
+
+        private void deleteObjButton_Click(object sender, EventArgs e)
+        {
+            if (objectsListTreeView.SelectedNode != null)
+            {
+                deleteObjNode(objectsListTreeView.SelectedNode);
+            }
+        }
 
         private void cameraListTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {

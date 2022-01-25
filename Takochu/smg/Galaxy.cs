@@ -125,6 +125,12 @@ namespace Takochu.smg
             return mZones[mName];
         }
 
+        public List<string> GetZonesUsedOnCurrentScenario()
+        {
+            Zone galaxyZone = GetGalaxyZone();
+            return galaxyZone.GetZonesUsedOnLayers(galaxyZone.GetLayersUsedOnZoneForCurrentScenario());
+        }
+
         /// <summary>
         /// Gets the origin of the zone.<br/>
         /// ゾーンの原点を取得
@@ -144,8 +150,13 @@ namespace Takochu.smg
             {
                 if (GameUtil.IsSMG2())
                 {
-                    SearchFile = 
-                        (GetGalaxyZone().mZones[Layer]);
+                    if (GetGalaxyZone().mZones.ContainsKey(Layer))
+                    {
+                        SearchFile = (GetGalaxyZone().mZones[Layer]);
+                    }
+                    else if (GetGalaxyZone().mZones.ContainsKey(Layer.ToLower())) {
+                        SearchFile = (GetGalaxyZone().mZones[Layer.ToLower()]);
+                    }
                 }
                 else
                 {
@@ -183,8 +194,14 @@ namespace Takochu.smg
             {
                 if (GameUtil.IsSMG2())
                 {
-                    SearchFile = 
-                        (GetGalaxyZone().mZones[Layer]);
+                    if (GetGalaxyZone().mZones.ContainsKey(Layer))
+                    {
+                        SearchFile = (GetGalaxyZone().mZones[Layer]);
+                    }
+                    else if (GetGalaxyZone().mZones.ContainsKey(Layer.ToLower()))
+                    {
+                        SearchFile = (GetGalaxyZone().mZones[Layer.ToLower()]);
+                    }
                 }
                 else
                 {
