@@ -1384,6 +1384,85 @@ namespace Takochu.ui
             lightsDataGridView = dataGridViewEdit_Lights.GetDataTable();
         }
 
+        private void glLevelView_MouseClick(object sender, MouseEventArgs e)
+        {
+            var ray = ScreenToRay(e.Location);
+            Console.WriteLine($"dir: {ray.Direction.Y.ToString("F")}\norigin: {ray.Origin}");
+        }
+
+        private Ray ScreenToRay(Point mousePos)
+        {
+            //Eigen made code.
+            float[] mousePosrayrad_xy = new float[2];
+            float k_FOV_H = k_FOV / 2;
+            //y rad
+            mousePosrayrad_xy[1] = (k_FOV - k_FOV_H) * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
+            //x rad
+            mousePosrayrad_xy[0] = ((k_FOV * m_AspectRatio) - (k_FOV_H * m_AspectRatio)) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
+
+            //vector_x,y,z,speed. camera bese.
+            Vector4 ray = new Vector4((float)System.Math.Tan(mousePosrayrad_xy[0]),
+                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f, 1f);
+
+            //rotate
+            Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamTarget.X),
+                                                 (float)System.Math.Cos(m_CamTarget.Y),
+                                                 (float)System.Math.Cos(m_CamTarget.Z)
+                                                 );
+
+            ray.X *= CamPositionRad.Y * CamPositionRad.Z;
+            ray.Y *= CamPositionRad.X * CamPositionRad.Z;
+            ray.Z *= CamPositionRad.X * CamPositionRad.Y;
+
+
+            //Eigen code end.
+
+            //Create camera
+            Matrix4 projmtx = m_ProjMatrix;
+            Matrix4 viewmtx = m_CamMatrix;
+
+            //Get Normalized mouse position
+            Vector3 normalizedmouse = new Vector3((2.0f * mousePos.X) / glLevelView.Width - 1.0f, -((2.0f * mousePos.Y) / glLevelView.Height - 1.0f), -1.0f);
+            Vector3 origin;
+            Vector3 dir;
+            if (!m_OrthView)
+            {
+                Vector4 clip = new Vector4(normalizedmouse.X, normalizedmouse.Y, -1.0f, 1.0f);
+                //Vector4.Multiply(,);
+                //Unproject mouse position
+                projmtx.Invert();
+                Vector4 eye = (Vector4.Multiply(clip , new Vector4(projmtx.M11, projmtx.M22,projmtx.M33,projmtx.M44)));
+                eye.Z = -1.0f;
+                eye.W = 0.0f;
+                viewmtx.Invert();
+                //Convert to direction
+                //dir = (eye * viewmtx.Inverted()).Xyz;
+                dir = (Vector4.Multiply(eye, new Vector4(viewmtx.M11, viewmtx.M22, viewmtx.M33, viewmtx.M44))).Xyz;
+                dir.Normalize();
+
+                origin = m_CamPosition;
+
+            }
+            else
+            {
+                Vector3 CameraUnitVector = new Vector3((float)(Math.Cos(m_CamRotation.X) * Math.Cos(m_CamRotation.Y)),
+                                                       (float)Math.Sin(m_CamRotation.Y),
+                                                       (float)(Math.Sin(m_CamRotation.X) * Math.Cos(m_CamRotation.Y)));//Unit vector in camera direction
+
+                Vector3 scaledmouse = Vector3.Multiply(Vector3.Multiply( normalizedmouse ,  new Vector3(glLevelView.Width, glLevelView.Height, 0f)) , m_OrthZoom) / 2f;
+                Vector3 ScreenXBasis = new Vector3((float)(-Math.Sin(m_CamRotation.X))
+                                                       , 0f
+                                                       , (float)(Math.Cos(m_CamRotation.X)));//Basis vector on the viewport plane. This one is flat on the y axis.
+                Vector3 ScreenYBasis = Vector3.Cross(ScreenXBasis, CameraUnitVector);
+                Vector3 ApparentCameraPos = m_CamPosition - 10000f * CameraUnitVector;
+                origin = scaledmouse.X * ScreenXBasis * 1.415f + scaledmouse.Y * ScreenYBasis * 1.415f + ApparentCameraPos;
+                dir = CameraUnitVector;
+
+            }
+            //LastClick = new Ray(origin, dir);//Debug
+            return new Ray(origin, dir);
+        }
+
         private void lightsTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
             if (e.Node.Parent == null) return;
@@ -1457,8 +1536,6 @@ namespace Takochu.ui
 
             ids.Add(mGalaxy.mName, mGalaxy.GetGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
 
-            //ids.AddRange(mGalaxy.GetGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
-
             foreach (string z in zones)
             {
                 Zone zone = mGalaxy.GetZone(z);
@@ -1523,19 +1600,76 @@ namespace Takochu.ui
             AbstractObj obj = node.Tag as AbstractObj;
 
             // paths and stages require additional logic to delete
-            if (obj.mType != "StageObj" && obj.mType != "PathObj" && obj.mType != "PathPointObj")
+            if (obj.mType != "StageObj" && obj.mType != "PathPointObj")
             {
                 int id = obj.mUnique;
                 Zone z = obj.mParentZone;
+
+                if (obj.mType == "PathObj")
+                {
+                    PathObj path_obj = obj as PathObj;
+                    AbstractObj out_obj;
+
+                    if (z.DoesAnyObjUsePathID(path_obj.Get<short>("no"), out out_obj))
+                    {
+                        DialogResult res = MessageBox.Show($"You are about to delete a path that an object still uses! Are you sure you want to delete it?\n{out_obj.ToString()}", "Path Deletion", MessageBoxButtons.YesNo);
+
+                        if (res == DialogResult.Yes)
+                        {
+                            z.DeleteObjectWithUniqueID(id);
+                            GL.DeleteLists(mDispLists[0][id], 1);
+                            objectsListTreeView.Nodes.Remove(node);
+                            m_AreChanges = true;
+                            glLevelView.Refresh();
+                            return;
+                        }
+                        else
+                        {
+                            // we do nothing
+                            return;
+                        }
+                    }
+                }
+
                 z.DeleteObjectWithUniqueID(id);
                 GL.DeleteLists(mDispLists[0][id], 1);
                 objectsListTreeView.Nodes.Remove(node);
                 m_AreChanges = true;
                 glLevelView.Refresh();
+
             }
-            else
+            else if (obj.mType == "PathPointObj")
             {
-                Console.WriteLine("we'll implement this later...");
+                PathPointObj pobj = node.Tag as PathPointObj;
+                PathObj parentPath = pobj.mParent;
+                Zone z = pobj.mParentZone;
+                z.DeletePathPointFromPath(parentPath.mUnique, node.Parent.Nodes.IndexOf(node));
+
+                var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(z.mZoneName);
+                var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(z.mZoneName);
+
+                GL.DeleteLists(mDispLists[0][parentPath.mUnique], 1);
+                GL.NewList(mDispLists[0][parentPath.mUnique], ListMode.Compile);
+
+                GL.PushMatrix();
+                {
+                    GL.Translate(Pos_ZoneOffset);
+                    GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                    GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                    GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                }
+
+                parentPath.Render(RenderMode.Opaque);
+                GL.PopMatrix();
+                GL.EndList();
+
+                objectsListTreeView.Nodes.Remove(node);
+                m_AreChanges = true;
+                glLevelView.Refresh();
+            }
+            else if (obj.mType == "StageObj")
+            {
+
             }
         }
 
