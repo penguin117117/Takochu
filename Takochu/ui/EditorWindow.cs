@@ -1396,9 +1396,9 @@ namespace Takochu.ui
             float[] mousePosrayrad_xy = new float[2];
             float k_FOV_H = k_FOV / 2;
             //y rad
-            mousePosrayrad_xy[1] = (k_FOV - k_FOV_H) * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
+            mousePosrayrad_xy[1] = k_FOV_H * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
             //x rad
-            mousePosrayrad_xy[0] = ((k_FOV * m_AspectRatio) - (k_FOV_H * m_AspectRatio)) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
+            mousePosrayrad_xy[0] = (k_FOV_H * m_AspectRatio) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
 
             //vector_x,y,z,speed. camera bese.
             Vector4 ray = new Vector4((float)System.Math.Tan(mousePosrayrad_xy[0]),
