@@ -1406,9 +1406,9 @@ namespace Takochu.ui
                                       (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f, 1f);
 
             //rotate
-            Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamTarget.X),
-                                                 (float)System.Math.Cos(m_CamTarget.Y),
-                                                 (float)System.Math.Cos(m_CamTarget.Z)
+            Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamRotation.X),//m_CamTarget オブジェクトを中心とした回転軸
+                                                 (float)System.Math.Cos(m_CamRotation.Y),
+                                                 0//(float)System.Math.Cos(m_CamRotation.Z)
                                                  );
 
             ray.X *= CamPositionRad.Y * CamPositionRad.Z;
