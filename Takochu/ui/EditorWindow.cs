@@ -228,7 +228,7 @@ namespace Takochu.ui
                     //mObjects.AddRange(z.GetAllObjectsFromLayers(currentLayers));
                     //mGalaxy
                     //var layername = z.GetLayersUsedOnZoneForCurrentScenario()[z.mGalaxy.mScenarioNo];
-                    //mObjects.AddRange(z.GetObjectsFromLayer("Map",layername)) ;
+                    //mObjects.AddRange(z.GetObjectsFromLayer("Map",layername));
                     //Console.WriteLine(layername);
                 }
                 else
@@ -935,6 +935,7 @@ namespace Takochu.ui
 
             GL.LoadMatrix(ref m_CamMatrix);
 
+            //Axis Setup
             GL.Begin(BeginMode.Lines);
             GL.Color4(1f, 0f, 0f, 1f);
             GL.Vertex3(0f, 0f, 0f);
@@ -947,7 +948,19 @@ namespace Takochu.ui
             GL.Vertex3(0f, 0f, 100000f);
             GL.End();
 
+
+            var ray = ScreenToRay(m_LastMouseMove);
+
+            GL.LineWidth(112.5f);
+            GL.Color4(1.0, 0.0, 0.0, 1.0);
+            GL.Begin(BeginMode.Lines);
+            GL.Vertex3(m_CamPosition * 100.0f);
+            Vector3 s = OpenTK.Vector3.Normalize(ray.Direction);
+            GL.Vertex3(s * 10000f);
+            GL.End();
+
             GL.Color4(1f, 1f, 1f, 1f);
+            Console.WriteLine(m_CamPosition);
 
             foreach (KeyValuePair<int, Dictionary<int, int>> disp in mDispLists)
             {
@@ -1387,35 +1400,44 @@ namespace Takochu.ui
         private void glLevelView_MouseClick(object sender, MouseEventArgs e)
         {
             var ray = ScreenToRay(e.Location);
+
             Console.WriteLine($"dir: {ray.Direction.Y.ToString("F")}\norigin: {ray.Origin}");
         }
 
         private Ray ScreenToRay(Point mousePos)
         {
-            //Eigen made code.
             float[] mousePosrayrad_xy = new float[2];
             float k_FOV_H = k_FOV / 2;
             //y rad
-            mousePosrayrad_xy[1] = (k_FOV - k_FOV_H) * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
+            mousePosrayrad_xy[1] = k_FOV_H * -(mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * 0.5f);
             //x rad
-            mousePosrayrad_xy[0] = ((k_FOV * m_AspectRatio) - (k_FOV_H * m_AspectRatio)) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
+            mousePosrayrad_xy[0] = (k_FOV_H * m_AspectRatio) * -(mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * 0.5f));
 
             //vector_x,y,z,speed. camera bese.
-            Vector4 ray = new Vector4((float)System.Math.Tan(mousePosrayrad_xy[0]),
-                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f, 1f);
+            Vector4 ray = new Vector4((float)Math.Sin(mousePosrayrad_xy[0]),
+                                      (float)Math.Cos(mousePosrayrad_xy[1]), -1f, 1f);
+
+            Vector3 camVec = m_CamPosition - m_CamTarget;
+            Vector3 right = Vector3.Cross(camVec, Vector3.UnitY);
+            Vector3 Up = Vector3.Cross(camVec, right);
+
+            Matrix4 s = Matrix4.LookAt(m_CamPosition, m_CamTarget, Up);
 
             //rotate
-            Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamTarget.X),
-                                                 (float)System.Math.Cos(m_CamTarget.Y),
-                                                 (float)System.Math.Cos(m_CamTarget.Z)
+            Vector3 CamRotationRad = new Vector3((float)System.Math.Cos(camVec.X),
+                                                 (float)System.Math.Cos(camVec.Y),
+                                                 (float)System.Math.Cos(camVec.Z)
                                                  );
 
-            ray.X *= CamPositionRad.Y * CamPositionRad.Z;
-            ray.Y *= CamPositionRad.X * CamPositionRad.Z;
-            ray.Z *= CamPositionRad.X * CamPositionRad.Y;
+            Vector3 nnormalizedmouse = new Vector3((2.0f * mousePos.X) / glLevelView.Width - 1.0f, -((2.0f * mousePos.Y) / glLevelView.Height - 1.0f), -1.0f);
 
+            Vector3 rrr = Vector4.Multiply(new Vector4(s.M11, s.M22, s.M33, s.M44), new Vector4(nnormalizedmouse.X, nnormalizedmouse.Y, -1.0f, 1.0f)).Xyz;
 
-            //Eigen code end.
+            //ray.X *= CamRotationRad.Y * CamRotationRad.Z;
+            //ray.Y *= CamRotationRad.X * CamRotationRad.Z;
+            //ray.Z *= CamRotationRad.X * CamRotationRad.Y;
+
+            //ray = (Vector4.Multiply(ray, new Vector4(s.M11, s.M22, s.M33, s.M44)));
 
             //Create camera
             Matrix4 projmtx = m_ProjMatrix;
@@ -1460,7 +1482,7 @@ namespace Takochu.ui
 
             }
             //LastClick = new Ray(origin, dir);//Debug
-            return new Ray(origin, dir);
+            return new Ray(origin, rrr);
         }
 
         private void lightsTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
