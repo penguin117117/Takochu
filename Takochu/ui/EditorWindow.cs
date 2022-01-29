@@ -1386,6 +1386,7 @@ namespace Takochu.ui
 
         private void glLevelView_MouseClick(object sender, MouseEventArgs e)
         {
+            if (e.Button == MouseButtons.Right) return;
             var ray = ScreenToRay(e.Location);
             Console.WriteLine($"dir: {ray.Direction.Y.ToString("F")}\norigin: {ray.Origin}");
         }
@@ -1396,23 +1397,23 @@ namespace Takochu.ui
             float[] mousePosrayrad_xy = new float[2];
             float k_FOV_H = k_FOV / 2;
             //y rad
-            mousePosrayrad_xy[1] = (k_FOV - k_FOV_H) * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
+            mousePosrayrad_xy[1] = k_FOV_H * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
             //x rad
-            mousePosrayrad_xy[0] = ((k_FOV * m_AspectRatio) - (k_FOV_H * m_AspectRatio)) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
+            mousePosrayrad_xy[0] = (k_FOV_H * m_AspectRatio) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
 
             //vector_x,y,z,speed. camera bese.
             Vector4 ray = new Vector4((float)System.Math.Tan(mousePosrayrad_xy[0]),
                                       (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f, 1f);
 
             //rotate
-            Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamTarget.X),
-                                                 (float)System.Math.Cos(m_CamTarget.Y),
-                                                 (float)System.Math.Cos(m_CamTarget.Z)
+            Vector3 CamRotationCos = new Vector3((float)System.Math.Cos(m_CamRotation.X),//m_CamTarget オブジェクトを中心とした回転軸
+                                                 (float)System.Math.Cos(m_CamRotation.Y),
+                                                 0//(float)System.Math.Cos(m_CamRotation.Z)
                                                  );
 
-            ray.X *= CamPositionRad.Y * CamPositionRad.Z;
-            ray.Y *= CamPositionRad.X * CamPositionRad.Z;
-            ray.Z *= CamPositionRad.X * CamPositionRad.Y;
+            ray.X *= CamRotationCos.Y * CamRotationCos.Z;
+            ray.Y *= CamRotationCos.X * CamRotationCos.Z;
+            ray.Z *= CamRotationCos.X * CamRotationCos.Y;
 
 
             //Eigen code end.
