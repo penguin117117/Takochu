@@ -335,7 +335,7 @@ namespace Takochu.rnd.BmdRendererSys
             _vertex.AppendLine("float h = cos(r);");
             _vertex.AppendLine("float v = sin(r);");
             _vertex.AppendLine("mat2 Rot = mat2(h, v, -v, h);");
-            _vertex.AppendLine("return vec2(yworldPos.x, yworldPos.z);");
+            _vertex.AppendLine("return vec2(pow(yworldPos.x, 5.0)*2.0, pow(yworldPos.z, 5.0)*2.0);");
             _vertex.AppendLine("}");
 
             _vertex.AppendLine("");
