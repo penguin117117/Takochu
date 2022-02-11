@@ -18,6 +18,7 @@ namespace Takochu.smg
     public class Zone
     {
         public string[] cPossibleFiles = { "Design", "Light", "Ghost", "Map", "Sound", "ZoneInfo" };
+        public static int MissingPathArgumentsRemove { get; private set; }
 
         public Zone(Galaxy galaxy, string name)
         {
@@ -36,6 +37,8 @@ namespace Takochu.smg
 
         public void Load()
         {
+
+            MissingPathArgumentsRemove = 0;
             if (GameUtil.IsSMG1())
             {
                 string path = $"/StageData/{mZoneName}.arc";
@@ -196,7 +199,8 @@ namespace Takochu.smg
                 pathsBCSV.Save();
                 mMapFiles["Map"].Save();
 
-                MessageBox.Show("Takochu just added in missing path arguments that Whitehole was known to remove.");
+                MissingPathArgumentsRemove++;
+                
 
                 pathsBCSV = new BCSV(mMapFiles["Map"].OpenFile("/root/jmp/Path/CommonPathInfo"));
             }
@@ -454,6 +458,29 @@ namespace Takochu.smg
             return false;
         }
 
+        public List<int> GetAllUniqueIDS()
+        {
+            List<int> ids = new List<int>();
+
+            foreach (string str in cPossibleFiles)
+            {
+                if (mObjects.ContainsKey(str))
+                {
+                    foreach (string layer in GameUtil.GalaxyLayersCommon)
+                    {
+                        if (mObjects[str].ContainsKey(layer))
+                        {
+                            mObjects[str][layer].ForEach(o => ids.Add(o.mUnique));
+                        }
+                    }
+                }
+            }
+
+            mPaths.ForEach(p => ids.Add(p.mUnique));
+
+            return ids;
+        }
+
         public List<int> GetAllUniqueIDsFromZoneOnCurrentScenario() {
             List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
 
@@ -547,6 +574,19 @@ namespace Takochu.smg
                     return;
                 }
             }
+        }
+
+        public PathObj GetPathFromID(int id)
+        {
+            foreach (PathObj pobj in mPaths)
+            {
+                if (pobj.mID == id)
+                {
+                    return pobj;
+                }
+            }
+
+            return null;
         }
 
         public AbstractObj GetObjFromUniqueID(int id)
