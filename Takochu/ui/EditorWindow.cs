@@ -1467,8 +1467,8 @@ namespace Takochu.ui
             mousePosrayrad_xy[0] = (k_FOV_H * m_AspectRatio) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
 
             //vector_x,y,z,speed. camera bese.
-            Vector4 ray = new Vector4((float)System.Math.Tan(mousePosrayrad_xy[0]),
-                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f, 1f);
+            Vector3 ray = new Vector3((float)System.Math.Tan(mousePosrayrad_xy[0]),
+                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f);
 
             //rotate
             Vector3 CamRotationCos = new Vector3((float)System.Math.Cos(m_CamRotation.X),//m_CamTarget オブジェクトを中心とした回転軸
@@ -1479,6 +1479,8 @@ namespace Takochu.ui
             ray.X *= CamRotationCos.Y * CamRotationCos.Z;
             ray.Y *= CamRotationCos.X * CamRotationCos.Z;
             ray.Z *= CamRotationCos.X * CamRotationCos.Y;
+
+            return new Ray(m_CamPosition, ray);
 
 
             //Eigen code end.
