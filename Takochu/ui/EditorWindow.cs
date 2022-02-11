@@ -38,6 +38,8 @@ namespace Takochu.ui
 
             mGalaxy = Program.sGame.OpenGalaxy(mGalaxyName);
             galaxyNameTxtBox.Text = mGalaxy.mGalaxyName;
+            AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
+            pathsToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayPath;
 
             foreach(KeyValuePair<int, Scenario> scenarios in mGalaxy.mScenarios)
             {
@@ -50,8 +52,8 @@ namespace Takochu.ui
                 scenarioTreeView.Nodes.Add(n);
             }
 
-            if (!BGMInfo.HasBGMInfo(mGalaxy.mName))
-                stageInformationBtn.Enabled = false;
+            //if (!BGMInfo.HasBGMInfo(mGalaxy.mName))
+            //    stageInformationBtn.Enabled = false;
         }
 
         private string mGalaxyName;
@@ -411,7 +413,6 @@ namespace Takochu.ui
             }
 
             mGalaxy.Close();
-            
         }
 
         private void EditorWindow_Load(object sender, EventArgs e)
@@ -676,11 +677,16 @@ namespace Takochu.ui
                     keyValuePairs.Add(o.mUnique, GL.GenLists(1));
                     mDispLists.Add(t, keyValuePairs);
 
+                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false)
+                        continue;
+
+                    if (o.mType == "PathObj" && pathsToolStripMenuItem.Checked == false)
+                        continue;
+
                     GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
 
                     GL.Color4(Color.FromArgb(o.mUnique));
                     o.Render(mode);
-                    //Console.WriteLine(o.mName);
                     GL.EndList();
                     
                 }
@@ -703,6 +709,9 @@ namespace Takochu.ui
 
                         keyValuePairs.Add(o.mUnique, GL.GenLists(1));
                         mDispLists[t].Add(o.mUnique, GL.GenLists(1));
+
+                        if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false)
+                            continue;
 
                         GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
 
@@ -730,6 +739,9 @@ namespace Takochu.ui
 
                         keyValuePairs.Add(p.mUnique, GL.GenLists(1));
                         mDispLists[t].Add(p.mUnique, GL.GenLists(1));
+
+                        if (pathsToolStripMenuItem.Checked == false)
+                            continue;
 
                         GL.NewList(mDispLists[t][p.mUnique], ListMode.Compile);
 
@@ -764,6 +776,9 @@ namespace Takochu.ui
                     keyValuePairs.Add(o.mUnique, GL.GenLists(1));
                     mDispLists[t].Add(o.mUnique, GL.GenLists(1));
 
+                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false)
+                            continue;
+
                     GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
@@ -786,6 +801,9 @@ namespace Takochu.ui
 
                     keyValuePairs.Add(path.mUnique, GL.GenLists(1));
                     mDispLists[t].Add(path.mUnique, GL.GenLists(1));
+
+                    if (pathsToolStripMenuItem.Checked == false)
+                        continue;
 
                     GL.NewList(mDispLists[t][path.mUnique], ListMode.Compile);
 
@@ -1010,7 +1028,7 @@ namespace Takochu.ui
             m_LastMouseMove = m_LastMouseClick = e.Location;
         }
 
-        private void ChangeToNode(TreeNode node)
+        private void ChangeToNode(TreeNode node, bool changeCamera=false)
         {
             AbstractObj abstractObj = node.Tag as AbstractObj;
 
@@ -1025,20 +1043,23 @@ namespace Takochu.ui
             }
             else
             {
-                //objects Camera Setting
-                //The following process moves the camera to the object.
-                var ZoneName = abstractObj.mParentZone.mZoneName;
-                var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(ZoneName);
-                var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(ZoneName);
+                if (changeCamera)
+                {
+                    //objects Camera Setting
+                    //The following process moves the camera to the object.
+                    var ZoneName = abstractObj.mParentZone.mZoneName;
+                    var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(ZoneName);
+                    var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(ZoneName);
 
-                var PosObj = abstractObj.mTruePosition;
-                var CorrectPos_Object = calc.RotAfin.GetPositionAfterRotation(PosObj, Rot_ZoneOffset, calc.RotAfin.TargetVector.All);
+                    var PosObj = abstractObj.mTruePosition;
+                    var CorrectPos_Object = calc.RotAfin.GetPositionAfterRotation(PosObj, Rot_ZoneOffset, calc.RotAfin.TargetVector.All);
 
-                m_CamDistance = 0.200f;
-                m_CamTarget = Pos_ZoneOffset / 10000f + CorrectPos_Object / 10000;
-                m_CamPosition = CorrectPos_Object / 10000;
-                m_CamRotation.Y = (float)Math.PI / 8f;
-                m_CamRotation.X = (-(abstractObj.mTrueRotation.Y + Pos_ZoneOffset.Y) / 180f) * (float)Math.PI;
+                    m_CamDistance = 0.200f;
+                    m_CamTarget = Pos_ZoneOffset / 10000f + CorrectPos_Object / 10000;
+                    m_CamPosition = CorrectPos_Object / 10000;
+                    m_CamRotation.Y = (float)Math.PI / 8f;
+                    m_CamRotation.X = (-(abstractObj.mTrueRotation.Y + Pos_ZoneOffset.Y) / 180f) * (float)Math.PI;
+                }
 
                 //objects PropertyGrideSetting
                 //Display the property grid for setting the currently selected object.
@@ -1116,6 +1137,40 @@ namespace Takochu.ui
                     dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(dataGridView1, pathPoint);
                     dataGridView1 = dataGridViewEdit.GetDataTable();
                 }
+
+                if (pathsToolStripMenuItem.Checked == false)
+                {
+                    if (abstractObj.CanUsePath())
+                    {
+                        Zone z = abstractObj.mParentZone;
+                        // we need to delete any rendered paths
+                        List<int> ids = z.GetAllUniqueIDsFromObjectsOfType("PathObj");
+                        ids.ForEach(i => GL.DeleteLists(mDispLists[0][i], 1));
+                        PathObj path = z.GetPathFromID(abstractObj.mEntry.Get<short>("CommonPath_ID"));
+
+                        if (path != null)
+                        {
+                            // now we render only this path
+                            var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(path.mParentZone.mZoneName);
+                            var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(path.mParentZone.mZoneName);
+
+                            GL.DeleteLists(mDispLists[0][path.mUnique], 1);
+                            GL.NewList(mDispLists[0][path.mUnique], ListMode.Compile);
+
+                            GL.PushMatrix();
+                            {
+                                GL.Translate(Pos_ZoneOffset);
+                                GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                                GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                                GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                            }
+
+                            path.Render(RenderMode.Opaque);
+                            GL.PopMatrix();
+                            GL.EndList();
+                        }
+                    }
+                }
             }
 
             UpdateCamera();
@@ -1124,7 +1179,7 @@ namespace Takochu.ui
 
         private void objectsListTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            ChangeToNode(e.Node);
+            ChangeToNode(e.Node, (Control.ModifierKeys == Keys.Shift));
         }
 
         private void objectsListTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -1154,7 +1209,7 @@ namespace Takochu.ui
                 var tes = dgv[e.ColumnIndex, e.RowIndex] as DataGridViewComboBoxCell;
                 cell_value = tes.Items.IndexOf(cell_value)-1;
                 Console.WriteLine("DataGridViewComboBoxCellです");
-            } 
+            }
             
             dataGridViewEdit.ChangeValue(e.RowIndex,cell_value);
 
@@ -1178,7 +1233,7 @@ namespace Takochu.ui
                 }
 
                 path.Render(RenderMode.Opaque);
-                GL.PushMatrix();
+                GL.PopMatrix();
                 GL.EndList();
             }
             else if (mSelectedObject.GetType() == typeof(StageObj))
@@ -1227,7 +1282,15 @@ namespace Takochu.ui
             }
 
             m_AreChanges = true;
+            undoToolStripMenuItem.Enabled = true;
             glLevelView.Refresh();
+
+            // if redoing was possible at this point, it is no longer possible since we have introduced a more recent redo
+            if (EditorUtil.EditorActionHolder.CanRedo())
+            {
+                EditorUtil.EditorActionHolder.ClearActionsAfterCurrent();
+                redoToolStripMenuItem.Enabled = false;
+            }
             
         }
 
@@ -1295,6 +1358,8 @@ namespace Takochu.ui
             }
 
             glLevelView.Refresh();
+            Properties.Settings.Default.EditorWindowDisplayArea = AreaToolStripMenuItem.Checked;
+            Properties.Settings.Default.Save();
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -1402,8 +1467,8 @@ namespace Takochu.ui
             mousePosrayrad_xy[0] = (k_FOV_H * m_AspectRatio) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
 
             //vector_x,y,z,speed. camera bese.
-            Vector4 ray = new Vector4((float)System.Math.Tan(mousePosrayrad_xy[0]),
-                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f, 1f);
+            Vector3 ray = new Vector3((float)System.Math.Tan(mousePosrayrad_xy[0]),
+                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f);
 
             //rotate
             Vector3 CamRotationCos = new Vector3((float)System.Math.Cos(m_CamRotation.X),//m_CamTarget オブジェクトを中心とした回転軸
@@ -1414,6 +1479,8 @@ namespace Takochu.ui
             ray.X *= CamRotationCos.Y * CamRotationCos.Z;
             ray.Y *= CamRotationCos.X * CamRotationCos.Z;
             ray.Z *= CamRotationCos.X * CamRotationCos.Y;
+
+            return new Ray(m_CamPosition, ray);
 
 
             //Eigen code end.
@@ -1594,11 +1661,19 @@ namespace Takochu.ui
             }
 
             glLevelView.Refresh();
+            Properties.Settings.Default.EditorWindowDisplayPath = pathsToolStripMenuItem.Checked;
+            Properties.Settings.Default.Save();
         }
 
         private void deleteObjNode(TreeNode node)
         {
             AbstractObj obj = node.Tag as AbstractObj;
+
+            if (node.Text == mGalaxy.mName)
+            {
+                MessageBox.Show("You cannot delete the main galaxy!");
+                return;
+            }
 
             // paths and stages require additional logic to delete
             if (obj.mType != "StageObj" && obj.mType != "PathPointObj")
@@ -1670,7 +1745,28 @@ namespace Takochu.ui
             }
             else if (obj.mType == "StageObj")
             {
+                DialogResult res = MessageBox.Show("You are about to delete an entire zone. Are you sure?", "Zone Deletion", MessageBoxButtons.YesNo);
 
+                if (res == DialogResult.Yes)
+                {
+                    List<int> ids = mGalaxy.GetZone(obj.mName).GetAllUniqueIDS();
+                    mGalaxy.RemoveZone(obj.mName);
+
+                    foreach (int id in ids)
+                    {
+                        // only delete the display lists for the objects that are currently in the scene
+                        // the RemoveZone functions removes the ones not in it
+                        if (mDispLists[0].ContainsKey(id))
+                        {
+                            GL.DeleteLists(mDispLists[0][id], 1);
+                        }
+                    }
+
+                    objectsListTreeView.Nodes.Remove(node);
+
+                    m_AreChanges = true;
+                    glLevelView.Refresh();
+                }
             }
         }
 
@@ -1680,6 +1776,127 @@ namespace Takochu.ui
             {
                 deleteObjNode(objectsListTreeView.SelectedNode);
             }
+        }
+
+        private void undoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            EditorUtil.EditorAction to;
+            EditorUtil.EditorAction from;
+            EditorUtil.EditorActionHolder.DoUndo(out from, out to);
+
+            if (from.mActionType == EditorUtil.EditorActionHolder.ActionType.ActionType_EditObject)
+            {
+                EditorUtil.ObjectEditAction objAction = from as EditorUtil.ObjectEditAction;
+                AbstractObj obj = objAction.mEditedObject;
+                Console.WriteLine($"in a perfect would, we would set {objAction.mFieldName} to {objAction.mValue}");
+
+                // this code is only here because there seems to be some issues when it comes to converting types...
+                // forcing these types (as defined in a file) seems to fix a lot of casting issues
+                if (BCSV.sFieldTypeTable.ContainsKey(objAction.mFieldName))
+                {
+                    string fieldtype = BCSV.sFieldTypeTable[objAction.mFieldName];
+
+                    switch (fieldtype)
+                    {
+                        case "float":
+                            obj.mEntry.Set(objAction.mFieldName, (float)objAction.mValue);
+                            break;
+                    }
+                }
+                else
+                {
+                    obj.mEntry.Set(objAction.mFieldName, objAction.mValue);
+                }
+
+                if (objAction.mFieldName.StartsWith("pos_"))
+                {
+                    obj.SetPosition(new Vector3(obj.mEntry.Get<float>("pos_x"), obj.mEntry.Get<float>("pos_y"), obj.mEntry.Get<float>("pos_z")));
+
+                    var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.mZoneName);
+                    var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.mZoneName);
+
+                    GL.DeleteLists(mDispLists[0][obj.mUnique], 1);
+                    GL.NewList(mDispLists[0][obj.mUnique], ListMode.Compile);
+
+                    GL.PushMatrix();
+                    {
+                        GL.Translate(Pos_ZoneOffset);
+                        GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                        GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                        GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                    }
+
+                    obj.Render(RenderMode.Opaque);
+                    GL.PopMatrix();
+                    GL.EndList();
+                    glLevelView.Refresh();
+                }
+
+                m_AreChanges = true;
+            }
+
+            undoToolStripMenuItem.Enabled = EditorUtil.EditorActionHolder.CanUndo();
+            // undoing causes the ability to redo!
+            redoToolStripMenuItem.Enabled = true;
+        }
+
+        private void redoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            EditorUtil.EditorAction from;
+            EditorUtil.EditorAction to;
+            EditorUtil.EditorActionHolder.DoRedo(out from, out to);
+
+            if (from.mActionType == EditorUtil.EditorActionHolder.ActionType.ActionType_EditObject)
+            {
+                EditorUtil.ObjectEditAction objAction = to as EditorUtil.ObjectEditAction;
+                AbstractObj obj = objAction.mEditedObject;
+                Console.WriteLine($"in a perfect would, we would set {objAction.mFieldName} to {objAction.mValue}");
+
+                if (BCSV.sFieldTypeTable.ContainsKey(objAction.mFieldName))
+                {
+                    string fieldtype = BCSV.sFieldTypeTable[objAction.mFieldName];
+
+                    switch(fieldtype)
+                    {
+                        case "float":
+                            obj.mEntry.Set(objAction.mFieldName, (float)objAction.mValue);
+                            break;
+                    }
+                }
+                else
+                {
+                    obj.mEntry.Set(objAction.mFieldName, objAction.mValue);
+                }
+
+                if (objAction.mFieldName.StartsWith("pos_"))
+                {
+                    obj.SetPosition(new Vector3(obj.mEntry.Get<float>("pos_x"), obj.mEntry.Get<float>("pos_y"), obj.mEntry.Get<float>("pos_z")));
+
+                    var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.mZoneName);
+                    var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.mZoneName);
+
+                    GL.DeleteLists(mDispLists[0][obj.mUnique], 1);
+                    GL.NewList(mDispLists[0][obj.mUnique], ListMode.Compile);
+
+                    GL.PushMatrix();
+                    {
+                        GL.Translate(Pos_ZoneOffset);
+                        GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                        GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                        GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
+                    }
+
+                    obj.Render(RenderMode.Opaque);
+                    GL.PopMatrix();
+                    GL.EndList();
+                    glLevelView.Refresh();
+                }
+               
+                m_AreChanges = true; 
+            }
+
+            redoToolStripMenuItem.Enabled = EditorUtil.EditorActionHolder.CanRedo();
+            undoToolStripMenuItem.Enabled = EditorUtil.EditorActionHolder.CanUndo();
         }
 
         private void cameraListTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
