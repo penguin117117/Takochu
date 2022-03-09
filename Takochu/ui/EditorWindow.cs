@@ -841,7 +841,7 @@ namespace Takochu.ui
 
             m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
             m_SkyboxMatrix = Matrix4.LookAt(Vector3.Zero, skybox_target, up);
-            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
+            m_CamMatrix = Matrix4.Mult(Matrix4.CreateScale(0.0001f), m_CamMatrix);
         }
 
         private void UpdateCamera(Vector3 v3)
@@ -872,7 +872,7 @@ namespace Takochu.ui
             
             m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
             m_SkyboxMatrix = Matrix4.LookAt(Vector3.One, skybox_target, up);
-            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
+            m_CamMatrix = Matrix4.Mult(Matrix4.CreateScale(0.0001f), m_CamMatrix);
         }
 
         private void glLevelView_Paint(object sender, PaintEventArgs e)

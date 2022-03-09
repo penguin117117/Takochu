@@ -269,7 +269,7 @@ namespace Takochu.rnd
                             else
                                 GL.BlendEquation(BlendEquationMode.FuncAdd);
 
-                            GL.BlendFunc(blendsrc[mat.BlendMode.SrcFactor], blenddst[mat.BlendMode.DstFactor]);
+                            GL.BlendFunc((BlendingFactor)blendsrc[mat.BlendMode.SrcFactor], (BlendingFactor)blenddst[mat.BlendMode.DstFactor]);
                             break;
 
                         case 2:
@@ -423,11 +423,11 @@ namespace Takochu.rnd
                             if ((prim.ArrayMask & (1 << 10)) != 0) GL.Normal3(m_Model.NormalArray[prim.NormalIndices[i]]);
 
                             //頂点インデックスにあった頂点番号の頂点を順番にセット
-                            Vector3 pos = m_Model.PositionArray[prim.PositionIndices[i]];
+                            Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[i]], 1.0f);
                             //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
-                            if ((prim.ArrayMask & (1 << 0)) != 0) Vector3.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[i]], out pos);
-                            else Vector3.Transform(ref pos, ref mtxtable[0], out pos);
-                            GL.Vertex3(pos);
+                            if ((prim.ArrayMask & (1 << 0)) != 0) Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[i]], out pos);
+                            else Vector4.Transform(ref pos, ref mtxtable[0], out pos);
+                            GL.Vertex3(pos.X, pos.Y, pos.Z);
                         }
 
                         GL.End();
