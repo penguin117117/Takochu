@@ -30,7 +30,7 @@ namespace Takochu.smg
 
             mMapFiles = new Dictionary<string, FilesystemBase>();
             mObjects = new Dictionary<string, Dictionary<string, List<AbstractObj>>>();
-            mZones = new Dictionary<string, List<StageObj>>();
+            mHasStageObjList = new Dictionary<string, List<StageObj>>();
 
             Load();
         }
@@ -193,14 +193,14 @@ namespace Takochu.smg
                     didAdd = true;
                 }
             }
-            
+
             if (didAdd)
             {
                 pathsBCSV.Save();
                 mMapFiles["Map"].Save();
 
                 MissingPathArgumentsRemove++;
-                
+
 
                 pathsBCSV = new BCSV(mMapFiles["Map"].OpenFile("/root/jmp/Path/CommonPathInfo"));
             }
@@ -249,9 +249,9 @@ namespace Takochu.smg
                 mObjects[archive].Add(layer, new List<AbstractObj>());
             }
 
-            if (!mZones.ContainsKey(layer))
+            if (!mHasStageObjList.ContainsKey(layer))
             {
-                mZones.Add(layer, new List<StageObj>());
+                mHasStageObjList.Add(layer, new List<StageObj>());
             }
 
             BCSV bcsv = new BCSV(mMapFiles[archive].OpenFile($"/stage/jmp/{path}"));
@@ -270,7 +270,7 @@ namespace Takochu.smg
                         break;
                     case "stageobjinfo":
                         //case "StageObjInfo":
-                        mZones[layer].Add(new StageObj(Entry, this));
+                        mHasStageObjList[layer].Add(new StageObj(Entry, this));
                         break;
                     case "objinfo":
                         //case "ObjInfo":
@@ -319,10 +319,10 @@ namespace Takochu.smg
 
         public bool IsZoneUsedOnLayer(string layer)
         {
-            if (mZones.ContainsKey(layer))
+            if (mHasStageObjList.ContainsKey(layer))
                 return false;
 
-            List<StageObj> zones = mZones[layer];
+            List<StageObj> zones = mHasStageObjList[layer];
 
             return zones.Any(s => mZoneName == s.mName);
         }
@@ -335,9 +335,9 @@ namespace Takochu.smg
             List<string> zones = new List<string>();
             layers.ForEach(l =>
             {
-                if (mZones.ContainsKey(l))
+                if (mHasStageObjList.ContainsKey(l))
                 {
-                    List<StageObj> z = mZones[l];
+                    List<StageObj> z = mHasStageObjList[l];
                     z.ForEach(s => zones.Add(s.mName));
                 }
             });
@@ -388,9 +388,9 @@ namespace Takochu.smg
 
             foreach (string layer in layers)
             {
-                if (mZones.ContainsKey(layer))
+                if (mHasStageObjList.ContainsKey(layer))
                 {
-                    ret.AddRange(mZones[layer]);
+                    ret.AddRange(mHasStageObjList[layer]);
 
                 }
             }
@@ -429,11 +429,66 @@ namespace Takochu.smg
             List<AbstractObj> ret = new List<AbstractObj>();
             List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
 
-            foreach(string file in cPossibleFiles)
+            foreach (string file in cPossibleFiles)
             {
                 if (mObjects.ContainsKey(file))
                 {
                     ret.AddRange(GetObjectsFromLayers(file, objType, layers));
+                }
+            }
+
+            return ret;
+        }
+
+        public List<AbstractObj> GetAllObjectsOfAllTypeFromCurrentScenario()
+        {
+            List<AbstractObj> ret = new List<AbstractObj>();
+            string[] types = new string[] { "AreaObj", "CameraObj", "DebugObj", "DemoObj", "GeneralPosObj", "Obj", "MapPartsObj", "PathPointObj", "PlanetObj", "StartObj" };
+
+            foreach (string type in types)
+            {
+                ret.AddRange(GetAllObjectsOfTypeFromCurrentScenario(type));
+            }
+
+            ret.AddRange(mPaths);
+            mPaths.ForEach(p => ret.AddRange(p.mPathPointObjs));
+
+            return ret;
+        }
+
+        public List<AbstractObj> GetAllObjectsWithAttributeNonZero(string attr)
+        {
+            List<AbstractObj> ret = new List<AbstractObj>();
+            List<AbstractObj> allObjs = GetAllObjectsOfAllTypeFromCurrentScenario();
+
+            foreach (AbstractObj obj in allObjs)
+            {
+                if (obj.mEntry.ContainsKey(attr))
+                {
+                    string fieldType = obj.mEntry.GetTypeOfField(attr).ToString();
+
+                    switch (fieldType)
+                    {
+                        case "System.Int16":
+                            short short_val = obj.Get<short>(attr);
+
+                            if (short_val != -1)
+                            {
+                                ret.Add(obj);
+                            }
+                            break;
+                        case "System.Int32":
+                            int int_val = obj.Get<int>(attr);
+
+                            if (int_val != -1)
+                            {
+                                ret.Add(obj);
+                            }
+                            break;
+                        default:
+                            Console.WriteLine($"lol type {fieldType}");
+                            break;
+                    }
                 }
             }
 
@@ -446,7 +501,7 @@ namespace Takochu.smg
             List<AbstractObj> objs = GetAllObjectsOfTypeFromCurrentScenario("Obj");
             objs.AddRange(GetAllObjectsOfTypeFromCurrentScenario("MapPartsObj"));
 
-            foreach(AbstractObj obj in objs)
+            foreach (AbstractObj obj in objs)
             {
                 if (obj.Get<short>("CommonPath_ID") == id)
                 {
@@ -481,21 +536,22 @@ namespace Takochu.smg
             return ids;
         }
 
-        public List<int> GetAllUniqueIDsFromZoneOnCurrentScenario() {
+        public List<int> GetAllUniqueIDsFromZoneOnCurrentScenario()
+        {
             List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
 
             List<int> ids = new List<int>();
 
-            foreach(string str in cPossibleFiles)
+            foreach (string str in cPossibleFiles)
             {
                 if (mObjects.ContainsKey(str))
                 {
-                    foreach(string l in layers)
+                    foreach (string l in layers)
                     {
                         List<AbstractObj> objs = mObjects[str][l];
                         objs.ForEach(o => ids.Add(o.mUnique));
                     }
-                    
+
                 }
             }
 
@@ -515,7 +571,7 @@ namespace Takochu.smg
             }
 
             List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
-           
+
 
             foreach (string str in cPossibleFiles)
             {
@@ -525,13 +581,13 @@ namespace Takochu.smg
                     {
                         List<AbstractObj> objs = mObjects[str][l];
 
-                        foreach(AbstractObj o in objs)
+                        foreach (AbstractObj o in objs)
                         {
                             if (o.mType == obj_type)
                             {
                                 ids.Add(o.mUnique);
                             }
-                                
+
                         }
                     }
 
@@ -553,7 +609,7 @@ namespace Takochu.smg
                     {
                         List<AbstractObj> objs = mObjects[str][l];
 
-                        foreach(AbstractObj o in objs)
+                        foreach (AbstractObj o in objs)
                         {
                             if (o.mUnique == id)
                             {
@@ -566,7 +622,7 @@ namespace Takochu.smg
                 }
             }
 
-            foreach(PathObj pobj in mPaths)
+            foreach (PathObj pobj in mPaths)
             {
                 if (pobj.mUnique == id)
                 {
@@ -593,30 +649,50 @@ namespace Takochu.smg
         {
             List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
 
-            foreach (string str in cPossibleFiles)
+            foreach (string directoryName in cPossibleFiles)
             {
-                if (mObjects.ContainsKey(str))
-                {
-                    foreach (string l in layers)
-                    {
-                        List<AbstractObj> objs = mObjects[str][l];
+                if (!mObjects.ContainsKey(directoryName)) continue;
 
-                        foreach (AbstractObj o in objs)
+                foreach (string layer in layers)
+                {
+                    if (!mObjects.ContainsKey(directoryName))
+                    {
+                        break;
+                    }
+
+                    if (!mObjects[directoryName].ContainsKey(layer))
+                    {
+                        break;
+                    }
+
+                    List<AbstractObj> abstObjs = mObjects[directoryName][layer];
+
+                    foreach (AbstractObj abstObj in abstObjs)
+                    {
+                        if (abstObj.mUnique == id)
                         {
-                            if (o.mUnique == id)
-                            {
-                                return o;
-                            }
+                            return abstObj;
                         }
                     }
                 }
+
             }
 
-            foreach (PathObj pobj in mPaths)
+            foreach (PathObj pathObj in mPaths)
             {
-                if (pobj.mUnique == id)
+                foreach (var pathPointObj in pathObj.mPathPointObjs)
                 {
-                    return pobj;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        if (pathPointObj.mPointIDs[i] == id)
+                        {
+                            return pathPointObj;
+                        }
+                    }
+                    /*if (pathPointObj.mUnique == id)
+                    {
+                        return pathPointObj;
+                    }*/
                 }
             }
 
@@ -655,26 +731,51 @@ namespace Takochu.smg
                 }
             }
 
-            foreach (PathObj pobj in mPaths)
-            {
-                if (pobj.mUnique == id)
-                {
-                    idx = mPaths.IndexOf(pobj);
-                }
-            }
 
-            if (idx != -1)
-            {
-                mPaths.RemoveAt(idx);
-            }
+            
+            //foreach (PathObj pathObj in mPaths)
+            //{
+            //    if (pathObj.mPathPointObjs.Count <= 1)
+            //    {
+            //        continue;
+            //    }
+            //    foreach (var pathPointObj in pathObj.mPathPointObjs)
+            //    {
+                    
+
+            //        if (pathPointObj.mParent.mUnique == id)
+            //        {
+            //            MessageBox.Show("Del PathPointObj");
+            //            idx = pathObj.mPathPointObjs.IndexOf(pathPointObj);
+            //            //pathObj.RemovePathPointAtIndex(idx);
+            //            pathObj.RemovePathPointAtIndex(idx);
+            //        }
+            //    }
+            //}
+
+            //if (idx != -1)
+            //{
+            //    mPaths.RemoveAt(idx);
+            //}
 
             UpdatePathIndicies();
         }
 
         public void DeletePathPointFromPath(int id, int idx)
         {
-            PathObj path = GetObjFromUniqueID(id) as PathObj;
-            path.RemovePathPointAtIndex(idx);
+            var obj = GetObjFromUniqueID(id);
+            if (obj is PathObj)
+            {
+                PathObj path = obj as PathObj;
+                path.RemovePathPointAtIndex(idx);
+            }
+            else if (obj is PathPointObj) 
+            {
+                PathPointObj path = obj as PathPointObj;
+                path.mParent.RemovePathPointAtIndex(idx);
+            }
+
+            
         }
 
         public void UpdatePathIndicies()
@@ -904,7 +1005,8 @@ namespace Takochu.smg
         public bool mIsMainGalaxy;
 
         public Dictionary<string, Dictionary<string, List<AbstractObj>>> mObjects;
-        public Dictionary<string, List<StageObj>> mZones;
+
+        public Dictionary<string, List<StageObj>> mHasStageObjList;
         public List<Camera> mCameras;
         public Dictionary<string, CANM> mIntroCameras;
         public Dictionary<string, GST> mGhostFiles;

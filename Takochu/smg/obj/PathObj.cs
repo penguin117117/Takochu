@@ -2,6 +2,7 @@
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using Takochu.fmt;
 using Takochu.io;
 using Takochu.rnd;
 using Takochu.util;
+using static Takochu.util.EditorUtil;
 
 namespace Takochu.smg.obj
 {
@@ -52,6 +54,7 @@ namespace Takochu.smg.obj
         public void RemovePathPointAtIndex(int idx)
         {
             mPathPointObjs.RemoveAt(idx);
+            
         }
 
         public override void Reload_mValues()
@@ -80,6 +83,9 @@ namespace Takochu.smg.obj
             mEntry.Set("usage", mUsage);
             mEntry.Set("Path_ID", mPathID);
 
+
+            //mFilesystem.DeleteFile($"/Stage/jmp/Path/CommonPathPointInfo.{mNo}");
+
             BCSV b = new BCSV(mFilesystem.OpenFile($"/Stage/jmp/Path/CommonPathPointInfo.{mNo}"));
             b.mEntries.Clear();
 
@@ -96,12 +102,15 @@ namespace Takochu.smg.obj
         {
             foreach (PathPointObj pp in mPathPointObjs)
             {
-                
                 pp.Render(1, mPathColor, mode);
                 pp.Render(2, mPathColor, mode);
                 pp.Render(0, mPathColor, mode);
 
-                GL.Color4(mPathColor);
+                if (mode != RenderMode.Picking)
+                {
+                    GL.Color4(mPathColor);
+                }
+
                 GL.LineWidth(1.0f);
                 GL.Begin(BeginMode.LineStrip);
 
@@ -111,7 +120,10 @@ namespace Takochu.smg.obj
                 GL.End();
             }
 
-            GL.Color4(mPathColor);
+            if (mode != RenderMode.Picking)
+            {
+                GL.Color4(mPathColor);
+            }
 
             if (mPathPointObjs.Count != 0)
             {

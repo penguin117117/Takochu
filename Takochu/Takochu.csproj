@@ -119,6 +119,9 @@
     <Compile Include="io\FilesystemBase.cs" />
     <Compile Include="io\RARCFile.cs" />
     <Compile Include="io\RARCFilesystem.cs" />
+    <Compile Include="io\SpecificNameARC\IARC_IO.cs" />
+    <Compile Include="io\SpecificNameARC\ScenarioArcFile.cs" />
+    <Compile Include="io\SpecificNameARC\SpecificArcBase.cs" />
     <Compile Include="io\Yaz0.cs" />
     <Compile Include="io\ExternalFilesystem.cs" />
     <Compile Include="io\FileBase.cs" />
@@ -171,7 +174,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="smg\BGMInfo.cs" />
+    <Compile Include="smg\StageBgmInfoArcFile.cs" />
     <Compile Include="smg\LightData.cs" />
     <Compile Include="smg\msg\FlowEmulator.cs" />
     <Compile Include="smg\msg\NameHolder.cs" />
@@ -183,7 +186,7 @@
     <Compile Include="smg\obj\PathObj.cs" />
     <Compile Include="smg\obj\PathPointObj.cs" />
     <Compile Include="smg\obj\PlanetObj.cs" />
-    <Compile Include="smg\Scenario.cs" />
+    <Compile Include="smg\ScenarioEntry.cs" />
     <Compile Include="ui\LightAttribEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -216,6 +219,18 @@
     </Compile>
     <Compile Include="ui\StageInfoEditorSys\ScenarioBGMInfo_DataGridView.cs" />
     <Compile Include="ui\StageInfoEditorSys\ScenarioInformation.cs" />
+    <Compile Include="ui\StageObjectAttrFinder.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ui\StageObjectAttrFinder.Designer.cs">
+      <DependentUpon>StageObjectAttrFinder.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ui\TextDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ui\TextDialog.Designer.cs">
+      <DependentUpon>TextDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="util\CameraUtil.cs" />
     <Compile Include="smg\Galaxy.cs" />
     <Compile Include="smg\Game.cs" />
@@ -309,6 +324,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ui\StageInfoEditor.resx">
       <DependentUpon>StageInfoEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ui\StageObjectAttrFinder.resx">
+      <DependentUpon>StageObjectAttrFinder.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ui\TextDialog.resx">
+      <DependentUpon>TextDialog.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="Build.cmd" />
     <None Include="OpenTK.dll.config" />

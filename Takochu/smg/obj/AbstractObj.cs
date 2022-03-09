@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using Takochu.fmt;
 using Takochu.rnd;
 using OpenTK.Graphics;
+using System.Drawing;
+using static Takochu.util.EditorUtil;
+using Takochu.util;
 
 namespace Takochu.smg.obj
 {
@@ -14,7 +17,9 @@ namespace Takochu.smg.obj
     {
         public readonly Dictionary<string, List<string>> cMultiRenderObjs = new Dictionary<string, List<string>>()
         {
-            { "RedBlueTurnBlock", new List<string>() { "RedBlueTurnBlock", "RedBlueTurnBlockBase" } }
+            { "RedBlueTurnBlock", new List<string>() { "RedBlueTurnBlock", "RedBlueTurnBlockBase" } },
+            //{ "PatakuriBig" , new List<string>(){"KuriboChief","PatakuriWingBig" } }
+            { "PatakuriBig" , new List<string>(){"PatakuriWingBig","KuriboChief" } }
         };
 
         public AbstractObj(BCSV.Entry entry)
@@ -22,7 +27,26 @@ namespace Takochu.smg.obj
             mEntry = entry;
             if (entry.ContainsKey("name"))
                 mName = Get<string>("name");
-            mUnique = Program.sUniqueID++;
+
+            if (this is PathPointObj)
+            {
+                PathPointObj path = this as PathPointObj;
+                path.mPointColors = new Color[3];
+                path.mPointIDs = new int[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    path.mPointIDs[i] = Program.sUniqueID++;
+                    Color c = Color.FromArgb(0xFF, GlobalRandom.GetNext(256), GlobalRandom.GetNext(256), GlobalRandom.GetNext(256));
+                    ColorHolder.Add(path.mPointIDs[i], c);
+                    path.mPointColors[i] = c;
+                }
+            }
+            else
+            {
+                mUnique = Program.sUniqueID++;
+                mPicking = Color.FromArgb(0xFF, GlobalRandom.GetNext(256), GlobalRandom.GetNext(256), GlobalRandom.GetNext(256));
+                ColorHolder.Add(mUnique, mPicking);
+            }
         }
 
         public bool CanUsePath()
@@ -109,6 +133,7 @@ namespace Takochu.smg.obj
         public string mType { get; protected set; }
 
         public int mUnique { get; protected set; }
+        public Color mPicking { get; protected set; }
         public RendererBase mRenderer { get; protected set; }
         public RendererBase mRenderer2 { get; protected set; }
 

@@ -18,16 +18,34 @@ using Takochu.smg.msg;
 using Takochu.rnd;
 using OpenTK.Graphics.OpenGL;
 using static Takochu.util.RenderUtil;
+using System.Runtime.InteropServices;
 
 namespace Takochu.ui
 {
     public partial class EditorWindow : Form
     {
+        private string mGalaxyName;
+        private int mCurrentScenario;
+        private Galaxy mGalaxy;
+        private List<AbstractObj> mObjects = new List<AbstractObj>();
+        private List<PathObj> mPaths = new List<PathObj>();
+
+        Dictionary<string, List<StageObj>> mStages = new Dictionary<string, List<StageObj>>();
+        List<string> mZonesUsed = new List<string>();
+
+        Dictionary<string, int> mZoneMasks = new Dictionary<string, int>();
+
+        Dictionary<int, Dictionary<int, int>> mDispLists = new Dictionary<int, Dictionary<int, int>>();
+
+        AbstractObj mSelectedObject;
+
         public EditorWindow(string galaxyName)
         {
             InitializeComponent();
             mGalaxyName = galaxyName;
 
+            //SMG1 data cannot be saved in the current version.
+            //現段階ではギャラクシー1のデータは保存できません。
             if (GameUtil.IsSMG1())
                 SaveToolStripMenuItem.Enabled = false;
         }
@@ -37,39 +55,30 @@ namespace Takochu.ui
             //base.OnLoad(e);
 
             mGalaxy = Program.sGame.OpenGalaxy(mGalaxyName);
-            galaxyNameTxtBox.Text = mGalaxy.mGalaxyName;
+            GalaxyNameTxtBox.Text = mGalaxy.mHolderName;
             AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
             pathsToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayPath;
+            m_PickingFrameBuffer = new uint[9];
+            mDispLists.Add(0, new Dictionary<int, int>());
+            mDispLists.Add(1, new Dictionary<int, int>());
+            mDispLists.Add(2, new Dictionary<int, int>());
 
-            foreach(KeyValuePair<int, Scenario> scenarios in mGalaxy.mScenarios)
+            foreach (KeyValuePair<int, ScenarioEntry> scenarioBCSV_Entry in mGalaxy.ScenarioARC.ScenarioDataBCSV)
             {
-                Scenario s = scenarios.Value;
-                TreeNode n = new TreeNode($"[{s.mScenarioNo}] {s.mScenarioName}")
+                ScenarioEntry senario = scenarioBCSV_Entry.Value;
+                TreeNode treeNode = new TreeNode($"[{senario.ScenarioNo}] {senario.ScenarioName}")
                 {
-                    Tag = s.mScenarioNo
+                    Tag = senario.ScenarioNo
                 };
 
-                scenarioTreeView.Nodes.Add(n);
+                scenarioTreeView.Nodes.Add(treeNode);
             }
 
             //if (!BGMInfo.HasBGMInfo(mGalaxy.mName))
             //    stageInformationBtn.Enabled = false;
         }
 
-        private string mGalaxyName;
-        public int mCurrentScenario;
-
-        private Galaxy mGalaxy;
-        private List<AbstractObj> mObjects = new List<AbstractObj>();
-        private List<PathObj> mPaths = new List<PathObj>();
-        Dictionary<string, List<StageObj>> mStages = new Dictionary<string, List<StageObj>>();
-        List<string> mZonesUsed = new List<string>();
-
-        Dictionary<string, int> mZoneMasks = new Dictionary<string, int>();
-
-        Dictionary<int, Dictionary<int, int>> mDispLists = new Dictionary<int, Dictionary<int, int>>();
-
-        AbstractObj mSelectedObject;
+        
         
         
         public void LoadScenario(int scenarioNo)
@@ -99,13 +108,6 @@ namespace Takochu.ui
             mDispLists.Add(1, new Dictionary<int, int>());
             mDispLists.Add(2, new Dictionary<int, int>());
 
-            //for (int i = 0; i < 3; i++)
-            //    GL.DeleteLists(mDisplayLists[i], 1);
-
-            // we want to clear out the children of the 5 camera type root nodes
-            //for (int i = 0; i < 5; i++)
-            //    camerasTree.Nodes[i].Nodes.Clear();
-
             mGalaxy.SetScenario(scenarioNo);
             scenarioNameTxtBox.Text = mGalaxy.mCurScenarioName;
 
@@ -128,7 +130,7 @@ namespace Takochu.ui
 
             List<string> currentLayers = new List<string>();
 
-            Zone galaxyZone = mGalaxy.GetGalaxyZone();
+            Zone galaxyZone = mGalaxy.GetMainGalaxyZone();
             mObjects.AddRange(galaxyZone.GetAllObjectsFromLayers(layers));
             //Console.WriteLine(mZonesUsed.Count);
             //Console.WriteLine("\n\r\n\r");
@@ -239,13 +241,13 @@ namespace Takochu.ui
                     {
                         List<StageObj> stgs;
 
-                        if (galaxyZone.mZones.ContainsKey(layer))
+                        if (galaxyZone.mHasStageObjList.ContainsKey(layer))
                         {
-                            stgs = galaxyZone.mZones[layer];
+                            stgs = galaxyZone.mHasStageObjList[layer];
                         }
-                        else if (galaxyZone.mZones.ContainsKey(layer.ToLower()))
+                        else if (galaxyZone.mHasStageObjList.ContainsKey(layer.ToLower()))
                         {
-                            stgs = galaxyZone.mZones[layer.ToLower()];
+                            stgs = galaxyZone.mHasStageObjList[layer.ToLower()];
                         }
                         else
                         {
@@ -332,9 +334,10 @@ namespace Takochu.ui
 
             PopulateTreeView();
 
-            //RenderObjectLists(RenderMode.Picking);
+            RenderObjectLists(RenderMode.Picking);
             RenderObjectLists(RenderMode.Opaque);
-            //RenderObjectLists(RenderMode.Translucent);
+
+            attrFinderToolStripMenuItem.Enabled = true;
         }
 
         private void PopulateCameraTreeNode(ref TreeNode node)
@@ -344,18 +347,6 @@ namespace Takochu.ui
             node.Nodes.Add("Event Cameras");
             node.Nodes.Add("Start Cameras");
             node.Nodes.Add("Other Cameras");
-        }
-
-        private void RenderZone(List<AbstractObj> objs)
-        {
-            foreach(AbstractObj obj in objs)
-                obj.Render(RenderMode.Opaque);
-        }
-
-        private void RenderZone2(AbstractObj objs)
-        {
-            
-                objs.Render(RenderMode.Opaque);
         }
 
         private void scenarioTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -379,7 +370,7 @@ namespace Takochu.ui
                 sw.Reset();
                 sw.Start();
 
-                if (mGalaxy.GetGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
+                if (mGalaxy.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
                     introCameraEditorBtn.Enabled = true;
                 else
                     introCameraEditorBtn.Enabled = false;
@@ -390,7 +381,7 @@ namespace Takochu.ui
                 sw.Start();
             }
             sw.Stop();
-            mGalaxy.GetGalaxyZone().LoadCameras();
+            mGalaxy.GetMainGalaxyZone().LoadCameras();
             Console.WriteLine($"LoadCameras: {sw.Elapsed}");
             sw.Reset();
             sw.Start();
@@ -446,7 +437,7 @@ namespace Takochu.ui
         private void stageInformationBtn_Click(object sender, EventArgs e)
         {
             StageInfoEditor stageInfo = new StageInfoEditor(ref mGalaxy, mCurrentScenario);
-            stageInfo.Show();
+            stageInfo.ShowDialog();
         }
 
         private void applyGalaxyNameBtn_Click(object sender, EventArgs e)
@@ -454,7 +445,7 @@ namespace Takochu.ui
             string galaxy_lbl = $"GalaxyName_{mGalaxyName}";
             string scenario_lbl = $"ScenarioName_{mGalaxyName}{mCurrentScenario}";
 
-            NameHolder.AssignToGalaxy(galaxy_lbl, galaxyNameTxtBox.Text);
+            NameHolder.AssignToGalaxy(galaxy_lbl, GalaxyNameTxtBox.Text);
             NameHolder.AssignToScenario(scenario_lbl, scenarioNameTxtBox.Text);
         }
 
@@ -474,12 +465,12 @@ namespace Takochu.ui
                 applyGalaxyNameBtn.Enabled = true;
                 LoadScenario(mCurrentScenario);
 
-                if (mGalaxy.GetGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
+                if (mGalaxy.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
                     introCameraEditorBtn.Enabled = true;
                 else
                     introCameraEditorBtn.Enabled = false;
             }
-            mGalaxy.GetGalaxyZone().LoadCameras();
+            mGalaxy.GetMainGalaxyZone().LoadCameras();
             UpdateCamera();
             glLevelView.Refresh();
             sw.Stop();
@@ -542,7 +533,7 @@ namespace Takochu.ui
 
                 if (!o.mParentZone.mZoneName.EndsWith("Galaxy") && zoneNode.Tag == null)
                 {
-                    var layers = mGalaxy.GetGalaxyZone().GetAllStageDataFromLayers(mGalaxy.GetGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
+                    var layers = mGalaxy.GetMainGalaxyZone().GetAllStageDataFromLayers(mGalaxy.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
                     zoneNode.Tag = layers.Find(stage => stage.mName == zoneNode.Text) as StageObj;
                 }
                 
@@ -626,7 +617,6 @@ namespace Takochu.ui
 
         private uint[] m_PickingFrameBuffer;
         private float m_PickingDepth;
-        private float m_PickingModelDepth;
 
         private bool m_OrthView = false;
         private float m_OrthZoom = 20f;
@@ -637,15 +627,6 @@ namespace Takochu.ui
         private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Lights;
 
         private bool m_AreChanges;
-        /*
-         * 0 = Opaque
-         * 1 = Translucent
-         * 2 = Picking
-         */
-        private int[] mDisplayLists = new int[3];
-
-        private int[] mObjectDisplayLists;
-
         private void RenderObjectLists(RenderMode mode)
         {
             int t = 0;
@@ -663,103 +644,73 @@ namespace Takochu.ui
                     break;
             }
 
-            /*if (mDisplayLists[t] == 0)
-                mDisplayLists[t] = GL.GenLists(1);
-
-            GL.NewList(mDisplayLists[t], ListMode.Compile);*/
-
-            if (mode == RenderMode.Picking)
+            List<StageObj> stage_layers = mGalaxy.GetMainGalaxyZone().GetAllStageDataFromLayers(mGalaxy.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
+                
+            foreach(StageObj stage in stage_layers)
             {
-                foreach(AbstractObj o in mObjects)
+                List<AbstractObj> objsInStage = mObjects.FindAll(o => o.mParentZone.mZoneName == stage.mName);
+                List<PathObj> pathsInStage = mPaths.FindAll(p => p.mParentZone.mZoneName == stage.mName);
+
+                foreach (AbstractObj o in objsInStage)
                 {
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    keyValuePairs.Add(o.mUnique, GL.GenLists(1));
-                    mDispLists.Add(t, keyValuePairs);
-
-                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false)
+                    if (mDispLists[t].ContainsKey(o.mUnique))
                         continue;
 
-                    if (o.mType == "PathObj" && pathsToolStripMenuItem.Checked == false)
+                    keyValuePairs.Add(o.mUnique, GL.GenLists(1));
+                    mDispLists[t].Add(o.mUnique, GL.GenLists(1));
+
+                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                         continue;
 
                     GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
 
-                    GL.Color4(Color.FromArgb(o.mUnique));
-                    o.Render(mode);
-                    GL.EndList();
-                    
-                }
-            }
-            else
-            {
-                List<StageObj> stage_layers = mGalaxy.GetGalaxyZone().GetAllStageDataFromLayers(mGalaxy.GetGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
-                
-                foreach(StageObj stage in stage_layers)
-                {
-                    List<AbstractObj> objsInStage = mObjects.FindAll(o => o.mParentZone.mZoneName == stage.mName);
-                    List<PathObj> pathsInStage = mPaths.FindAll(p => p.mParentZone.mZoneName == stage.mName);
-
-                    foreach (AbstractObj o in objsInStage)
+                    GL.PushMatrix();
                     {
-                        Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
-
-                        if (mDispLists[t].ContainsKey(o.mUnique))
-                            continue;
-
-                        keyValuePairs.Add(o.mUnique, GL.GenLists(1));
-                        mDispLists[t].Add(o.mUnique, GL.GenLists(1));
-
-                        if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false)
-                            continue;
-
-                        GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
-
-                        GL.PushMatrix();
-                        {
-                            GL.Translate(stage.mPosition);
-                            GL.Rotate(stage.mRotation.Z, 0f, 0f, 1f);
-                            GL.Rotate(stage.mRotation.Y, 0f, 1f, 0f);
-                            GL.Rotate(stage.mRotation.X, 1f, 0f, 0f);
-                        }
-                        o.Render(mode);
-                        GL.PopMatrix();
-
-                        GL.EndList();
-                        //mGalaxy.Get_Pos_GlobalOffset(stage.mName)
-                        //Console.WriteLine("                     "+stage.mName);
-                    }
-
-                    foreach (PathObj p in pathsInStage)
-                    {
-                        Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
-
-                        if (mDispLists[t].ContainsKey(p.mUnique))
-                            continue;
-
-                        keyValuePairs.Add(p.mUnique, GL.GenLists(1));
-                        mDispLists[t].Add(p.mUnique, GL.GenLists(1));
-
-                        if (pathsToolStripMenuItem.Checked == false)
-                            continue;
-
-                        GL.NewList(mDispLists[t][p.mUnique], ListMode.Compile);
-
-                        GL.PushMatrix();
-
                         GL.Translate(stage.mPosition);
                         GL.Rotate(stage.mRotation.Z, 0f, 0f, 1f);
                         GL.Rotate(stage.mRotation.Y, 0f, 1f, 0f);
                         GL.Rotate(stage.mRotation.X, 1f, 0f, 0f);
-                        p.Render(mode);
-                        //Console.WriteLine(p);
-                        GL.PopMatrix();
+                    }
 
-                        GL.EndList();
-                        //Console.WriteLine(stage.mName);
-                    }                    
+                    if (mode == RenderMode.Picking)
+                    {
+                        GL.Color4((byte)o.mPicking.R, (byte)o.mPicking.G, (byte)o.mPicking.B, (byte)0xFF);
+                    }
+
+                    o.Render(mode);
+                    GL.PopMatrix();
+
+                    GL.EndList();
                 }
-                //return;
+
+                foreach (PathObj p in pathsInStage)
+                {
+                    Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
+
+                    if (mDispLists[t].ContainsKey(p.mUnique))
+                        continue;
+
+                    keyValuePairs.Add(p.mUnique, GL.GenLists(1));
+                    mDispLists[t].Add(p.mUnique, GL.GenLists(1));
+
+                    if (pathsToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
+                        continue;
+
+                    GL.NewList(mDispLists[t][p.mUnique], ListMode.Compile);
+
+                    GL.PushMatrix();
+
+                    GL.Translate(stage.mPosition);
+                    GL.Rotate(stage.mRotation.Z, 0f, 0f, 1f);
+                    GL.Rotate(stage.mRotation.Y, 0f, 1f, 0f);
+                    GL.Rotate(stage.mRotation.X, 1f, 0f, 0f);
+                    p.Render(mode);
+                    GL.PopMatrix();
+
+                    GL.EndList();
+                }                    
                 // and now we just do the regular stage
                 List<AbstractObj> regularObjs = mObjects.FindAll(o => o.mParentZone.mZoneName == mGalaxyName);
                 List<PathObj> regularPaths = mPaths.FindAll(p => p.mParentZone.mZoneName == mGalaxyName);
@@ -776,16 +727,18 @@ namespace Takochu.ui
                     keyValuePairs.Add(o.mUnique, GL.GenLists(1));
                     mDispLists[t].Add(o.mUnique, GL.GenLists(1));
 
-                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false)
+                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                             continue;
 
                     GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
-                    //GL.Translate(o.mTruePosition);
-                    //GL.Rotate(o.mRotation.Z, 0f, 0f, 1f);
-                    //GL.Rotate(o.mRotation.Y, 0f, 1f, 0f);
-                    //GL.Rotate(o.mRotation.X, 1f, 0f, 0f);
+
+                    if (mode == RenderMode.Picking)
+                    {
+                        GL.Color4((byte)o.mPicking.R, (byte)o.mPicking.G, (byte)o.mPicking.B, (byte)0xFF);
+                    }
+
                     o.Render(mode);
                     GL.PopMatrix();
 
@@ -802,13 +755,13 @@ namespace Takochu.ui
                     keyValuePairs.Add(path.mUnique, GL.GenLists(1));
                     mDispLists[t].Add(path.mUnique, GL.GenLists(1));
 
-                    if (pathsToolStripMenuItem.Checked == false)
+                    if (pathsToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                         continue;
 
                     GL.NewList(mDispLists[t][path.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
-                    
+
                     path.Render(mode);
 
                     GL.PopMatrix();
@@ -897,13 +850,11 @@ namespace Takochu.ui
         {
             if (!m_GLLoaded) return;
             glLevelView.MakeCurrent();
-            //GL.MatrixMode(MatrixMode.Projection);
-            //Matrix4 projmtx = (!m_OrthView) ? Matrix4.CreatePerspectiveFieldOfView(m_FOV, m_AspectRatio, k_zNear, m_zFar) :
-            //    Matrix4.CreateOrthographic(m_OrthZoom, m_OrthZoom / m_AspectRatio, k_zNear, m_zFar);
-            //GL.LoadMatrix(ref projmtx);
 
             /* step one -- fakecolor rendering */
             GL.ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            GL.ClearDepth(1f);
+            GL.ClearStencil(0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
             GL.MatrixMode(MatrixMode.Modelview);
@@ -911,6 +862,7 @@ namespace Takochu.ui
 
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.ColorLogicOp);
             GL.Disable(EnableCap.Dither);
             GL.Disable(EnableCap.LineSmooth);
             GL.Disable(EnableCap.PolygonSmooth);
@@ -919,28 +871,21 @@ namespace Takochu.ui
 
             foreach (KeyValuePair<int, Dictionary<int, int>> disp in mDispLists)
             {
+                if (disp.Key != 2)
+                    continue;
+
                 foreach (KeyValuePair<int, int> actualList in disp.Value)
                     GL.CallList(actualList.Value);
             }
 
-            for (int a = 0; a < 3; a++)
-            {
-                GL.Color4(Color.FromArgb(a));
-                GL.CallList(mDisplayLists[a]);
-            }
-
+            GL.DepthMask(true);
             GL.Flush();
-            GL.ReadPixels(m_MouseCoords.X, glLevelView.Height - m_MouseCoords.Y, 1, 1, PixelFormat.DepthComponent, PixelType.Float, ref m_PickingModelDepth);
-            m_PickingModelDepth = -(m_zFar * k_zNear / (m_PickingModelDepth * (m_zFar - k_zNear) - m_zFar));
 
-            GL.Flush();
-            GL.ReadPixels(m_MouseCoords.X - 1, glLevelView.Height - m_MouseCoords.Y + 1, 3, 3, PixelFormat.Bgra, PixelType.UnsignedByte, m_PickingFrameBuffer);
-
+            GL.ReadPixels(m_MouseCoords.X - 1, glLevelView.Height - m_MouseCoords.Y + 1, 3, 3, PixelFormat.Bgra, PixelType.UnsignedInt8888Reversed, m_PickingFrameBuffer);
             GL.ReadPixels(m_MouseCoords.X, glLevelView.Height - m_MouseCoords.Y, 1, 1, PixelFormat.DepthComponent, PixelType.Float, ref m_PickingDepth);
             m_PickingDepth = -(m_zFar * k_zNear / (m_PickingDepth * (m_zFar - k_zNear) - m_zFar));
 
             /* actual rendering */
-
             GL.DepthMask(true);
             GL.ClearColor(0.0f, 0.0f, 0.125f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
@@ -967,11 +912,8 @@ namespace Takochu.ui
 
             GL.Color4(1f, 1f, 1f, 1f);
 
-            foreach (KeyValuePair<int, Dictionary<int, int>> disp in mDispLists)
-            {
-                foreach (KeyValuePair<int, int> actualList in disp.Value)
-                    GL.CallList(actualList.Value);
-            }
+            mDispLists[0].Values.ToList().ForEach(l => GL.CallList(l));
+            mDispLists[1].Values.ToList().ForEach(l => GL.CallList(l));
 
             glLevelView.SwapBuffers();
         }
@@ -981,7 +923,9 @@ namespace Takochu.ui
             float xdelta = (float)(e.X - m_LastMouseMove.X);
             float ydelta = (float)(e.Y - m_LastMouseMove.Y);
 
+            //Console.WriteLine($"{m_PickingFrameBuffer[0]}");
 
+            m_MouseCoords = e.Location;
             m_LastMouseMove = e.Location;
 
             if (m_MouseDown != MouseButtons.None)
@@ -1016,6 +960,52 @@ namespace Takochu.ui
         {
             if (e.Button != m_MouseDown) return;
 
+            // this checks to make sure that we are just clicking, and not coming off of a drag while left clicking
+            if ((Math.Abs(e.X - m_LastMouseClick.X) < 3) && (Math.Abs(e.Y - m_LastMouseClick.Y) < 3) &&
+                (m_PickingFrameBuffer[4] == m_PickingFrameBuffer[1]) &&
+                (m_PickingFrameBuffer[4] == m_PickingFrameBuffer[3]) &&
+                (m_PickingFrameBuffer[4] == m_PickingFrameBuffer[5]) &&
+                (m_PickingFrameBuffer[4] == m_PickingFrameBuffer[7]))
+            {
+                uint color = m_PickingFrameBuffer[4];
+                Color clr = EditorUtil.UIntToColor(color);
+
+                int id = EditorUtil.ColorHolder.IDFromColor(clr);
+
+                foreach (string z in mZonesUsed)
+                {
+                    Zone zone = mGalaxy.GetZone(z);
+                    AbstractObj obj = zone.GetObjFromUniqueID(id);
+
+                    if (obj == null)
+                    {
+                        continue;
+                    }
+
+                    // if the current seleted object is the same, we deselect
+                    if (obj == mSelectedObject)
+                    {
+                        mSelectedObject = null;
+                        return;
+                    }
+
+                    mSelectedObject = obj;
+
+                    if (obj is PathPointObj)
+                    {
+                        SelectTreeNodeWithUnique(id);
+                        break;
+                    }
+                    else
+                    {
+                        SelectTreeNodeWithUnique(obj.mUnique);
+                        break;
+                    }
+
+                    
+                }
+            }
+
             m_MouseDown = MouseButtons.None;
             m_LastMouseMove = e.Location;
         }
@@ -1033,6 +1023,10 @@ namespace Takochu.ui
             AbstractObj abstractObj = node.Tag as AbstractObj;
 
             if (abstractObj == null) return;
+
+            node.EnsureVisible();
+            objectsListTreeView.Select();
+            objectsListTreeView.SelectedNode = node;
 
             if (node.Parent == null && node.Text.EndsWith("Zone"))
             {
@@ -1052,6 +1046,24 @@ namespace Takochu.ui
                     var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(ZoneName);
 
                     var PosObj = abstractObj.mTruePosition;
+
+                    //Move the camera to the position of Point0, index number 0 in the PathPoint list.
+                    if (abstractObj is PathObj) 
+                    {
+                        if (abstractObj == null) return;
+                        var pathObj = abstractObj as PathObj;
+                        PosObj = pathObj.mPathPointObjs[0].mPoint0;
+                    }
+
+                    //The camera when PathPointObj is selected.
+                    //The selection of point 1 and point 2 of PathPointObj is not supported.
+                    if (abstractObj is PathPointObj) 
+                    {
+                        if (abstractObj == null) return;
+                        var pathPointObj = abstractObj as PathPointObj;
+                        PosObj = pathPointObj.mPoint0;
+                    }
+
                     var CorrectPos_Object = calc.RotAfin.GetPositionAfterRotation(PosObj, Rot_ZoneOffset, calc.RotAfin.TargetVector.All);
 
                     m_CamDistance = 0.200f;
@@ -1197,18 +1209,71 @@ namespace Takochu.ui
             
         }
 
+        IEnumerable<TreeNode> Collect(TreeNodeCollection nodes)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                yield return node;
+
+                foreach (var child in Collect(node.Nodes))
+                    yield return child;
+            }
+        }
+
+        private void SelectTreeNodeWithUnique(int id)
+        {
+            foreach(var node in Collect(objectsListTreeView.Nodes))
+            {
+                AbstractObj obj = node.Tag as AbstractObj;
+
+                if (obj == null)
+                    continue;
+
+                if (obj.mUnique == id)
+                {
+                    tabControl1.SelectedIndex = 2;
+                    ExpandAllParents(node);
+                    ChangeToNode(node, (Control.ModifierKeys == Keys.Shift));
+                    return;
+                }
+                else if (obj is PathPointObj)
+                {
+                    var ppObj = obj as PathPointObj;
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        if (ppObj.mPointIDs[i] == id)
+                        {
+                            tabControl1.SelectedIndex = 2;
+                            ExpandAllParents(node);
+                            ChangeToNode(node, (Control.ModifierKeys == Keys.Shift));
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ExpandAllParents(TreeNode node)
+        {
+            node.Expand();
+
+            if (node.Parent != null)
+            {
+                ExpandAllParents(node.Parent);
+            }
+        }
+
         private void dataGridView1_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             var dgv = (DataGridView)sender;
             var cell_value = dgv[e.ColumnIndex, e.RowIndex].Value;
 
             //dgv[e.ColumnIndex, e.RowIndex].AccessibilityObject.
-            Console.WriteLine(dgv[e.ColumnIndex, e.RowIndex].FormattedValueType);
             if (dgv[e.ColumnIndex, e.RowIndex] is DataGridViewComboBoxCell) 
             {
                 var tes = dgv[e.ColumnIndex, e.RowIndex] as DataGridViewComboBoxCell;
                 cell_value = tes.Items.IndexOf(cell_value)-1;
-                Console.WriteLine("DataGridViewComboBoxCellです");
             }
             
             dataGridViewEdit.ChangeValue(e.RowIndex,cell_value);
@@ -1299,7 +1364,7 @@ namespace Takochu.ui
             List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
             Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
 
-            ids.Add(mGalaxy.mName, mGalaxy.GetGalaxyZone().GetAllUniqueIDsFromObjectsOfType("AreaObj"));
+            ids.Add(mGalaxy.mName, mGalaxy.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("AreaObj"));
 
             foreach (string z in zones)
             {
@@ -1453,7 +1518,6 @@ namespace Takochu.ui
         {
             if (e.Button == MouseButtons.Right) return;
             var ray = ScreenToRay(e.Location);
-            Console.WriteLine($"dir: {ray.Direction.Y.ToString("F")}\norigin: {ray.Origin}");
         }
 
         private Ray ScreenToRay(Point mousePos)
@@ -1602,7 +1666,7 @@ namespace Takochu.ui
             List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
             Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
 
-            ids.Add(mGalaxy.mName, mGalaxy.GetGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
+            ids.Add(mGalaxy.mName, mGalaxy.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
 
             foreach (string z in zones)
             {
@@ -1897,6 +1961,50 @@ namespace Takochu.ui
 
             redoToolStripMenuItem.Enabled = EditorUtil.EditorActionHolder.CanRedo();
             undoToolStripMenuItem.Enabled = EditorUtil.EditorActionHolder.CanUndo();
+        }
+
+        private void attrFinderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
+            zones.Add(mGalaxyName);
+            List<AbstractObj> resObjs = new List<AbstractObj>();
+
+            TextDialog dlg = new TextDialog();
+            dlg.ShowDialog();
+            string field = dlg.GetField();
+
+            if (dlg.IsCanceled())
+            {
+                return;
+            }
+
+            StageObjectAttrFinder finder = new StageObjectAttrFinder(field);
+
+            foreach (string zone in zones)
+            {
+                Zone z = mGalaxy.GetZone(zone);
+                resObjs.AddRange(z.GetAllObjectsWithAttributeNonZero(field));
+            }
+
+            if (resObjs.Count == 0)
+            {
+                MessageBox.Show($"No objects were found that contain the field {field}.");
+                return;
+            }
+
+            foreach (AbstractObj obj in resObjs)
+            {
+                if (obj.mEntry.ContainsKey("l_id"))
+                {
+                    finder.AddRow(obj.Get<int>("l_id"), obj.mName, obj.mParentZone.mZoneName, obj.mEntry.Get(field));
+                }
+                else
+                {
+                    finder.AddRow(-1, obj.mName, obj.mParentZone.mZoneName, obj.mEntry.Get(field));
+                }
+            }
+
+            finder.Show();
         }
 
         private void cameraListTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
