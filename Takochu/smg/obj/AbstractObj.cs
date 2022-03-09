@@ -24,6 +24,20 @@ namespace Takochu.smg.obj
                 mName = Get<string>("name");
             mUnique = Program.sUniqueID++;
         }
+
+        public bool CanUsePath()
+        {
+            switch(mType)
+            {
+                case "Obj":
+                case "AreaObj":
+                case "MapPartsObj":
+                case "PlanetObj":
+                    return true;
+            }
+
+            return false;
+        }
         
         public virtual void Save() { }
 
@@ -67,6 +81,12 @@ namespace Takochu.smg.obj
         public T Get<T>(string key)
         {
             return mEntry.Get<T>(key);
+        }
+
+        public void SetPosition(Vector3 pos)
+        {
+            mTruePosition = pos;
+            mPosition = new Vector3(pos.X / 100, pos.Y / 100, pos.Z / 100);
         }
 
         
