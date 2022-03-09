@@ -19,7 +19,7 @@ namespace Takochu.util
         {
             Matrix4 ret = Matrix4.Identity;
 
-            Matrix4 mscale = Matrix4.Scale(scale);
+            Matrix4 mscale = Matrix4.CreateScale(scale);
             Matrix4 mxrot = Matrix4.CreateRotationX(rot.X);
             Matrix4 myrot = Matrix4.CreateRotationY(rot.Y);
             Matrix4 mzrot = Matrix4.CreateRotationZ(rot.Z);
