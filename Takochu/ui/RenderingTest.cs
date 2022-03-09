@@ -65,7 +65,7 @@ namespace Takochu.ui
             m_SkyboxMatrix = Matrix4.LookAt(Vector3.Zero, skybox_target, up);
 
             //m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
-            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
+            m_CamMatrix = Matrix4.Mult(Matrix4.CreateScale(0.0001f), m_CamMatrix);
 
             //GL.NewList(m_RenderInfo.BillboardDL, ListMode.Compile);
             //GL.Rotate(m_CamRotation.Y, 0f, 1f, 0f);

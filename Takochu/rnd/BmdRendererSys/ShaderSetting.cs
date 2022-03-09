@@ -15,7 +15,7 @@ namespace Takochu.rnd.BmdRendererSys
         /// 頂点シェーダからフラグメントシェーダに送る情報(頂点位置やUV座標など)
         /// </summary>
         private static readonly string[] GenSrc = {
-            "normalize(gl_Vertex)",
+            "vec4(skyuv1, 0.0, 1.0)",
             "vec4(gl_Normal,1.0)",
             "argh",
             "argh",
@@ -326,11 +326,24 @@ namespace Takochu.rnd.BmdRendererSys
         {
             _vertex.AppendLine("#version 120");
             _vertex.AppendLine("varying vec3 pos;");
+
+
+            _vertex.AppendLine("vec2 uv_Sky(vec3 Position)");
+            _vertex.AppendLine("{");
+            _vertex.AppendLine("vec3 yworldPos = normalize(vec3(Position.x, Position.y * 15.0, Position.z));");
+            _vertex.AppendLine("float r = 3.14 / 4.0 * 3.0;");
+            _vertex.AppendLine("float h = cos(r);");
+            _vertex.AppendLine("float v = sin(r);");
+            _vertex.AppendLine("mat2 Rot = mat2(h, v, -v, h);");
+            _vertex.AppendLine("return vec2(pow(yworldPos.x, 5.0)*2.0, pow(yworldPos.z, 5.0)*2.0);");
+            _vertex.AppendLine("}");
+
             _vertex.AppendLine("");
             _vertex.AppendLine("void main()");
             _vertex.AppendLine("{");
             _vertex.AppendLine("    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;");
             _vertex.AppendLine("    pos = normalize(gl_Vertex.xyz);");
+            _vertex.AppendLine("    vec2 skyuv1 = uv_Sky(gl_Vertex.xyz);");
 
             _vertex.AppendLine("    gl_FrontColor = gl_Color;");
             _vertex.AppendLine("    gl_FrontSecondaryColor = gl_SecondaryColor;");
@@ -390,6 +403,7 @@ namespace Takochu.rnd.BmdRendererSys
             _fragment.AppendLine("    return vec3(truncc1(c.r), truncc1(c.g), truncc1(c.b));");
             _fragment.AppendLine("}");
 
+
             _fragment.AppendLine("");
             _fragment.AppendLine("void main()");
             _fragment.AppendLine("{");
@@ -408,7 +422,7 @@ namespace Takochu.rnd.BmdRendererSys
                     (float)_material.ColorS10[_i].B / 255f, (float)_material.ColorS10[_i].A / 255f);
             }
 
-
+            
             //コンスタントカラー初期化
             for (int i = 0; i < 4; i++)
             {
