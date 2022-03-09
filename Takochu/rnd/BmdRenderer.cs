@@ -244,9 +244,17 @@ namespace Takochu.rnd
                             else
                                 GL.Disable(EnableCap.Texture2D);
 
-                            GL.BlendFunc((BlendingFactor)blendsrc[mat.BlendMode.SrcFactor], (BlendingFactor)blenddst[mat.BlendMode.DstFactor]);
-                            break;
-
+                            // alpha test -- only one comparison can be done
+                            if (mat.AlphaComp.MergeFunc == 1 && (mat.AlphaComp.Func0 == 7 || mat.AlphaComp.Func1 == 7))
+                                GL.Disable(EnableCap.AlphaTest);
+                            else if (mat.AlphaComp.MergeFunc == 0 && (mat.AlphaComp.Func0 == 0 || mat.AlphaComp.Func1 == 0))
+                            {
+                                GL.Enable(EnableCap.AlphaTest);
+                                GL.AlphaFunc(AlphaFunction.Never, 0f);
+                            }
+                            else
+                            {
+                                GL.Enable(EnableCap.AlphaTest);
 
                                 if ((mat.AlphaComp.MergeFunc == 1 && mat.AlphaComp.Func0 == 0) || (mat.AlphaComp.MergeFunc == 0 && mat.AlphaComp.Func0 == 7))
                                     GL.AlphaFunc(alphafunc[mat.AlphaComp.Func1], (float)mat.AlphaComp.Ref1 / 255f);
@@ -448,13 +456,8 @@ namespace Takochu.rnd
                                 else
                                     Vector3.Transform(ref pos, ref mtxtable[0], out pos);
 
-                            //頂点インデックスにあった頂点番号の頂点を順番にセット
-                            Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[i]], 1.0f);
-                            //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
-                            if ((prim.ArrayMask & (1 << 0)) != 0) Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[i]], out pos);
-                            else Vector4.Transform(ref pos, ref mtxtable[0], out pos);
-                            GL.Vertex3(pos.X, pos.Y, pos.Z);
-
+                                GL.Vertex3(pos.X, pos.Y, pos.Z);
+                            }
                         }
 
 

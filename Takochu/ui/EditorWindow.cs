@@ -812,7 +812,7 @@ namespace Takochu.ui
 
             m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
             m_SkyboxMatrix = Matrix4.LookAt(Vector3.Zero, skybox_target, up);
-            m_CamMatrix = Matrix4.Mult(Matrix4.CreateScale(0.0001f), m_CamMatrix);
+            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
         }
 
         private void UpdateCamera(Vector3 v3)
@@ -843,7 +843,7 @@ namespace Takochu.ui
             
             m_CamMatrix = Matrix4.LookAt(m_CamPosition, m_CamTarget, up);
             m_SkyboxMatrix = Matrix4.LookAt(Vector3.One, skybox_target, up);
-            m_CamMatrix = Matrix4.Mult(Matrix4.CreateScale(0.0001f), m_CamMatrix);
+            m_CamMatrix = Matrix4.Mult(Matrix4.Scale(0.0001f), m_CamMatrix);
         }
 
         private void glLevelView_Paint(object sender, PaintEventArgs e)
@@ -1526,25 +1526,23 @@ namespace Takochu.ui
             float[] mousePosrayrad_xy = new float[2];
             float k_FOV_H = k_FOV / 2;
             //y rad
-            mousePosrayrad_xy[1] = k_FOV_H * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
+            mousePosrayrad_xy[1] = (k_FOV - k_FOV_H) * (mousePos.Y - (glLevelView.Height * 0.5f)) / (glLevelView.Height * -0.5f);
             //x rad
-            mousePosrayrad_xy[0] = (k_FOV_H * m_AspectRatio) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
+            mousePosrayrad_xy[0] = ((k_FOV * m_AspectRatio) - (k_FOV_H * m_AspectRatio)) * (mousePos.X - (glLevelView.Width * 0.5f) / (glLevelView.Width * -0.5f));
 
             //vector_x,y,z,speed. camera bese.
-            Vector3 ray = new Vector3((float)System.Math.Tan(mousePosrayrad_xy[0]),
-                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f);
+            Vector4 ray = new Vector4((float)System.Math.Tan(mousePosrayrad_xy[0]),
+                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f, 1f);
 
             //rotate
-            Vector3 CamRotationCos = new Vector3((float)System.Math.Cos(m_CamRotation.X),//m_CamTarget オブジェクトを中心とした回転軸
-                                                 (float)System.Math.Cos(m_CamRotation.Y),
-                                                 0//(float)System.Math.Cos(m_CamRotation.Z)
+            Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamTarget.X),
+                                                 (float)System.Math.Cos(m_CamTarget.Y),
+                                                 (float)System.Math.Cos(m_CamTarget.Z)
                                                  );
 
-            ray.X *= CamRotationCos.Y * CamRotationCos.Z;
-            ray.Y *= CamRotationCos.X * CamRotationCos.Z;
-            ray.Z *= CamRotationCos.X * CamRotationCos.Y;
-
-            return new Ray(m_CamPosition, ray);
+            ray.X *= CamPositionRad.Y * CamPositionRad.Z;
+            ray.Y *= CamPositionRad.X * CamPositionRad.Z;
+            ray.Z *= CamPositionRad.X * CamPositionRad.Y;
 
 
             //Eigen code end.
