@@ -26,6 +26,10 @@ namespace Takochu
             RenderUtil.AssignColors();
             EditorActionHolder.Initialize();
 
+#if DEBUG
+            Properties.Settings.Default.EditorWindowDisplayPath = true;
+            Properties.Settings.Default.Save();
+#endif
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainWindow());

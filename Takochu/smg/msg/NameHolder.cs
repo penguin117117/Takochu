@@ -19,9 +19,9 @@ namespace Takochu.smg.msg
             {
                 foreach (string lang in sPossibleLangs)
                 {
-                    if (Program.sGame.mFilesystem.DoesDirectoryExist($"/{lang}"))
+                    if (Program.sGame.Filesystem.DoesDirectoryExist($"/{lang}"))
                     {
-                        var a = Program.sGame.mFilesystem.OpenFile($"/{lang}/MessageData/Message.arc");
+                        var a = Program.sGame.Filesystem.OpenFile($"/{lang}/MessageData/Message.arc");
                         mFilesystem = new RARCFilesystem(a);
                         //a.Close();
                         Program.sLanguage = lang;
@@ -45,9 +45,9 @@ namespace Takochu.smg.msg
             {
                 foreach (string lang in sPossibleLangs)
                 {
-                    if (Program.sGame.mFilesystem.DoesDirectoryExist($"/LocalizeData/{lang}"))
+                    if (Program.sGame.Filesystem.DoesDirectoryExist($"/LocalizeData/{lang}"))
                     {
-                        var a = Program.sGame.mFilesystem.OpenFile($"/LocalizeData/{lang}/MessageData/SystemMessage.arc");
+                        var a = Program.sGame.Filesystem.OpenFile($"/LocalizeData/{lang}/MessageData/SystemMessage.arc");
                         mFilesystem = new RARCFilesystem(a);
                         //a.Close();
                         Program.sLanguage = lang;

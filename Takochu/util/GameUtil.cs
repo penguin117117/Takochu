@@ -6,7 +6,9 @@ namespace Takochu.util
 {
     public static class GameUtil
     {
-        public static string[] GalaxyLayersCommon = new string[]
+        private static Game sGame;
+
+        public static readonly string[] GalaxyLayersCommon = new string[]
         {
             "Common",
             "LayerA",
@@ -27,7 +29,7 @@ namespace Takochu.util
             "LayerP"
         };
 
-        public static string[] GalaxyLayers = new string[]
+        public static readonly string[] GalaxyLayers = new string[]
         {
             "LayerA",
             "LayerB",
@@ -47,25 +49,25 @@ namespace Takochu.util
             "LayerP"
         };
 
-        public static string[] GalaxyLayers1 = new string[]
-        {
-            "layera",
-            "layerb",
-            "layerc",
-            "layerd",
-            "layere",
-            "layerf",
-            "layerg",
-            "layerh",
-            "layeri",
-            "layerj",
-            "layerk",
-            "layerl",
-            "layerm",
-            "layern",
-            "layero",
-            "layerp"
-        };
+        //public static string[] GalaxyLayers1 = new string[]
+        //{
+        //    "layera",
+        //    "layerb",
+        //    "layerc",
+        //    "layerd",
+        //    "layere",
+        //    "layerf",
+        //    "layerg",
+        //    "layerh",
+        //    "layeri",
+        //    "layerj",
+        //    "layerk",
+        //    "layerl",
+        //    "layerm",
+        //    "layern",
+        //    "layero",
+        //    "layerp"
+        //};
 
         public static List<string> GetGalaxyLayers(int mask)
         {
@@ -137,7 +139,5 @@ namespace Takochu.util
         {
             return sGame == Game.SMG2;
         }
-
-        private static Game sGame;
     }
 }

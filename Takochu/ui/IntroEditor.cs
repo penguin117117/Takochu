@@ -14,7 +14,7 @@ namespace Takochu.ui
 {
     public partial class IntroEditor : Form
     {
-        public IntroEditor(ref Galaxy galaxy)
+        public IntroEditor(ref GalaxyScenario galaxy)
         {
             InitializeComponent();
 

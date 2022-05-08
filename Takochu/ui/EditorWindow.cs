@@ -24,9 +24,8 @@ namespace Takochu.ui
 {
     public partial class EditorWindow : Form
     {
-        private string mGalaxyName;
         private int mCurrentScenario;
-        private Galaxy mGalaxy;
+        private GalaxyScenario _galaxyScenario;
         private List<AbstractObj> mObjects = new List<AbstractObj>();
         private List<PathObj> mPaths = new List<PathObj>();
 
@@ -42,7 +41,7 @@ namespace Takochu.ui
         public EditorWindow(string galaxyName)
         {
             InitializeComponent();
-            mGalaxyName = galaxyName;
+            _galaxyScenario = Program.sGame.OpenGalaxy(galaxyName);
 
             //SMG1 data cannot be saved in the current version.
             //現段階ではギャラクシー1のデータは保存できません。
@@ -54,8 +53,8 @@ namespace Takochu.ui
         {
             //base.OnLoad(e);
 
-            mGalaxy = Program.sGame.OpenGalaxy(mGalaxyName);
-            GalaxyNameTxtBox.Text = mGalaxy.mHolderName;
+            
+            GalaxyNameTxtBox.Text = _galaxyScenario.mHolderName;
             AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
             pathsToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayPath;
             m_PickingFrameBuffer = new uint[9];
@@ -63,7 +62,7 @@ namespace Takochu.ui
             mDispLists.Add(1, new Dictionary<int, int>());
             mDispLists.Add(2, new Dictionary<int, int>());
 
-            foreach (KeyValuePair<int, ScenarioEntry> scenarioBCSV_Entry in mGalaxy.ScenarioARC.ScenarioDataBCSV)
+            foreach (KeyValuePair<int, ScenarioEntry> scenarioBCSV_Entry in _galaxyScenario.ScenarioARC.ScenarioDataBCSV)
             {
                 ScenarioEntry senario = scenarioBCSV_Entry.Value;
                 TreeNode treeNode = new TreeNode($"[{senario.ScenarioNo}] {senario.ScenarioName}")
@@ -108,21 +107,21 @@ namespace Takochu.ui
             mDispLists.Add(1, new Dictionary<int, int>());
             mDispLists.Add(2, new Dictionary<int, int>());
 
-            mGalaxy.SetScenario(scenarioNo);
-            scenarioNameTxtBox.Text = mGalaxy.mCurScenarioName;
+            _galaxyScenario.SetScenario(scenarioNo);
+            scenarioNameTxtBox.Text = _galaxyScenario.mCurScenarioName;
 
             // first we need to get the proper layers that the galaxy itself uses
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mGalaxyName));
+            List<string> layers = GameUtil.GetGalaxyLayers(_galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(_galaxyScenario.mName));
 
             layers.ForEach(l => layerViewerDropDown.DropDownItems.Add(l));
 
             // get our main galaxy's zone
-            Zone mainZone = mGalaxy.GetZone(mGalaxyName);
+            Zone mainZone = _galaxyScenario.GetZone(_galaxyScenario.mName);
             //Console.WriteLine(mGalaxyName);
 
             // now we get the zones used on these layers
             // add our galaxy name itself so we can properly add it to a scene list with the other zones
-            mZonesUsed.Add(mGalaxyName);
+            mZonesUsed.Add(_galaxyScenario.mName);
             mZonesUsed.AddRange(mainZone.GetZonesUsedOnLayers(layers));
 
             Dictionary<string, List<Camera>> cameras = new Dictionary<string, List<Camera>>();
@@ -130,13 +129,13 @@ namespace Takochu.ui
 
             List<string> currentLayers = new List<string>();
 
-            Zone galaxyZone = mGalaxy.GetMainGalaxyZone();
+            Zone galaxyZone = _galaxyScenario.GetMainGalaxyZone();
             mObjects.AddRange(galaxyZone.GetAllObjectsFromLayers(layers));
             //Console.WriteLine(mZonesUsed.Count);
             //Console.WriteLine("\n\r\n\r");
             foreach (string zone in mZonesUsed)
             {
-                mZoneMasks.Add(zone, mGalaxy.GetMaskUsedInZoneOnCurrentScenario(zone));
+                mZoneMasks.Add(zone, _galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(zone));
 
                 TreeNode zoneNode = new TreeNode()
                 {
@@ -149,7 +148,7 @@ namespace Takochu.ui
 
                 objectsListTreeView.Nodes.Add(zoneNode);
 
-                Zone z = mGalaxy.GetZone(zone);
+                Zone z = _galaxyScenario.GetZone(zone);
 
                 if (z.mLights != null)
                 {
@@ -166,7 +165,7 @@ namespace Takochu.ui
                 }
 
 
-                ZoneAttributes attrs = mGalaxy.GetZone(zone).mAttributes;
+                ZoneAttributes attrs = _galaxyScenario.GetZone(zone).mAttributes;
 
                 if (attrs != null)
                 {
@@ -370,7 +369,7 @@ namespace Takochu.ui
                 sw.Reset();
                 sw.Start();
 
-                if (mGalaxy.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
+                if (_galaxyScenario.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
                     introCameraEditorBtn.Enabled = true;
                 else
                     introCameraEditorBtn.Enabled = false;
@@ -381,7 +380,7 @@ namespace Takochu.ui
                 sw.Start();
             }
             sw.Stop();
-            mGalaxy.GetMainGalaxyZone().LoadCameras();
+            _galaxyScenario.GetMainGalaxyZone().LoadCameras();
             Console.WriteLine($"LoadCameras: {sw.Elapsed}");
             sw.Reset();
             sw.Start();
@@ -403,7 +402,7 @@ namespace Takochu.ui
                 if ((dr == DialogResult.No) || (dr == DialogResult.Cancel)) { e.Cancel = true; return; }
             }
 
-            mGalaxy.Close();
+            _galaxyScenario.Close();
         }
 
         private void EditorWindow_Load(object sender, EventArgs e)
@@ -417,7 +416,7 @@ namespace Takochu.ui
         }
         private void openMsgEditorButton_Click(object sender, EventArgs e)
         {
-            MessageEditor editor = new MessageEditor(ref mGalaxy);
+            MessageEditor editor = new MessageEditor(ref _galaxyScenario);
             editor.Show();
         }
 
@@ -436,14 +435,14 @@ namespace Takochu.ui
 
         private void stageInformationBtn_Click(object sender, EventArgs e)
         {
-            StageInfoEditor stageInfo = new StageInfoEditor(ref mGalaxy, mCurrentScenario);
+            StageInfoEditor stageInfo = new StageInfoEditor(ref _galaxyScenario, mCurrentScenario);
             stageInfo.ShowDialog();
         }
 
         private void applyGalaxyNameBtn_Click(object sender, EventArgs e)
         {
-            string galaxy_lbl = $"GalaxyName_{mGalaxyName}";
-            string scenario_lbl = $"ScenarioName_{mGalaxyName}{mCurrentScenario}";
+            string galaxy_lbl = $"GalaxyName_{_galaxyScenario.mName}";
+            string scenario_lbl = $"ScenarioName_{_galaxyScenario.mName}{mCurrentScenario}";
 
             NameHolder.AssignToGalaxy(galaxy_lbl, GalaxyNameTxtBox.Text);
             NameHolder.AssignToScenario(scenario_lbl, scenarioNameTxtBox.Text);
@@ -451,7 +450,7 @@ namespace Takochu.ui
 
         private void introCameraEditorBtn_Click(object sender, EventArgs e)
         {
-            IntroEditor intro = new IntroEditor(ref mGalaxy);
+            IntroEditor intro = new IntroEditor(ref _galaxyScenario);
             intro.Show();
         }
 
@@ -465,12 +464,12 @@ namespace Takochu.ui
                 applyGalaxyNameBtn.Enabled = true;
                 LoadScenario(mCurrentScenario);
 
-                if (mGalaxy.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
+                if (_galaxyScenario.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
                     introCameraEditorBtn.Enabled = true;
                 else
                     introCameraEditorBtn.Enabled = false;
             }
-            mGalaxy.GetMainGalaxyZone().LoadCameras();
+            _galaxyScenario.GetMainGalaxyZone().LoadCameras();
             UpdateCamera();
             glLevelView.Refresh();
             sw.Stop();
@@ -533,7 +532,7 @@ namespace Takochu.ui
 
                 if (!o.mParentZone.mZoneName.EndsWith("Galaxy") && zoneNode.Tag == null)
                 {
-                    var layers = mGalaxy.GetMainGalaxyZone().GetAllStageDataFromLayers(mGalaxy.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
+                    var layers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(_galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
                     zoneNode.Tag = layers.Find(stage => stage.mName == zoneNode.Text) as StageObj;
                 }
                 
@@ -644,7 +643,7 @@ namespace Takochu.ui
                     break;
             }
 
-            List<StageObj> stage_layers = mGalaxy.GetMainGalaxyZone().GetAllStageDataFromLayers(mGalaxy.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
+            List<StageObj> stage_layers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(_galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
                 
             foreach(StageObj stage in stage_layers)
             {
@@ -712,8 +711,8 @@ namespace Takochu.ui
                     GL.EndList();
                 }                    
                 // and now we just do the regular stage
-                List<AbstractObj> regularObjs = mObjects.FindAll(o => o.mParentZone.mZoneName == mGalaxyName);
-                List<PathObj> regularPaths = mPaths.FindAll(p => p.mParentZone.mZoneName == mGalaxyName);
+                List<AbstractObj> regularObjs = mObjects.FindAll(o => o.mParentZone.mZoneName == _galaxyScenario.mName);
+                List<PathObj> regularPaths = mPaths.FindAll(p => p.mParentZone.mZoneName == _galaxyScenario.mName);
 
                 foreach (AbstractObj o in regularObjs)
                 {
@@ -974,7 +973,7 @@ namespace Takochu.ui
 
                 foreach (string z in mZonesUsed)
                 {
-                    Zone zone = mGalaxy.GetZone(z);
+                    Zone zone = _galaxyScenario.GetZone(z);
                     AbstractObj obj = zone.GetObjFromUniqueID(id);
 
                     if (obj == null)
@@ -1042,8 +1041,8 @@ namespace Takochu.ui
                     //objects Camera Setting
                     //The following process moves the camera to the object.
                     var ZoneName = abstractObj.mParentZone.mZoneName;
-                    var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(ZoneName);
-                    var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(ZoneName);
+                    var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(ZoneName);
+                    var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(ZoneName);
 
                     var PosObj = abstractObj.mTruePosition;
 
@@ -1163,8 +1162,8 @@ namespace Takochu.ui
                         if (path != null)
                         {
                             // now we render only this path
-                            var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(path.mParentZone.mZoneName);
-                            var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(path.mParentZone.mZoneName);
+                            var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(path.mParentZone.mZoneName);
+                            var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(path.mParentZone.mZoneName);
 
                             GL.DeleteLists(mDispLists[0][path.mUnique], 1);
                             GL.NewList(mDispLists[0][path.mUnique], ListMode.Compile);
@@ -1283,8 +1282,8 @@ namespace Takochu.ui
                 PathPointObj obj = mSelectedObject as PathPointObj;
                 PathObj path = obj.mParent;
 
-                var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
-                var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+                var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+                var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
 
                 GL.DeleteLists(mDispLists[0][path.mUnique], 1);
                 GL.NewList(mDispLists[0][path.mUnique], ListMode.Compile);
@@ -1304,7 +1303,7 @@ namespace Takochu.ui
             else if (mSelectedObject.GetType() == typeof(StageObj))
             {
                 StageObj stageObj = mSelectedObject as StageObj;
-                Zone z = mGalaxy.GetZone(stageObj.mName);
+                Zone z = _galaxyScenario.GetZone(stageObj.mName);
                 List<int> ids = z.GetAllUniqueIDsFromZoneOnCurrentScenario();
 
                 foreach(int id in ids)
@@ -1327,8 +1326,8 @@ namespace Takochu.ui
             }
             else
             {
-                var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
-                var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+                var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
+                var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(mSelectedObject.mParentZone.mZoneName);
 
                 GL.DeleteLists(mDispLists[0][mSelectedObject.mUnique], 1);
                 GL.NewList(mDispLists[0][mSelectedObject.mUnique], ListMode.Compile);
@@ -1361,14 +1360,14 @@ namespace Takochu.ui
 
         private void AreaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
+            List<string> zones = _galaxyScenario.GetZonesUsedOnCurrentScenario();
             Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
 
-            ids.Add(mGalaxy.mName, mGalaxy.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("AreaObj"));
+            ids.Add(_galaxyScenario.mName, _galaxyScenario.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("AreaObj"));
 
             foreach (string z in zones)
             {
-                Zone zone = mGalaxy.GetZone(z);
+                Zone zone = _galaxyScenario.GetZone(z);
                 ids.Add(z, zone.GetAllUniqueIDsFromObjectsOfType("AreaObj"));
             }
 
@@ -1399,10 +1398,10 @@ namespace Takochu.ui
 
                     foreach (int id in id_list)
                     {
-                        var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(zoneName);
-                        var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(zoneName);
+                        var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(zoneName);
+                        var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(zoneName);
 
-                        AreaObj area = mGalaxy.GetZone(zoneName).GetObjFromUniqueID(id) as AreaObj;
+                        AreaObj area = _galaxyScenario.GetZone(zoneName).GetObjFromUniqueID(id) as AreaObj;
 
                         GL.DeleteLists(mDispLists[0][area.mUnique], 1);
                         GL.NewList(mDispLists[0][area.mUnique], ListMode.Compile);
@@ -1439,7 +1438,7 @@ namespace Takochu.ui
                 Translate.GetMessageBox.Show(MessageBoxText.UnimplementedFeatures, MessageBoxCaption.Info);
                 return;
             }
-            mGalaxy.Save();
+            _galaxyScenario.Save();
             EditorWindowSys.DataGridViewEdit.IsChangedClear();
             m_AreChanges = false;
             OpenSaveStatusLabel.Text = "Changes Saved : SaveTime : " + DateTime.Now;
@@ -1456,7 +1455,7 @@ namespace Takochu.ui
             mObjects.Clear();
             mDispLists.Clear();
             glLevelView.Dispose();
-            mGalaxy.Close();
+            _galaxyScenario.Close();
         }
 
         /// <summary>
@@ -1661,14 +1660,14 @@ namespace Takochu.ui
 
         private void pathsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
+            List<string> zones = _galaxyScenario.GetZonesUsedOnCurrentScenario();
             Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
 
-            ids.Add(mGalaxy.mName, mGalaxy.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
+            ids.Add(_galaxyScenario.mName, _galaxyScenario.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
 
             foreach (string z in zones)
             {
-                Zone zone = mGalaxy.GetZone(z);
+                Zone zone = _galaxyScenario.GetZone(z);
                 ids.Add(z, zone.GetAllUniqueIDsFromObjectsOfType("PathObj"));
             }
 
@@ -1699,10 +1698,10 @@ namespace Takochu.ui
 
                     foreach (int id in id_list)
                     {
-                        var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(zoneName);
-                        var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(zoneName);
+                        var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(zoneName);
+                        var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(zoneName);
 
-                        PathObj path = mGalaxy.GetZone(zoneName).GetObjFromUniqueID(id) as PathObj;
+                        PathObj path = _galaxyScenario.GetZone(zoneName).GetObjFromUniqueID(id) as PathObj;
 
                         GL.DeleteLists(mDispLists[0][path.mUnique], 1);
                         GL.NewList(mDispLists[0][path.mUnique], ListMode.Compile);
@@ -1731,7 +1730,7 @@ namespace Takochu.ui
         {
             AbstractObj obj = node.Tag as AbstractObj;
 
-            if (node.Text == mGalaxy.mName)
+            if (node.Text == _galaxyScenario.mName)
             {
                 MessageBox.Show("You cannot delete the main galaxy!");
                 return;
@@ -1783,8 +1782,8 @@ namespace Takochu.ui
                 Zone z = pobj.mParentZone;
                 z.DeletePathPointFromPath(parentPath.mUnique, node.Parent.Nodes.IndexOf(node));
 
-                var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(z.mZoneName);
-                var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(z.mZoneName);
+                var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(z.mZoneName);
+                var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(z.mZoneName);
 
                 GL.DeleteLists(mDispLists[0][parentPath.mUnique], 1);
                 GL.NewList(mDispLists[0][parentPath.mUnique], ListMode.Compile);
@@ -1811,8 +1810,8 @@ namespace Takochu.ui
 
                 if (res == DialogResult.Yes)
                 {
-                    List<int> ids = mGalaxy.GetZone(obj.mName).GetAllUniqueIDS();
-                    mGalaxy.RemoveZone(obj.mName);
+                    List<int> ids = _galaxyScenario.GetZone(obj.mName).GetAllUniqueIDS();
+                    _galaxyScenario.RemoveZone(obj.mName);
 
                     foreach (int id in ids)
                     {
@@ -1874,8 +1873,8 @@ namespace Takochu.ui
                 {
                     obj.SetPosition(new Vector3(obj.mEntry.Get<float>("pos_x"), obj.mEntry.Get<float>("pos_y"), obj.mEntry.Get<float>("pos_z")));
 
-                    var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.mZoneName);
-                    var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.mZoneName);
+                    var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(obj.mParentZone.mZoneName);
+                    var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(obj.mParentZone.mZoneName);
 
                     GL.DeleteLists(mDispLists[0][obj.mUnique], 1);
                     GL.NewList(mDispLists[0][obj.mUnique], ListMode.Compile);
@@ -1934,8 +1933,8 @@ namespace Takochu.ui
                 {
                     obj.SetPosition(new Vector3(obj.mEntry.Get<float>("pos_x"), obj.mEntry.Get<float>("pos_y"), obj.mEntry.Get<float>("pos_z")));
 
-                    var Pos_ZoneOffset = mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.mZoneName);
-                    var Rot_ZoneOffset = mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.mZoneName);
+                    var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(obj.mParentZone.mZoneName);
+                    var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(obj.mParentZone.mZoneName);
 
                     GL.DeleteLists(mDispLists[0][obj.mUnique], 1);
                     GL.NewList(mDispLists[0][obj.mUnique], ListMode.Compile);
@@ -1963,8 +1962,8 @@ namespace Takochu.ui
 
         private void attrFinderToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            List<string> zones = mGalaxy.GetZonesUsedOnCurrentScenario();
-            zones.Add(mGalaxyName);
+            List<string> zones = _galaxyScenario.GetZonesUsedOnCurrentScenario();
+            zones.Add(_galaxyScenario.mName);
             List<AbstractObj> resObjs = new List<AbstractObj>();
 
             TextDialog dlg = new TextDialog();
@@ -1980,7 +1979,7 @@ namespace Takochu.ui
 
             foreach (string zone in zones)
             {
-                Zone z = mGalaxy.GetZone(zone);
+                Zone z = _galaxyScenario.GetZone(zone);
                 resObjs.AddRange(z.GetAllObjectsWithAttributeNonZero(field));
             }
 

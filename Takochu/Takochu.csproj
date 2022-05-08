@@ -232,7 +232,7 @@
       <DependentUpon>TextDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="util\CameraUtil.cs" />
-    <Compile Include="smg\Galaxy.cs" />
+    <Compile Include="smg\GalaxyScenario.cs" />
     <Compile Include="smg\Game.cs" />
     <Compile Include="smg\obj\AbstractObj.cs" />
     <Compile Include="smg\obj\AreaObj.cs" />
@@ -348,6 +348,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\objectdb.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="res\FieldTypes.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

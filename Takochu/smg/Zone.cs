@@ -20,11 +20,11 @@ namespace Takochu.smg
         public string[] cPossibleFiles = { "Design", "Light", "Ghost", "Map", "Sound", "ZoneInfo" };
         public static int MissingPathArgumentsRemove { get; private set; }
 
-        public Zone(Galaxy galaxy, string name)
+        public Zone(GalaxyScenario galaxy, string name)
         {
             mGalaxy = galaxy;
             mGame = galaxy.mGame;
-            mFilesystem = mGame.mFilesystem;
+            mFilesystem = mGame.Filesystem;
             mZoneName = name;
             mIsMainGalaxy = (mGalaxy.mName == name);
 
@@ -997,7 +997,7 @@ namespace Takochu.smg
             pathsBCSV.Save();
         }
 
-        public Galaxy mGalaxy;
+        public GalaxyScenario mGalaxy;
         private Game mGame;
         private FilesystemBase mFilesystem;
         public string mZoneName;

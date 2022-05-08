@@ -59,5 +59,40 @@ namespace Takochu.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+        ///
+        ///&lt;!-- SMG1/2 Object Database, generated 03/11/2022 20:05:04 --&gt;
+        ///
+        ///&lt;database timestamp=&quot;1647029104&quot;&gt;
+        ///
+        ///	&lt;actors&gt;
+        ///	&lt;actor id=&quot;Air&quot;&gt;
+        ///		&lt;flags known=&quot;0&quot; complete=&quot;0&quot;/&gt;
+        ///	&lt;fields&gt;
+        ///	&lt;/fields&gt;
+        ///	&lt;/actor&gt;
+        ///
+        ///	&lt;actor id=&quot;AnmModelSwitchMove&quot;&gt;
+        ///		&lt;flags known=&quot;0&quot; complete=&quot;0&quot;/&gt;
+        ///	&lt;fields&gt;
+        ///	&lt;/fields&gt;
+        ///	&lt;/actor&gt;
+        ///
+        ///	&lt;actor id=&quot;AnmModelSwitchMoveEndKill&quot;&gt;
+        ///		&lt;flags known=&quot;0&quot; complete=&quot;0&quot;/&gt;
+        ///	&lt;fields&gt;
+        ///	&lt;/fields&gt;
+        ///	&lt;/actor&gt;
+        ///
+        ///	&lt;actor id=&quot;AnmModelSwitchMoveEndKillAnyAnim&quot;&gt;
+        ///	 [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string objectdb {
+            get {
+                return ResourceManager.GetString("objectdb", resourceCulture);
+            }
+        }
     }
 }

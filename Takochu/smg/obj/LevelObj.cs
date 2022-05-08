@@ -117,7 +117,7 @@ namespace Takochu.smg.obj
             }
             else if (mRenderer == null && Program.sGame.DoesFileExist($"/ObjectData/{mName}.arc"))
             {
-                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile($"/ObjectData/{mName}.arc"));
+                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{mName}.arc"));
 
                 if (rarc.DoesFileExist($"/root/{mName}.bdl"))
                 {
@@ -139,7 +139,7 @@ namespace Takochu.smg.obj
             else if (SP_ObjectName.ContainsKey(mName)) 
             {
                 var tmpname = SP_ObjectName[mName];
-                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile($"/ObjectData/{tmpname.Item1}.arc"));
+                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item1}.arc"));
 
                 if (rarc.DoesFileExist($"/root/{tmpname.Item1}.bdl"))
                 {
@@ -155,7 +155,7 @@ namespace Takochu.smg.obj
 
                 if (tmpname.Item2 == "None") return;
 
-                RARCFilesystem rarc1 = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile($"/ObjectData/{tmpname.Item2}.arc"));
+                RARCFilesystem rarc1 = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item2}.arc"));
 
                 if (rarc1.DoesFileExist($"/root/{tmpname.Item2}.bdl"))
                 {
