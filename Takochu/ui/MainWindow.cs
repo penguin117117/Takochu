@@ -21,8 +21,8 @@ namespace Takochu
 {
     public partial class MainWindow : Form
     {
-        private const string DefaultPath = "\"\"";
-        
+        private const string Default_GameDir = "\"\"";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -32,36 +32,38 @@ namespace Takochu
                 Properties.Settings.Default.BCSVPaths = new List<string>();
             }
 
-            string GamePath = Properties.Settings.Default.GamePath;
+            string gamePath = Properties.Settings.Default.GamePath;
 
-            if (GamePath == DefaultPath || (!Directory.Exists(GamePath)))
+            bool isDefaultGameDir = gamePath == Default_GameDir;
+            bool notFoundUserGameDir = !Directory.Exists(gamePath);
+
+            if (isDefaultGameDir || notFoundUserGameDir)
             {
                 Translate.GetMessageBox.Show(MessageBoxText.InitialPathSettings, MessageBoxCaption.Info);
 
-                if (SetGamePath() == false)
+                if (SetGameDirectory() == false)
                 {
                     return;
                 }
-                else
-                {
-                    GamePath = Properties.Settings.Default.GamePath;
-                    if (Directory.Exists(GamePath))
-                    {
-                        Setup();
-                        return;
-                    }
 
+                gamePath = Properties.Settings.Default.GamePath;
+                if (Directory.Exists(gamePath))
+                {
+                    OpenGameDir();
+                    return;
                 }
+
+
             }
 
             // is it valid AND does it still exist?
-            if (GamePath != DefaultPath && Directory.Exists(GamePath))
+            if (gamePath != Default_GameDir && Directory.Exists(gamePath))
             {
-                Setup();
+                OpenGameDir();
             }
         }
 
-        private void Setup(bool reSetup = false)
+        private void OpenGameDir(bool reSetup = false)
         {
             try
             {
@@ -135,22 +137,22 @@ namespace Takochu
                 SetDefaultPath();
                 KillApplication();
             }
-            
+
         }
 
         /// <summary>
         /// ゲームディレクトリを初期化します。
         /// </summary>
-        private void SetDefaultPath() 
+        private void SetDefaultPath()
         {
-            Properties.Settings.Default.GamePath = DefaultPath;
+            Properties.Settings.Default.GamePath = Default_GameDir;
             Properties.Settings.Default.Save();
         }
 
         /// <summary>
         /// アプリケーションを強制終了させます。
         /// </summary>
-        private void KillApplication() 
+        private void KillApplication()
         {
             Close();
             Environment.Exit(0);
@@ -159,9 +161,9 @@ namespace Takochu
         private void selectGameFolderBtn_Click(object sender, EventArgs e)
         {
             bool res =
-            SetGamePath();
+            SetGameDirectory();
 
-            if (res) Setup(true);
+            if (res) OpenGameDir(true);
         }
 
         private void BcsvEditorBtn_Click(object sender, EventArgs e)
@@ -170,7 +172,7 @@ namespace Takochu
             bcsvEditor.Show();
         }
 
-        private bool SetGamePath()
+        private bool SetGameDirectory()
         {
             var SetPath = Properties.Settings.Default.GamePath;
 
