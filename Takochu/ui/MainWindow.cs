@@ -45,22 +45,10 @@ namespace Takochu
                 {
                     return;
                 }
-
-                gamePath = Properties.Settings.Default.GamePath;
-                if (Directory.Exists(gamePath))
-                {
-                    OpenGameDir();
-                    return;
-                }
-
-
             }
 
-            // is it valid AND does it still exist?
-            if (gamePath != Default_GameDir && Directory.Exists(gamePath))
-            {
-                OpenGameDir();
-            }
+            OpenGameDir();
+            
         }
 
         private void OpenGameDir(bool reSetup = false)
