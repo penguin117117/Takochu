@@ -24,6 +24,8 @@ namespace Takochu.ui
 {
     public partial class EditorWindow : Form
     {
+
+        private string GalaxyName;
         private int mCurrentScenario;
         private GalaxyScenario _galaxyScenario;
         private List<AbstractObj> mObjects = new List<AbstractObj>();
@@ -41,7 +43,8 @@ namespace Takochu.ui
         public EditorWindow(string galaxyName)
         {
             InitializeComponent();
-            _galaxyScenario = Program.sGame.OpenGalaxy(galaxyName);
+            //_galaxyScenario = Program.sGame.OpenGalaxy(galaxyName);
+            GalaxyName = galaxyName;
 
             //SMG1 data cannot be saved in the current version.
             //現段階ではギャラクシー1のデータは保存できません。
@@ -53,7 +56,7 @@ namespace Takochu.ui
         {
             //base.OnLoad(e);
 
-            
+            _galaxyScenario = Program.sGame.OpenGalaxy(GalaxyName);
             GalaxyNameTxtBox.Text = _galaxyScenario.mHolderName;
             AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
             pathsToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayPath;
