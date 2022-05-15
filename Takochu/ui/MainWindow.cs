@@ -94,49 +94,14 @@ namespace Takochu
 
         private void selectGameFolderBtn_Click(object sender, EventArgs e)
         {
-            bool successfulSetting = SetGameDirectory();
-
-            if (successfulSetting) SetGalaxyTreeView(true);
+            bool successfulSet = GameDirectory.BrowseSetGameDirectory();
+            if (successfulSet) SetGalaxyTreeView(true);
         }
 
         private void BcsvEditorBtn_Click(object sender, EventArgs e)
         {
             BCSVEditorForm bcsvEditor = new BCSVEditorForm();
             bcsvEditor.Show();
-        }
-
-        private bool SetGameDirectory()
-        {
-            var setPath = Properties.Settings.Default.GamePath;
-
-            if (!Directory.Exists(setPath))
-                setPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-
-            CommonOpenFileDialog cofd = new CommonOpenFileDialog
-            {
-                InitialDirectory = setPath,
-                IsFolderPicker = true
-            };
-            if (cofd.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                string path = cofd.FileName;
-                if (Directory.Exists($"{path}/StageData") && Directory.Exists($"{path}/ObjectData"))
-                {
-                    Properties.Settings.Default.GamePath = path;
-                    Properties.Settings.Default.Save();
-
-                    Program.sGame = new Game(new ExternalFilesystem(path));
-
-                    Translate.GetMessageBox.Show(MessageBoxText.FolderPathCorrectly, MessageBoxCaption.Info);
-                    return true;
-                }
-                else
-                {
-                    Translate.GetMessageBox.Show(MessageBoxText.InvalidGameFolder, MessageBoxCaption.Error);
-                    return false;
-                }
-            }
-            return false;
         }
 
         private void galaxyTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)

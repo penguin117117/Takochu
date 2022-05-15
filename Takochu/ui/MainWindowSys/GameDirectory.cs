@@ -87,7 +87,7 @@ namespace Takochu.ui.MainWindowSys
 
         }
 
-        private bool BrowseSetGameDirectory()
+        public bool BrowseSetGameDirectory()
         {
             var SetPath = Properties.Settings.Default.GamePath;
 
