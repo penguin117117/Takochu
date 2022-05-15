@@ -193,6 +193,7 @@
     <Compile Include="ui\LightAttribEditor.Designer.cs">
       <DependentUpon>LightAttribEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="ui\MainWindowSys\GameDirectory.cs" />
     <Compile Include="ui\RenderingTest.cs">
       <SubType>Form</SubType>
     </Compile>
