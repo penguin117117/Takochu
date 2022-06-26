@@ -13,6 +13,10 @@ namespace Takochu
 {
     static class Program
     {
+        public static string sLanguage;
+        public static Game sGame;
+        public static int sUniqueID;
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -25,19 +29,9 @@ namespace Takochu
             ObjectDB.Load();
             RenderUtil.AssignColors();
             EditorActionHolder.Initialize();
-
-#if DEBUG
-            Properties.Settings.Default.EditorWindowDisplayPath = true;
-            Properties.Settings.Default.Save();
-#endif
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainWindow());
         }
-
-        //public static Translator sTranslator;
-        public static string sLanguage;
-        public static Game sGame;
-        public static int sUniqueID;
     }
 }

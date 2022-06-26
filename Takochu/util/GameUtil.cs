@@ -49,26 +49,6 @@ namespace Takochu.util
             "LayerP"
         };
 
-        //public static string[] GalaxyLayers1 = new string[]
-        //{
-        //    "layera",
-        //    "layerb",
-        //    "layerc",
-        //    "layerd",
-        //    "layere",
-        //    "layerf",
-        //    "layerg",
-        //    "layerh",
-        //    "layeri",
-        //    "layerj",
-        //    "layerk",
-        //    "layerl",
-        //    "layerm",
-        //    "layern",
-        //    "layero",
-        //    "layerp"
-        //};
-
         public static List<string> GetGalaxyLayers(int mask)
         {
             List<string> layers = new List<string>();

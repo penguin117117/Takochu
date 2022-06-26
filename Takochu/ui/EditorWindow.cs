@@ -24,8 +24,7 @@ namespace Takochu.ui
 {
     public partial class EditorWindow : Form
     {
-
-        private string GalaxyName;
+        private string _galaxyName;
         private int mCurrentScenario;
         private GalaxyScenario _galaxyScenario;
         private List<AbstractObj> mObjects = new List<AbstractObj>();
@@ -43,8 +42,7 @@ namespace Takochu.ui
         public EditorWindow(string galaxyName)
         {
             InitializeComponent();
-            //_galaxyScenario = Program.sGame.OpenGalaxy(galaxyName);
-            GalaxyName = galaxyName;
+            _galaxyName = galaxyName;
 
             //SMG1 data cannot be saved in the current version.
             //現段階ではギャラクシー1のデータは保存できません。
@@ -52,18 +50,35 @@ namespace Takochu.ui
                 SaveToolStripMenuItem.Enabled = false;
         }
 
+        private void InitializeDispList() 
+        {
+            mDispLists.Add(0, new Dictionary<int, int>());
+            mDispLists.Add(1, new Dictionary<int, int>());
+            mDispLists.Add(2, new Dictionary<int, int>());
+        }
+
+        private void ClearGLDisplayLists() 
+        {
+            foreach (KeyValuePair<int, Dictionary<int, int>> disp in mDispLists)
+            {
+                foreach (KeyValuePair<int, int> actualList in disp.Value)
+                {
+                    GL.DeleteLists(actualList.Value, 1);
+                }
+            }
+        }
+
         protected override void OnLoad(EventArgs e)
         {
             //base.OnLoad(e);
 
-            _galaxyScenario = Program.sGame.OpenGalaxy(GalaxyName);
+            _galaxyScenario = Program.sGame.OpenGalaxy(_galaxyName);
+
             GalaxyNameTxtBox.Text = _galaxyScenario.mHolderName;
             AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
             pathsToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayPath;
             m_PickingFrameBuffer = new uint[9];
-            mDispLists.Add(0, new Dictionary<int, int>());
-            mDispLists.Add(1, new Dictionary<int, int>());
-            mDispLists.Add(2, new Dictionary<int, int>());
+            InitializeDispList();
 
             foreach (KeyValuePair<int, ScenarioEntry> scenarioBCSV_Entry in _galaxyScenario.ScenarioARC.ScenarioDataBCSV)
             {
@@ -99,33 +114,28 @@ namespace Takochu.ui
 
             mObjects.Clear();
 
-            foreach (KeyValuePair<int, Dictionary<int, int>> disp in mDispLists)
-            {
-                foreach (KeyValuePair<int, int> actualList in disp.Value)
-                    GL.DeleteLists(actualList.Value, 1);
-            }
-
+            ClearGLDisplayLists();
             mDispLists.Clear();
-            mDispLists.Add(0, new Dictionary<int, int>());
-            mDispLists.Add(1, new Dictionary<int, int>());
-            mDispLists.Add(2, new Dictionary<int, int>());
+            InitializeDispList();
 
             _galaxyScenario.SetScenario(scenarioNo);
             scenarioNameTxtBox.Text = _galaxyScenario.mCurScenarioName;
 
+            string mainGalaxyName = _galaxyScenario.mName;
+
             // first we need to get the proper layers that the galaxy itself uses
-            List<string> layers = GameUtil.GetGalaxyLayers(_galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(_galaxyScenario.mName));
+            // ギャラクシーの対象のシナリオで使用される全てのレイヤーを取得する。
+            int layerMaskBitPatternNo = _galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(mainGalaxyName);
+            List<string> layers = GameUtil.GetGalaxyLayers(layerMaskBitPatternNo);
 
-            layers.ForEach(l => layerViewerDropDown.DropDownItems.Add(l));
+            layers.ForEach(layerName => layerViewerDropDown.DropDownItems.Add(layerName));
 
-            // get our main galaxy's zone
-            Zone mainZone = _galaxyScenario.GetZone(_galaxyScenario.mName);
-            //Console.WriteLine(mGalaxyName);
+            Zone mainGalaxyZone = _galaxyScenario.GetZone(mainGalaxyName);
 
             // now we get the zones used on these layers
             // add our galaxy name itself so we can properly add it to a scene list with the other zones
-            mZonesUsed.Add(_galaxyScenario.mName);
-            mZonesUsed.AddRange(mainZone.GetZonesUsedOnLayers(layers));
+            mZonesUsed.Add(mainGalaxyName);
+            mZonesUsed.AddRange(mainGalaxyZone.GetZonesUsedOnLayers(layers));
 
             Dictionary<string, List<Camera>> cameras = new Dictionary<string, List<Camera>>();
             List<Light> lights = new List<Light>();
@@ -134,8 +144,7 @@ namespace Takochu.ui
 
             Zone galaxyZone = _galaxyScenario.GetMainGalaxyZone();
             mObjects.AddRange(galaxyZone.GetAllObjectsFromLayers(layers));
-            //Console.WriteLine(mZonesUsed.Count);
-            //Console.WriteLine("\n\r\n\r");
+
             foreach (string zone in mZonesUsed)
             {
                 mZoneMasks.Add(zone, _galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(zone));
@@ -631,49 +640,36 @@ namespace Takochu.ui
         private bool m_AreChanges;
         private void RenderObjectLists(RenderMode mode)
         {
-            int t = 0;
+            int renderModeNo = (int)mode;
 
-            switch(mode)
-            {
-                case RenderMode.Opaque:
-                    t = 0;
-                    break;
-                case RenderMode.Translucent:
-                    t = 1;
-                    break;
-                case RenderMode.Picking:
-                    t = 2;
-                    break;
-            }
-
-            List<StageObj> stage_layers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(_galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
+            List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(_galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
                 
-            foreach(StageObj stage in stage_layers)
+            foreach(StageObj stageObj in stageObjLayers)
             {
-                List<AbstractObj> objsInStage = mObjects.FindAll(o => o.mParentZone.mZoneName == stage.mName);
-                List<PathObj> pathsInStage = mPaths.FindAll(p => p.mParentZone.mZoneName == stage.mName);
+                List<AbstractObj> objsInStage = mObjects.FindAll(o => o.mParentZone.mZoneName == stageObj.mName);
+                List<PathObj> pathsInStage = mPaths.FindAll(p => p.mParentZone.mZoneName == stageObj.mName);
 
                 foreach (AbstractObj o in objsInStage)
                 {
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    if (mDispLists[t].ContainsKey(o.mUnique))
+                    if (mDispLists[renderModeNo].ContainsKey(o.mUnique))
                         continue;
 
                     keyValuePairs.Add(o.mUnique, GL.GenLists(1));
-                    mDispLists[t].Add(o.mUnique, GL.GenLists(1));
+                    mDispLists[renderModeNo].Add(o.mUnique, GL.GenLists(1));
 
                     if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                         continue;
 
-                    GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
+                    GL.NewList(mDispLists[renderModeNo][o.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
                     {
-                        GL.Translate(stage.mPosition);
-                        GL.Rotate(stage.mRotation.Z, 0f, 0f, 1f);
-                        GL.Rotate(stage.mRotation.Y, 0f, 1f, 0f);
-                        GL.Rotate(stage.mRotation.X, 1f, 0f, 0f);
+                        GL.Translate(stageObj.mPosition);
+                        GL.Rotate(stageObj.mRotation.Z, 0f, 0f, 1f);
+                        GL.Rotate(stageObj.mRotation.Y, 0f, 1f, 0f);
+                        GL.Rotate(stageObj.mRotation.X, 1f, 0f, 0f);
                     }
 
                     if (mode == RenderMode.Picking)
@@ -691,23 +687,23 @@ namespace Takochu.ui
                 {
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    if (mDispLists[t].ContainsKey(p.mUnique))
+                    if (mDispLists[renderModeNo].ContainsKey(p.mUnique))
                         continue;
 
                     keyValuePairs.Add(p.mUnique, GL.GenLists(1));
-                    mDispLists[t].Add(p.mUnique, GL.GenLists(1));
+                    mDispLists[renderModeNo].Add(p.mUnique, GL.GenLists(1));
 
                     if (pathsToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                         continue;
 
-                    GL.NewList(mDispLists[t][p.mUnique], ListMode.Compile);
+                    GL.NewList(mDispLists[renderModeNo][p.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
 
-                    GL.Translate(stage.mPosition);
-                    GL.Rotate(stage.mRotation.Z, 0f, 0f, 1f);
-                    GL.Rotate(stage.mRotation.Y, 0f, 1f, 0f);
-                    GL.Rotate(stage.mRotation.X, 1f, 0f, 0f);
+                    GL.Translate(stageObj.mPosition);
+                    GL.Rotate(stageObj.mRotation.Z, 0f, 0f, 1f);
+                    GL.Rotate(stageObj.mRotation.Y, 0f, 1f, 0f);
+                    GL.Rotate(stageObj.mRotation.X, 1f, 0f, 0f);
                     p.Render(mode);
                     GL.PopMatrix();
 
@@ -723,16 +719,16 @@ namespace Takochu.ui
                     //Console.WriteLine("test "+ o.mName);
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    if (mDispLists[t].ContainsKey(o.mUnique))
+                    if (mDispLists[renderModeNo].ContainsKey(o.mUnique))
                         continue;
 
                     keyValuePairs.Add(o.mUnique, GL.GenLists(1));
-                    mDispLists[t].Add(o.mUnique, GL.GenLists(1));
+                    mDispLists[renderModeNo].Add(o.mUnique, GL.GenLists(1));
 
                     if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                             continue;
 
-                    GL.NewList(mDispLists[t][o.mUnique], ListMode.Compile);
+                    GL.NewList(mDispLists[renderModeNo][o.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
 
@@ -751,16 +747,16 @@ namespace Takochu.ui
                 {
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    if (mDispLists[t].ContainsKey(path.mUnique))
+                    if (mDispLists[renderModeNo].ContainsKey(path.mUnique))
                         continue;
 
                     keyValuePairs.Add(path.mUnique, GL.GenLists(1));
-                    mDispLists[t].Add(path.mUnique, GL.GenLists(1));
+                    mDispLists[renderModeNo].Add(path.mUnique, GL.GenLists(1));
 
                     if (pathsToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                         continue;
 
-                    GL.NewList(mDispLists[t][path.mUnique], ListMode.Compile);
+                    GL.NewList(mDispLists[renderModeNo][path.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
 
