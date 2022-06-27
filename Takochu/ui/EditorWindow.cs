@@ -142,8 +142,7 @@ namespace Takochu.ui
 
             List<string> currentLayers = new List<string>();
 
-            Zone galaxyZone = _galaxyScenario.GetMainGalaxyZone();
-            mObjects.AddRange(galaxyZone.GetAllObjectsFromLayers(layers));
+            mObjects.AddRange(mainGalaxyZone.GetAllObjectsFromLayers(layers));
 
             foreach (string zone in mZonesUsed)
             {
@@ -252,13 +251,13 @@ namespace Takochu.ui
                     {
                         List<StageObj> stgs;
 
-                        if (galaxyZone.mHasStageObjList.ContainsKey(layer))
+                        if (mainGalaxyZone.mHasStageObjList.ContainsKey(layer))
                         {
-                            stgs = galaxyZone.mHasStageObjList[layer];
+                            stgs = mainGalaxyZone.mHasStageObjList[layer];
                         }
-                        else if (galaxyZone.mHasStageObjList.ContainsKey(layer.ToLower()))
+                        else if (mainGalaxyZone.mHasStageObjList.ContainsKey(layer.ToLower()))
                         {
-                            stgs = galaxyZone.mHasStageObjList[layer.ToLower()];
+                            stgs = mainGalaxyZone.mHasStageObjList[layer.ToLower()];
                         }
                         else
                         {
@@ -367,8 +366,6 @@ namespace Takochu.ui
 
         private void scenarioTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            var sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
             if (scenarioTreeView.SelectedNode != null)
             {
                 mCurrentScenario = Convert.ToInt32(scenarioTreeView.SelectedNode.Tag);
@@ -376,30 +373,16 @@ namespace Takochu.ui
                 applyGalaxyNameBtn.Enabled = true;
                 LoadScenario(mCurrentScenario);
 
-                sw.Stop();
-                Console.WriteLine($"LoadScenario: {sw.Elapsed}");
-                sw.Reset();
-                sw.Start();
-
                 if (_galaxyScenario.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{mCurrentScenario}.canm"))
                     introCameraEditorBtn.Enabled = true;
                 else
                     introCameraEditorBtn.Enabled = false;
-
-                sw.Stop();
-                Console.WriteLine($"GetGalaxyZone: {sw.Elapsed}");
-                sw.Reset();
-                sw.Start();
             }
-            sw.Stop();
+
             _galaxyScenario.GetMainGalaxyZone().LoadCameras();
-            Console.WriteLine($"LoadCameras: {sw.Elapsed}");
-            sw.Reset();
-            sw.Start();
+            
             UpdateCamera();
             glLevelView.Refresh();
-            sw.Stop();
-            Console.WriteLine($"ScenarioTreeViewFinish: {sw.Elapsed}");
         }
 
         private void EditorWindow_FormClosing(object sender, FormClosingEventArgs e)
