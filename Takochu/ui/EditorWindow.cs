@@ -24,7 +24,7 @@ namespace Takochu.ui
 {
     public partial class EditorWindow : Form
     {
-        private string _galaxyName;
+        private readonly string _galaxyName;
         private int mCurrentScenario;
         private GalaxyScenario _galaxyScenario;
         private List<AbstractObj> mObjects = new List<AbstractObj>();
@@ -94,9 +94,6 @@ namespace Takochu.ui
             //if (!BGMInfo.HasBGMInfo(mGalaxy.mName))
             //    stageInformationBtn.Enabled = false;
         }
-
-        
-        
         
         public void LoadScenario(int scenarioNo)
         {
@@ -237,7 +234,7 @@ namespace Takochu.ui
                 {
                     if (GameUtil.IsSMG1())
                         currentLayers = currentLayers.ConvertAll(l => l.ToLower());
-                    //Console.WriteLine("____________________addrange");
+
                     mObjects.AddRange(z.GetAllObjectsFromLayers(TestLayers));
                     //mObjects.AddRange(z.GetAllObjectsFromLayers(currentLayers));
                     //mGalaxy
@@ -247,7 +244,7 @@ namespace Takochu.ui
                 }
                 else
                 {
-                    foreach (string layer in /*currentLayers*/TestLayers)
+                    foreach (string layer in TestLayers)
                     {
                         List<StageObj> stgs;
 
@@ -268,78 +265,25 @@ namespace Takochu.ui
                     }
                 }
             }
-            //Console.WriteLine("_________________________________________?");
-            List<Camera> cubeCameras = new List<Camera>();
-            List<Camera> groupCameras = new List<Camera>();
-            List<Camera> eventCameras = new List<Camera>();
-            List<Camera> startCameras = new List<Camera>();
-            List<Camera> otherCameras = new List<Camera>();
 
             foreach (string zone in mZonesUsed)
             {
                 TreeNode cameraZoneNode = new TreeNode(zone);
                 PopulateCameraTreeNode(ref cameraZoneNode);
 
-                cameras[zone].ForEach(c =>
+                cameras[zone].ForEach(camera =>
                 {
-                    if (c.GetCameraType() == Camera.CameraType.Cube)
+                    if (Enum.IsDefined(typeof(Camera.CameraType), camera.GetCameraType())) 
                     {
-                        cubeCameras.Add(c);
-                        TreeNode nd = new TreeNode(c.mName);
-                        nd.Tag = c;
-                        cameraZoneNode.Nodes[0].Nodes.Add(nd);
+                        TreeNode nd = new TreeNode(camera.mName)
+                        {
+                            Tag = camera
+                        };
+                        cameraZoneNode.Nodes[(int)camera.GetCameraType()].Nodes.Add(nd);
                     }
-                        
-                });
-
-                cameras[zone].ForEach(c =>
-                {
-                    if (c.GetCameraType() == Camera.CameraType.Group)
-                    {
-                        groupCameras.Add(c);
-                        TreeNode nd = new TreeNode(c.mName);
-                        nd.Tag = c;
-                        cameraZoneNode.Nodes[1].Nodes.Add(nd);
-                    }
-                        
-                });
-
-                cameras[zone].ForEach(c =>
-                {
-                    if (c.GetCameraType() == Camera.CameraType.Event) 
-                    {
-                        eventCameras.Add(c);
-                        TreeNode nd = new TreeNode(c.mName);
-                        nd.Tag = c;
-                        cameraZoneNode.Nodes[2].Nodes.Add(nd);
-                    }
-                });
-
-                cameras[zone].ForEach(c =>
-                {
-                    if (c.GetCameraType() == Camera.CameraType.Start)
-                    {
-                        startCameras.Add(c);
-                        TreeNode nd = new TreeNode(c.mName);
-                        nd.Tag = c;
-                        cameraZoneNode.Nodes[3].Nodes.Add(nd);
-                    }
-                });
-
-                cameras[zone].ForEach(c =>
-                {
-                    if (c.GetCameraType() == Camera.CameraType.Other)
-                    {
-                        otherCameras.Add(c);
-                        TreeNode nd = new TreeNode(c.mName);
-                        nd.Tag = c;
-                        cameraZoneNode.Nodes[4].Nodes.Add(nd);
-                    }
-                        
                 });
 
                 cameraListTreeView.Nodes.Add(cameraZoneNode);
-
             }
 
             PopulateTreeView();
@@ -394,7 +338,11 @@ namespace Takochu.ui
             if (EditorWindowSys.DataGridViewEdit.IsChanged || m_AreChanges) 
             {
                 dr = Translate.GetMessageBox.Show(MessageBoxText.ChangesNotSaved,MessageBoxCaption.Error,MessageBoxButtons.YesNo);
-                if ((dr == DialogResult.No) || (dr == DialogResult.Cancel)) { e.Cancel = true; return; }
+                if ((dr == DialogResult.No) || (dr == DialogResult.Cancel)) 
+                {
+                    e.Cancel = true;
+                    return; 
+                }
             }
 
             _galaxyScenario.Close();
