@@ -14,13 +14,13 @@ namespace Takochu.ui.StageInfoEditorSys
     /// </summary>
     public class ScenarioInformation
     {
-        private readonly Galaxy _galaxy;
+        private readonly GalaxyScenario _galaxy;
         public Dictionary<int, ScenarioEntry> ScenarioBCSV { get; private set; }
         //public Dictionary<int, ScenarioEntry> EditScenarios { get; private set; }
 
         
 
-        public ScenarioInformation(Galaxy galaxy, TreeView ScenarioListTreeView) 
+        public ScenarioInformation(GalaxyScenario galaxy, TreeView ScenarioListTreeView) 
         {
             _galaxy = galaxy;
             ScenarioBCSV = new Dictionary<int, ScenarioEntry>();

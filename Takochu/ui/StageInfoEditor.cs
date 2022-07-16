@@ -20,14 +20,14 @@ namespace Takochu.ui
 {
     public partial class StageInfoEditor : Form
     {
-        private readonly Galaxy _galaxy;
+        private readonly GalaxyScenario _galaxy;
         private List<StageBgmInfoArcFile.ScenarioBGMEntry> _scenarioEntries;
         private List<int> _bgmRestrictedIDs;
         private int _currentScenario;
         private readonly ScenarioInformation _scenarioInformation;
 
 
-        public StageInfoEditor(ref Galaxy galaxy, int scenarioNo)
+        public StageInfoEditor(ref GalaxyScenario galaxy, int scenarioNo)
         {
             _galaxy = galaxy;
             InitializeComponent();

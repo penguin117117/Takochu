@@ -12,17 +12,29 @@ namespace Takochu.smg
     class ObjectDB
     {
         public const string Xml_PathString = "res/objectdb.xml";
+        public const string URL_LinkString = "http://shibboleet.us.to/new_db/generate.php";
+
+        public static Dictionary<string, Actor> Actors;
+        public static Dictionary<string, Object> Objects;
+
         public static void GenDB()
         {
-            using (var c = new WebClient())
+            using (var webClient = new WebClient())
             {
                 try
                 {
-                    c.DownloadFile("http://shibboleet.us.to/new_db/generate.php", Xml_PathString);
+                    webClient.DownloadFile(URL_LinkString, Xml_PathString);
                 }
-                catch
+                catch (WebException webEx)
                 {
-                    // do nothing
+                    if (webEx.Status == WebExceptionStatus.NameResolutionFailure) 
+                    {
+                        File.WriteAllText(Xml_PathString, Properties.Resources.objectdb);
+                    }
+                }
+                catch (Exception ex) 
+                {
+                    Console.WriteLine(ex.Message);
                 }
             }
         }
@@ -202,7 +214,6 @@ namespace Takochu.smg
             public string Notes;
         }
 
-        public static Dictionary<string, Actor> Actors;
-        public static Dictionary<string, Object> Objects;
+       
     }
 }

@@ -76,7 +76,7 @@ namespace Takochu.ui
 
             filesystemView.Nodes.Clear();
 
-            mFilesystem = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile(archiveTextBox.Text));
+            mFilesystem = new RARCFilesystem(Program.sGame.Filesystem.OpenFile(archiveTextBox.Text));
 
             TreeNode root = new TreeNode("/");
 

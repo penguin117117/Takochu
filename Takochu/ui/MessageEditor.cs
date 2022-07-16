@@ -24,7 +24,7 @@ namespace Takochu.util
             zoneNamesComboBox.Enabled = false;
         }
 
-        public MessageEditor(ref Galaxy galaxy)
+        public MessageEditor(ref GalaxyScenario galaxy)
         {
             InitializeComponent();
             mGalaxy = galaxy;
@@ -35,7 +35,7 @@ namespace Takochu.util
             }
         }
 
-        private Galaxy mGalaxy;
+        private GalaxyScenario mGalaxy;
         private string mSelectedZone;
         private MSBT mCurMessages;
         private MSBF mCurFlow;

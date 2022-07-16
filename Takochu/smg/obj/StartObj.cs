@@ -51,7 +51,7 @@ namespace Takochu.smg.obj
 
             if (Program.sGame.DoesFileExist("/ObjectData/Mario.arc"))
             {
-                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile("/ObjectData/Mario.arc"));
+                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile("/ObjectData/Mario.arc"));
 
                 if (rarc.DoesFileExist("/root/Mario.bdl"))
                 {

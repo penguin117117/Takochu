@@ -16,13 +16,14 @@ using Takochu.smg.msg;
 using Takochu.ui;
 using Takochu.util;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using Takochu.ui.MainWindowSys;
 
 namespace Takochu
 {
     public partial class MainWindow : Form
     {
-        private const string DefaultPath = "\"\"";
-        
+        public GameDirectory GameDirectory { get; private set; }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -32,71 +33,15 @@ namespace Takochu
                 Properties.Settings.Default.BCSVPaths = new List<string>();
             }
 
-            string GamePath = Properties.Settings.Default.GamePath;
-
-            if (GamePath == DefaultPath || (!Directory.Exists(GamePath)))
-            {
-                Translate.GetMessageBox.Show(MessageBoxText.InitialPathSettings, MessageBoxCaption.Info);
-
-                if (SetGamePath() == false)
-                {
-                    return;
-                }
-                else
-                {
-                    GamePath = Properties.Settings.Default.GamePath;
-                    if (Directory.Exists(GamePath))
-                    {
-                        Setup();
-                        return;
-                    }
-
-                }
-            }
-
-            // is it valid AND does it still exist?
-            if (GamePath != DefaultPath && Directory.Exists(GamePath))
-            {
-                Setup();
-            }
+            GameDirectory = new GameDirectory();
+            SetGalaxyTreeView();
         }
 
-        private void Setup(bool reSetup = false)
+        private void SetGalaxyTreeView(bool reSetup = false)
         {
             try
             {
-                var extFileSys = new ExternalFilesystem(Properties.Settings.Default.GamePath);
-                Program.sGame = new Game(extFileSys);
-
-                if (reSetup)
-                    LightData.Close();
-                LightData.Initialize();
-
-
-
-
-                if (GameUtil.IsSMG2())
-                {
-
-                    if (reSetup)
-                        StageBgmInfoArcFile.Close();
-
-                    StageBgmInfoArcFile.Initialize();
-
-
-                }
-
-                if (reSetup)
-                    NameHolder.Close();
-
-
-                NameHolder.Initialize();
-
-
-
-                ImageHolder.Initialize();
-
-
+                GameDirectory.OpenDirectory(reSetup);
 
                 bcsvEditorBtn.Enabled = true;
                 galaxyTreeView.Nodes.Clear();
@@ -132,25 +77,16 @@ namespace Takochu
                     "作業ディレクトリのパスを初期化した後、このプログラムは終了します。",
                     "Error"
                     );
-                SetDefaultPath();
+                GameDirectory.SetDefaultPath();
                 KillApplication();
             }
-            
-        }
 
-        /// <summary>
-        /// ゲームディレクトリを初期化します。
-        /// </summary>
-        private void SetDefaultPath() 
-        {
-            Properties.Settings.Default.GamePath = DefaultPath;
-            Properties.Settings.Default.Save();
         }
 
         /// <summary>
         /// アプリケーションを強制終了させます。
         /// </summary>
-        private void KillApplication() 
+        private void KillApplication()
         {
             Close();
             Environment.Exit(0);
@@ -158,50 +94,14 @@ namespace Takochu
 
         private void selectGameFolderBtn_Click(object sender, EventArgs e)
         {
-            bool res =
-            SetGamePath();
-
-            if (res) Setup(true);
+            bool successfulSet = GameDirectory.BrowseSetGameDirectory();
+            if (successfulSet) SetGalaxyTreeView(true);
         }
 
         private void BcsvEditorBtn_Click(object sender, EventArgs e)
         {
             BCSVEditorForm bcsvEditor = new BCSVEditorForm();
             bcsvEditor.Show();
-        }
-
-        private bool SetGamePath()
-        {
-            var SetPath = Properties.Settings.Default.GamePath;
-
-            if (!Directory.Exists(SetPath))
-                SetPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-
-            CommonOpenFileDialog cofd = new CommonOpenFileDialog
-            {
-                InitialDirectory = SetPath,
-                IsFolderPicker = true
-            };
-            if (cofd.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                string path = cofd.FileName;
-                if (Directory.Exists($"{path}/StageData") && Directory.Exists($"{path}/ObjectData"))
-                {
-                    Properties.Settings.Default.GamePath = path;
-                    Properties.Settings.Default.Save();
-
-                    Program.sGame = new Game(new ExternalFilesystem(path));
-
-                    Translate.GetMessageBox.Show(MessageBoxText.FolderPathCorrectly, MessageBoxCaption.Info);
-                    return true;
-                }
-                else
-                {
-                    Translate.GetMessageBox.Show(MessageBoxText.InvalidGameFolder, MessageBoxCaption.Error);
-                    return false;
-                }
-            }
-            return false;
         }
 
         private void galaxyTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
