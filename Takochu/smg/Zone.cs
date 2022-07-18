@@ -249,8 +249,10 @@ namespace Takochu.smg
             BCSV bcsv = new BCSV(mMapFiles[archive].OpenFile($"/stage/jmp/{path}"));
             //var a = new AbstractObj("Kuribo", this);
             //var b = a as LevelObj;
-            var b =new  LevelObj("Kuribo", this);
+            var b =new  LevelObj("Kuribo", this, path);
             b.mParentZone.ZoneName = "BigGalaxy";
+            
+
             Console.WriteLine(b.mParentZone.ZoneName);
             //bcsv.mEntries.Add(b.mEntry);
             

@@ -49,8 +49,14 @@ namespace Takochu.smg.obj
             { "GreenStar" , ("PowerStar","None") }
         };
 
-        public LevelObj(string objectName,Zone parentZone):base(objectName,parentZone) 
+        public LevelObj(string objectName,Zone parentZone,string path):base(objectName,parentZone) 
         {
+            string[] content = path.Split('/');
+            mDirectory = content[0];
+            mLayer = content[1];
+            mFile = content[2];
+
+
             mEntry.Add("name", mName = objectName);
             mEntry.Add("l_id", mID = 0);
 
@@ -84,7 +90,7 @@ namespace Takochu.smg.obj
             mEntry.Add("dir_y", mTrueRotation.Y);
             mEntry.Add("dir_z", mTrueRotation.Z);
 
-            mScale = Vector3.Zero;
+            mScale = Vector3.One;
             mEntry.Add("scale_x", mScale.X);
             mEntry.Add("scale_y", mScale.Y);
             mEntry.Add("scale_z", mScale.Z);
@@ -98,49 +104,73 @@ namespace Takochu.smg.obj
             mEntry.Add("DemoGroupId", mDemoGroupID = -1);
             mEntry.Add("MapParts_ID", mMapPartsID = -1);
 
+            if (cMultiRenderObjs.ContainsKey(mName))
+            {
+                mRenderer = new MultiBmdRenderer(cMultiRenderObjs[mName]);
+            }
+            else if (ModelCache.HasRenderer(mName))
+            {
+                mRenderer = ModelCache.GetRenderer(mName);
+            }
+            else if (mRenderer == null && Program.sGame.DoesFileExist($"/ObjectData/{mName}.arc"))
+            {
+                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{mName}.arc"));
 
-            //mEntry.Set("name", mName);
-            //mEntry.Set("l_id", mID);
+                if (rarc.DoesFileExist($"/root/{mName}.bdl"))
+                {
+                    mRenderer = new BmdRenderer(new BMD(rarc.OpenFile($"/root/{mName}.bdl")));
+                    ModelCache.AddRenderer(mName, (BmdRenderer)mRenderer);
+                }
+                else
+                {
+                    mRenderer = new ColorCubeRenderer(200f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
+                }
 
-            //for (int i = 0; i < 8; i++)
-            //    mEntry.Set($"Obj_arg{i}", mObjArgs[i]);
+                if (rarc.DoesFileExist("/root/ColorChange.brk"))
+                {
+                    //BRK brk = new BRK(rarc.OpenFile("/root/ColorChange.brk"));
+                }
 
-            //mEntry.Set("CameraSetId", mCameraSetID);
-            //mEntry.Set("SW_APPEAR", mSwitchAppear);
-            //mEntry.Set("SW_DEAD", mSwitchDead);
-            //mEntry.Set("SW_A", mSwitchActivate);
-            //mEntry.Set("SW_B", mSwitchDeactivate);
-            //if (GameUtil.IsSMG2())
-            //{
-            //    mEntry.Set("SW_AWAKE", mSwitchAwake);
-            //    mEntry.Set("SW_PARAM", mSwitchParameter);
-            //    mEntry.Set("ParamScale", mParamScale);
-            //    mEntry.Set("Obj_ID", mObjID);
-            //    mEntry.Set("GeneratorID", mGeneratorID);
-            //}
-            //mEntry.Set("MessageId", mMessageID);
+                rarc.Close();
+            }
+            else if (SP_ObjectName.ContainsKey(mName))
+            {
+                var tmpname = SP_ObjectName[mName];
+                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item1}.arc"));
 
+                if (rarc.DoesFileExist($"/root/{tmpname.Item1}.bdl"))
+                {
+                    mRenderer = new BmdRenderer(new BMD(rarc.OpenFile($"/root/{tmpname.Item1}.bdl")));
+                    ModelCache.AddRenderer(tmpname.Item1, (BmdRenderer)mRenderer);
+                }
+                else
+                {
+                    mRenderer = new ColorCubeRenderer(200f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
+                }
 
-            //mEntry.Set("pos_x", mTruePosition.X);
-            //mEntry.Set("pos_y", mTruePosition.Y);
-            //mEntry.Set("pos_z", mTruePosition.Z);
+                rarc.Close();
 
-            //mEntry.Set("dir_x", mTrueRotation.X);
-            //mEntry.Set("dir_y", mTrueRotation.Y);
-            //mEntry.Set("dir_z", mTrueRotation.Z);
+                if (tmpname.Item2 == "None") return;
 
-            //mEntry.Set("scale_x", mScale.X);
-            //mEntry.Set("scale_y", mScale.Y);
-            //mEntry.Set("scale_z", mScale.Z);
+                RARCFilesystem rarc1 = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item2}.arc"));
 
-            //mEntry.Set("CastId", mCastID);
-            //mEntry.Set("ViewGroupId", mViewGroupID);
-            //mEntry.Set("ShapeModelNo", mShapeModelNo);
-            //mEntry.Set("CommonPath_ID", mPathID);
-            //mEntry.Set("ClippingGroupId", mClippingGroupID);
-            //mEntry.Set("GroupId", mGroupID);
-            //mEntry.Set("DemoGroupId", mDemoGroupID);
-            //mEntry.Set("MapParts_ID", mMapPartsID);
+                if (rarc1.DoesFileExist($"/root/{tmpname.Item2}.bdl"))
+                {
+                    mRenderer2 = new BmdRenderer(new BMD(rarc1.OpenFile($"/root/{tmpname.Item2}.bdl")));
+                    ModelCache.AddRenderer(tmpname.Item2, (BmdRenderer)mRenderer2);
+                }
+                else
+                {
+                    mRenderer2 = new ColorCubeRenderer(200f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
+                }
+
+                rarc1.Close();
+            }
+            else
+            {
+                mRenderer = new ColorCubeRenderer(150f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
+            }
+
 
         }
 
