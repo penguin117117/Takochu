@@ -48,7 +48,102 @@ namespace Takochu.smg.obj
             { "SplashPieceBlock" , ("CoinBlock","None") },
             { "GreenStar" , ("PowerStar","None") }
         };
-         
+
+        public LevelObj(string objectName,Zone parentZone):base(objectName,parentZone) 
+        {
+            mEntry.Add("name", mName = objectName);
+            mEntry.Add("l_id", mID = 0);
+
+            for (int i = 0; i < 8; i++)
+                mEntry.Add($"Obj_arg{i}", -1);
+
+            mType = "Obj";
+
+            mEntry.Add("CameraSetId", mCameraSetID = -1);
+            mEntry.Add("SW_APPEAR", mSwitchAppear = -1);
+            mEntry.Add("SW_DEAD", mSwitchDead = -1);
+            mEntry.Add("SW_A", mSwitchActivate = -1);
+            mEntry.Add("SW_B", mSwitchDeactivate = -1);
+            if (GameUtil.IsSMG2())
+            {
+                mEntry.Add("SW_AWAKE", mSwitchAwake = -1);
+                mEntry.Add("SW_PARAM", mSwitchParameter = -1);
+                mEntry.Add("ParamScale", mParamScale = 1);
+                mEntry.Add("Obj_ID", mObjID = -1);
+                mEntry.Add("GeneratorID", mGeneratorID = -1);
+            }
+            mEntry.Add("MessageId", mMessageID = -1);
+
+            mTruePosition = Vector3.Zero;
+            mEntry.Add("pos_x", mTruePosition.X);
+            mEntry.Add("pos_y", mTruePosition.Y);
+            mEntry.Add("pos_z", mTruePosition.Z);
+
+            mTrueRotation = Vector3.Zero;
+            mEntry.Add("dir_x", mTrueRotation.X);
+            mEntry.Add("dir_y", mTrueRotation.Y);
+            mEntry.Add("dir_z", mTrueRotation.Z);
+
+            mScale = Vector3.Zero;
+            mEntry.Add("scale_x", mScale.X);
+            mEntry.Add("scale_y", mScale.Y);
+            mEntry.Add("scale_z", mScale.Z);
+
+            mEntry.Add("CastId", mCastID = -1);
+            mEntry.Add("ViewGroupId", mViewGroupID = -1);
+            mEntry.Add("ShapeModelNo", mShapeModelNo = -1);
+            mEntry.Add("CommonPath_ID", mPathID = -1);
+            mEntry.Add("ClippingGroupId", mClippingGroupID = -1);
+            mEntry.Add("GroupId", mGroupID = -1);
+            mEntry.Add("DemoGroupId", mDemoGroupID = -1);
+            mEntry.Add("MapParts_ID", mMapPartsID = -1);
+
+
+            //mEntry.Set("name", mName);
+            //mEntry.Set("l_id", mID);
+
+            //for (int i = 0; i < 8; i++)
+            //    mEntry.Set($"Obj_arg{i}", mObjArgs[i]);
+
+            //mEntry.Set("CameraSetId", mCameraSetID);
+            //mEntry.Set("SW_APPEAR", mSwitchAppear);
+            //mEntry.Set("SW_DEAD", mSwitchDead);
+            //mEntry.Set("SW_A", mSwitchActivate);
+            //mEntry.Set("SW_B", mSwitchDeactivate);
+            //if (GameUtil.IsSMG2())
+            //{
+            //    mEntry.Set("SW_AWAKE", mSwitchAwake);
+            //    mEntry.Set("SW_PARAM", mSwitchParameter);
+            //    mEntry.Set("ParamScale", mParamScale);
+            //    mEntry.Set("Obj_ID", mObjID);
+            //    mEntry.Set("GeneratorID", mGeneratorID);
+            //}
+            //mEntry.Set("MessageId", mMessageID);
+
+
+            //mEntry.Set("pos_x", mTruePosition.X);
+            //mEntry.Set("pos_y", mTruePosition.Y);
+            //mEntry.Set("pos_z", mTruePosition.Z);
+
+            //mEntry.Set("dir_x", mTrueRotation.X);
+            //mEntry.Set("dir_y", mTrueRotation.Y);
+            //mEntry.Set("dir_z", mTrueRotation.Z);
+
+            //mEntry.Set("scale_x", mScale.X);
+            //mEntry.Set("scale_y", mScale.Y);
+            //mEntry.Set("scale_z", mScale.Z);
+
+            //mEntry.Set("CastId", mCastID);
+            //mEntry.Set("ViewGroupId", mViewGroupID);
+            //mEntry.Set("ShapeModelNo", mShapeModelNo);
+            //mEntry.Set("CommonPath_ID", mPathID);
+            //mEntry.Set("ClippingGroupId", mClippingGroupID);
+            //mEntry.Set("GroupId", mGroupID);
+            //mEntry.Set("DemoGroupId", mDemoGroupID);
+            //mEntry.Set("MapParts_ID", mMapPartsID);
+
+        }
+
         public LevelObj(BCSV.Entry entry, Zone parentZone, string path) : base(entry)
         {
             
@@ -314,7 +409,6 @@ namespace Takochu.smg.obj
                 mEntry.Set("GeneratorID", mGeneratorID);
             }
             mEntry.Set("MessageId", mMessageID);
-            
 
             mEntry.Set("pos_x", mTruePosition.X);
             mEntry.Set("pos_y", mTruePosition.Y);

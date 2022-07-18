@@ -57,19 +57,19 @@ namespace Takochu.smg
             XmlDocument db = new XmlDocument();
             db.Load(Xml_PathString);
 
-            XmlNode actors = db.DocumentElement.ChildNodes[0];
+            XmlNode actorsNode = db.DocumentElement.ChildNodes[0];
 
-            foreach(XmlNode actrs in actors.ChildNodes)
+            foreach(XmlNode actorNode in actorsNode.ChildNodes)
             {
-                Actor actor = new Actor();
+                Actor actorData = new Actor();
 
-                actor.ActorName = actrs.Attributes["id"].Value;
+                actorData.ActorName = actorNode.Attributes["id"].Value;
 
-                XmlNode generalFlags = actrs["flags"];
-                actor.IsKnown = Convert.ToInt32(generalFlags.Attributes["known"].Value);
-                actor.IsComplete = Convert.ToInt32(generalFlags.Attributes["complete"].Value);
-                actor.Fields = new List<ActorField>();
-                XmlNode fields = actrs["fields"];
+                XmlNode generalFlags = actorNode["flags"];
+                actorData.IsKnown = Convert.ToInt32(generalFlags.Attributes["known"].Value);
+                actorData.IsComplete = Convert.ToInt32(generalFlags.Attributes["complete"].Value);
+                actorData.Fields = new List<ActorField>();
+                XmlNode fields = actorNode["fields"];
 
                 foreach(XmlNode field in fields.ChildNodes)
                 {
@@ -80,10 +80,10 @@ namespace Takochu.smg
                     f.Type = field.Attributes["type"].Value;
                     f.Value = field.Attributes["values"].Value;
                     f.Notes = field.Attributes["notes"].Value;
-                    actor.Fields.Add(f);
+                    actorData.Fields.Add(f);
                 }
 
-                Actors.Add(actor.ActorName, actor);
+                Actors.Add(actorData.ActorName, actorData);
             }
 
             XmlNode objects = db.DocumentElement.ChildNodes[1];

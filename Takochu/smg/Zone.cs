@@ -17,7 +17,7 @@ namespace Takochu.smg
 {
     public class Zone
     {
-        public string[] cPossibleFiles = { "Design", "Light", "Ghost", "Map", "Sound", "ZoneInfo" };
+        public string[] PossibleARCFileNames = { "Design", "Light", "Ghost", "Map", "Sound", "ZoneInfo" };
         public static int MissingPathArgumentsRemove { get; private set; }
 
         public Zone(GalaxyScenario galaxy, string name)
@@ -25,7 +25,7 @@ namespace Takochu.smg
             mGalaxy = galaxy;
             mGame = galaxy.mGame;
             mFilesystem = mGame.Filesystem;
-            mZoneName = name;
+            ZoneName = name;
             mIsMainGalaxy = (mGalaxy.mName == name);
 
             mMapFiles = new Dictionary<string, FilesystemBase>();
@@ -41,7 +41,7 @@ namespace Takochu.smg
             MissingPathArgumentsRemove = 0;
             if (GameUtil.IsSMG1())
             {
-                string path = $"/StageData/{mZoneName}.arc";
+                string path = $"/StageData/{ZoneName}.arc";
                 if (mFilesystem.DoesFileExist(path))
                 {
                     mMapFiles.Add("Map", new RARCFilesystem(mFilesystem.OpenFile(path)));
@@ -65,46 +65,47 @@ namespace Takochu.smg
             {
                 // so first we need to collect all of the files used in this zone
                 // zones can use Design, Sound, Light, etc
-                foreach (string file in cPossibleFiles)
+                foreach (string arcFileName in PossibleARCFileNames)
                 {
-                    string path = $"/StageData/{mZoneName}/{mZoneName}{file}.arc";
+                    string targetARCFilePath = $"/StageData/{ZoneName}/{ZoneName}{arcFileName}.arc";
 
-                    if (mFilesystem.DoesFileExist(path))
+                    if (!mFilesystem.DoesFileExist(targetARCFilePath)) 
+                        continue;
+
+                    RARCFilesystem fs = new RARCFilesystem(mFilesystem.OpenFile(targetARCFilePath));
+
+                    mMapFiles.Add(arcFileName, fs);
+
+                    if (arcFileName == "Light")
                     {
-                        RARCFilesystem fs = new RARCFilesystem(mFilesystem.OpenFile(path));
-
-                        mMapFiles.Add(file, fs);
-
-                        if (file == "Light")
-                        {
-                            LoadLight();
-                        }
-                        else if (file == "ZoneInfo")
-                        {
-                            LoadAttributes();
-                        }
-                        else if (file == "Ghost")
-                        {
-                            //LoadGhost();
-                        }
-                        else
-                        {
-                            // we load our StageObjInfo first because objects can use their offsets
-
-                            if (mIsMainGalaxy)
-                                LoadObjects(file, "Placement", "StageObjInfo");
-
-                            LoadObjects(file, "Placement", "AreaObjInfo");
-                            LoadObjects(file, "Placement", "CameraCubeInfo");
-                            LoadObjects(file, "Placement", "ObjInfo");
-                            LoadObjects(file, "Placement", "PlanetObjInfo");
-                            LoadObjects(file, "GeneralPos", "GeneralPosInfo");
-                            LoadObjects(file, "Debug", "DebugMoveInfo");
-                            LoadObjects(file, "Start", "StartInfo");
-                            LoadObjects(file, "MapParts", "MapPartsInfo");
-                            LoadObjects(file, "Placement", "DemoObjInfo");
-                        }
+                        LoadLight();
                     }
+                    else if (arcFileName == "ZoneInfo")
+                    {
+                        LoadAttributes();
+                    }
+                    else if (arcFileName == "Ghost")
+                    {
+                        //LoadGhost();
+                    }
+                    else
+                    {
+                        // we load our StageObjInfo first because objects can use their offsets
+
+                        if (mIsMainGalaxy)
+                            LoadObjects(arcFileName, "Placement", "StageObjInfo");
+
+                        LoadObjects(arcFileName, "Placement", "AreaObjInfo");
+                        LoadObjects(arcFileName, "Placement", "CameraCubeInfo");
+                        LoadObjects(arcFileName, "Placement", "ObjInfo");
+                        LoadObjects(arcFileName, "Placement", "PlanetObjInfo");
+                        LoadObjects(arcFileName, "GeneralPos", "GeneralPosInfo");
+                        LoadObjects(arcFileName, "Debug", "DebugMoveInfo");
+                        LoadObjects(arcFileName, "Start", "StartInfo");
+                        LoadObjects(arcFileName, "MapParts", "MapPartsInfo");
+                        LoadObjects(arcFileName, "Placement", "DemoObjInfo");
+                    }
+
                 }
                 LoadMessages();
             }
@@ -122,6 +123,7 @@ namespace Takochu.smg
                 return;
             }
 
+            //"Map", "placement", "objinfo"
             layers.ForEach(l => AssignsObjectsToList(archive, $"{directory}/{l}/{file}"));
         }
 
@@ -154,25 +156,25 @@ namespace Takochu.smg
 
         public void LoadLight()
         {
-            if (!mMapFiles["Light"].DoesFileExist($"/root/csv/{mZoneName}Light.bcsv"))
+            if (!mMapFiles["Light"].DoesFileExist($"/root/csv/{ZoneName}Light.bcsv"))
                 return;
 
-            BCSV light = new BCSV(mMapFiles["Light"].OpenFile($"/root/csv/{mZoneName}Light.bcsv"));
+            BCSV light = new BCSV(mMapFiles["Light"].OpenFile($"/root/csv/{ZoneName}Light.bcsv"));
             mLights = new List<Light>();
-            light.mEntries.ForEach(e => mLights.Add(new Light(e, mZoneName)));
+            light.mEntries.ForEach(e => mLights.Add(new Light(e, ZoneName)));
         }
 
         public void LoadMessages()
         {
-            if (mFilesystem.DoesFileExist($"/LocalizeData/{Program.sLanguage}/MessageData/{mZoneName}.arc"))
+            if (mFilesystem.DoesFileExist($"/LocalizeData/{Program.sLanguage}/MessageData/{ZoneName}.arc"))
             {
-                mMessagesFile = new RARCFilesystem(mFilesystem.OpenFile($"/LocalizeData/{Program.sLanguage}/MessageData/{mZoneName}.arc"));
+                mMessagesFile = new RARCFilesystem(mFilesystem.OpenFile($"/LocalizeData/{Program.sLanguage}/MessageData/{ZoneName}.arc"));
 
-                if (mMessagesFile.DoesFileExist($"/root/{mZoneName}.msbt"))
-                    mMessages = new MSBT(mMessagesFile.OpenFile($"/root/{mZoneName}.msbt"));
+                if (mMessagesFile.DoesFileExist($"/root/{ZoneName}.msbt"))
+                    mMessages = new MSBT(mMessagesFile.OpenFile($"/root/{ZoneName}.msbt"));
 
-                if (mMessagesFile.DoesFileExist($"/root/{mZoneName}.msbf"))
-                    mMessageFlows = new MSBF(mMessagesFile.OpenFile($"/root/{mZoneName}.msbf"));
+                if (mMessagesFile.DoesFileExist($"/root/{ZoneName}.msbf"))
+                    mMessageFlows = new MSBF(mMessagesFile.OpenFile($"/root/{ZoneName}.msbf"));
             }
         }
 
@@ -230,15 +232,38 @@ namespace Takochu.smg
             }
         }
 
+        public void AddObject(string archive, string directory, string file) 
+        {
+            string layer = "Common";
+            string path = $"{directory}/{layer}/{file}";
+            //List<string> layers = mMapFiles[archive].GetDirectories("/root/jmp/" + directory);
+
+            //if (layers == null)
+            //{
+            //    return;
+            //}
+
+            string[] data = path.Split('/');
+            //string layer = data[1];
+            //string dir = data[2];
+            BCSV bcsv = new BCSV(mMapFiles[archive].OpenFile($"/stage/jmp/{path}"));
+            //var a = new AbstractObj("Kuribo", this);
+            //var b = a as LevelObj;
+            var b =new  LevelObj("Kuribo", this);
+            b.mParentZone.ZoneName = "BigGalaxy";
+            Console.WriteLine(b.mParentZone.ZoneName);
+            //bcsv.mEntries.Add(b.mEntry);
+            
+
+            mObjects[archive][layer].Add(b);
+        }
 
         public void AssignsObjectsToList(string archive, string path)
         {
-            //Console.WriteLine(path);
             string[] data = path.Split('/');
             string layer = data[1];
             string dir = data[2];
-            //Console.WriteLine("Layer "+layer);
-            //Console.WriteLine(data[0] + data[1] + data[2] + "  " + data.Count());
+
             if (!mObjects.ContainsKey(archive))
             {
                 mObjects.Add(archive, new Dictionary<string, List<AbstractObj>>());
@@ -324,7 +349,7 @@ namespace Takochu.smg
 
             List<StageObj> zones = mHasStageObjList[layer];
 
-            return zones.Any(s => mZoneName == s.mName);
+            return zones.Any(s => ZoneName == s.mName);
         }
 
         public List<string> GetZonesUsedOnLayers(List<string> layers)
@@ -352,9 +377,9 @@ namespace Takochu.smg
 
         public List<AbstractObj> GetAllObjectsFromLayers(List<string> layers)
         {
-            List<AbstractObj> ret = new List<AbstractObj>();
+            List<AbstractObj> objectList = new List<AbstractObj>();
 
-            foreach (string archive in cPossibleFiles)
+            foreach (string archive in PossibleARCFileNames)
             {
                 if (!mObjects.ContainsKey(archive))
                     continue;
@@ -366,7 +391,7 @@ namespace Takochu.smg
                 {
                     if (objs.ContainsKey(l))
                     {
-                        ret.AddRange(objs[l]);
+                        objectList.AddRange(objs[l]);
                         //if (objs[l].Count > 0) Console.WriteLine(objs[l].ElementAt(0).mName);
 
                     }
@@ -374,7 +399,7 @@ namespace Takochu.smg
                 });
             }
 
-            return ret;
+            return objectList;
         }
 
         public StageObj GetStageDataFromNameOnCurScenario(string stageName)
@@ -400,7 +425,7 @@ namespace Takochu.smg
 
         public List<StageObj> GetAllStageDataForCurrentScenario()
         {
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
             return GetAllStageDataFromLayers(layers);
         }
 
@@ -427,9 +452,9 @@ namespace Takochu.smg
         public List<AbstractObj> GetAllObjectsOfTypeFromCurrentScenario(string objType)
         {
             List<AbstractObj> ret = new List<AbstractObj>();
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
 
-            foreach (string file in cPossibleFiles)
+            foreach (string file in PossibleARCFileNames)
             {
                 if (mObjects.ContainsKey(file))
                 {
@@ -517,7 +542,7 @@ namespace Takochu.smg
         {
             List<int> ids = new List<int>();
 
-            foreach (string str in cPossibleFiles)
+            foreach (string str in PossibleARCFileNames)
             {
                 if (mObjects.ContainsKey(str))
                 {
@@ -538,11 +563,11 @@ namespace Takochu.smg
 
         public List<int> GetAllUniqueIDsFromZoneOnCurrentScenario()
         {
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
 
             List<int> ids = new List<int>();
 
-            foreach (string str in cPossibleFiles)
+            foreach (string str in PossibleARCFileNames)
             {
                 if (mObjects.ContainsKey(str))
                 {
@@ -570,10 +595,10 @@ namespace Takochu.smg
                 return ids;
             }
 
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
 
 
-            foreach (string str in cPossibleFiles)
+            foreach (string str in PossibleARCFileNames)
             {
                 if (mObjects.ContainsKey(str))
                 {
@@ -599,9 +624,9 @@ namespace Takochu.smg
 
         public void RenderObjFromUnique(int id, RenderMode mode, bool recalcPosRot = false)
         {
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
 
-            foreach (string str in cPossibleFiles)
+            foreach (string str in PossibleARCFileNames)
             {
                 if (mObjects.ContainsKey(str))
                 {
@@ -647,9 +672,9 @@ namespace Takochu.smg
 
         public AbstractObj GetObjFromUniqueID(int id)
         {
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
 
-            foreach (string directoryName in cPossibleFiles)
+            foreach (string directoryName in PossibleARCFileNames)
             {
                 if (!mObjects.ContainsKey(directoryName)) continue;
 
@@ -702,9 +727,9 @@ namespace Takochu.smg
         public void DeleteObjectWithUniqueID(int id)
         {
             int idx = -1;
-            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            List<string> layers = GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
 
-            foreach (string str in cPossibleFiles)
+            foreach (string str in PossibleARCFileNames)
             {
                 if (mObjects.ContainsKey(str))
                 {
@@ -732,7 +757,7 @@ namespace Takochu.smg
             }
 
 
-            
+
             //foreach (PathObj pathObj in mPaths)
             //{
             //    if (pathObj.mPathPointObjs.Count <= 1)
@@ -741,7 +766,7 @@ namespace Takochu.smg
             //    }
             //    foreach (var pathPointObj in pathObj.mPathPointObjs)
             //    {
-                    
+
 
             //        if (pathPointObj.mParent.mUnique == id)
             //        {
@@ -769,13 +794,13 @@ namespace Takochu.smg
                 PathObj path = obj as PathObj;
                 path.RemovePathPointAtIndex(idx);
             }
-            else if (obj is PathPointObj) 
+            else if (obj is PathPointObj)
             {
                 PathPointObj path = obj as PathPointObj;
                 path.mParent.RemovePathPointAtIndex(idx);
             }
 
-            
+
         }
 
         public void UpdatePathIndicies()
@@ -810,7 +835,7 @@ namespace Takochu.smg
         public bool HasMessages()
         {
             if (GameUtil.IsSMG1())
-                return NameHolder.DoesMsgTblContain(mZoneName);
+                return NameHolder.DoesMsgTblContain(ZoneName);
             else
                 return mMessages != null;
         }
@@ -832,7 +857,7 @@ namespace Takochu.smg
 
         public List<string> GetLayersUsedOnZoneForCurrentScenario()
         {
-            return GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(mZoneName));
+            return GameUtil.GetGalaxyLayers(mGalaxy.GetMaskUsedInZoneOnCurrentScenario(ZoneName));
         }
 
         public void Save()
@@ -854,7 +879,7 @@ namespace Takochu.smg
             }
 
             // todo -- why does this zone's MSBT not save right
-            if (mZoneName != "MarioFaceShipZone")
+            if (ZoneName != "MarioFaceShipZone")
             {
                 if (mMessages != null)
                     mMessages.Save();
@@ -970,7 +995,7 @@ namespace Takochu.smg
 
         private void SaveLights()
         {
-            BCSV light = new BCSV(mMapFiles["Light"].OpenFile($"/root/csv/{mZoneName}Light.bcsv"));
+            BCSV light = new BCSV(mMapFiles["Light"].OpenFile($"/root/csv/{ZoneName}Light.bcsv"));
             light.mEntries.Clear();
 
             foreach (Light l in mLights)
@@ -1000,7 +1025,7 @@ namespace Takochu.smg
         public GalaxyScenario mGalaxy;
         private Game mGame;
         private FilesystemBase mFilesystem;
-        public string mZoneName;
+        public string ZoneName;
 
         public bool mIsMainGalaxy;
 
