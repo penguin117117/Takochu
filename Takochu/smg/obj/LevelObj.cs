@@ -60,8 +60,10 @@ namespace Takochu.smg.obj
             mEntry.Add("name", mName = objectName);
             mEntry.Add("l_id", mID = 0);
 
+            mObjArgs = new int[8];
+
             for (int i = 0; i < 8; i++)
-                mEntry.Add($"Obj_arg{i}", -1);
+                mEntry.Add($"Obj_arg{i}", mObjArgs[i] = -1);
 
             mType = "Obj";
 

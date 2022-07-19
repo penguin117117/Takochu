@@ -26,6 +26,26 @@ namespace Takochu.smg.obj
         {
             mEntry = new BCSV.Entry();
             mParentZone = parentZone;
+
+            if (this is PathPointObj)
+            {
+                PathPointObj path = this as PathPointObj;
+                path.mPointColors = new Color[3];
+                path.mPointIDs = new int[3];
+                for (int pointID = 0; pointID < 3; pointID++)
+                {
+                    path.mPointIDs[pointID] = Program.sUniqueID++;
+                    Color color = GetRandomColor();
+                    ColorHolder.Add(path.mPointIDs[pointID], color);
+                    path.mPointColors[pointID] = color;
+                }
+            }
+            else
+            {
+                mUnique = Program.sUniqueID++;
+                mPicking = GetRandomColor();
+                ColorHolder.Add(mUnique, mPicking);
+            }
         }
 
         public AbstractObj(BCSV.Entry entry)
