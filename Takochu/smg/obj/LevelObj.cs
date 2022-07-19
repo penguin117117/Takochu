@@ -51,11 +51,12 @@ namespace Takochu.smg.obj
 
         public LevelObj(string objectName,Zone parentZone,string path):base(objectName,parentZone) 
         {
-            string[] content = path.Split('/');
-            mDirectory = content[0];
-            mLayer = content[1];
-            mFile = content[2];
+            //string[] content = path.Split('/');
+            //mDirectory = content[0];
+            //mLayer = content[1];
+            //mFile = content[2];
 
+            Set_DirectoryAndLayerAndFileString(path);
 
             mEntry.Add("name", mName = objectName);
             mEntry.Add("l_id", mID = 0);
@@ -106,84 +107,19 @@ namespace Takochu.smg.obj
             mEntry.Add("DemoGroupId", mDemoGroupID = -1);
             mEntry.Add("MapParts_ID", mMapPartsID = -1);
 
-            if (cMultiRenderObjs.ContainsKey(mName))
-            {
-                mRenderer = new MultiBmdRenderer(cMultiRenderObjs[mName]);
-            }
-            else if (ModelCache.HasRenderer(mName))
-            {
-                mRenderer = ModelCache.GetRenderer(mName);
-            }
-            else if (mRenderer == null && Program.sGame.DoesFileExist($"/ObjectData/{mName}.arc"))
-            {
-                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{mName}.arc"));
-
-                if (rarc.DoesFileExist($"/root/{mName}.bdl"))
-                {
-                    mRenderer = new BmdRenderer(new BMD(rarc.OpenFile($"/root/{mName}.bdl")));
-                    ModelCache.AddRenderer(mName, (BmdRenderer)mRenderer);
-                }
-                else
-                {
-                    mRenderer = new ColorCubeRenderer(200f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
-                }
-
-                if (rarc.DoesFileExist("/root/ColorChange.brk"))
-                {
-                    //BRK brk = new BRK(rarc.OpenFile("/root/ColorChange.brk"));
-                }
-
-                rarc.Close();
-            }
-            else if (SP_ObjectName.ContainsKey(mName))
-            {
-                var tmpname = SP_ObjectName[mName];
-                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item1}.arc"));
-
-                if (rarc.DoesFileExist($"/root/{tmpname.Item1}.bdl"))
-                {
-                    mRenderer = new BmdRenderer(new BMD(rarc.OpenFile($"/root/{tmpname.Item1}.bdl")));
-                    ModelCache.AddRenderer(tmpname.Item1, (BmdRenderer)mRenderer);
-                }
-                else
-                {
-                    mRenderer = new ColorCubeRenderer(200f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
-                }
-
-                rarc.Close();
-
-                if (tmpname.Item2 == "None") return;
-
-                RARCFilesystem rarc1 = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item2}.arc"));
-
-                if (rarc1.DoesFileExist($"/root/{tmpname.Item2}.bdl"))
-                {
-                    mRenderer2 = new BmdRenderer(new BMD(rarc1.OpenFile($"/root/{tmpname.Item2}.bdl")));
-                    ModelCache.AddRenderer(tmpname.Item2, (BmdRenderer)mRenderer2);
-                }
-                else
-                {
-                    mRenderer2 = new ColorCubeRenderer(200f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
-                }
-
-                rarc1.Close();
-            }
-            else
-            {
-                mRenderer = new ColorCubeRenderer(150f, new Vector4(1f, 1f, 1f, 1f), new Vector4(1f, 0f, 1f, 1f), true);
-            }
-
-
+            BMD_Rendering();
         }
 
         public LevelObj(BCSV.Entry entry, Zone parentZone, string path) : base(entry)
         {
             
             mParentZone = parentZone;
-            string[] content = path.Split('/');
-            mDirectory = content[0];
-            mLayer = content[1];
-            mFile = content[2];
+            Set_DirectoryAndLayerAndFileString(path);
+
+            //string[] content = path.Split('/');
+            //mDirectory = content[0];
+            //mLayer = content[1];
+            //mFile = content[2];
 
             mType = "Obj";
 
@@ -226,14 +162,27 @@ namespace Takochu.smg.obj
             mDemoGroupID = Get<short>("DemoGroupId");
             mMapPartsID = Get<short>("MapParts_ID");
 
+            BMD_Rendering();
+        }
+
+        private void Set_DirectoryAndLayerAndFileString(string path) 
+        {
+            string[] content = path.Split('/');
+            mDirectory = content[0];
+            mLayer = content[1];
+            mFile = content[2];
+        }
+
+        private void BMD_Rendering() 
+        {
             /* 
-             * Rendering the proper BMD files can be a little complicated, so let's break this down
-             * If the object has multiple pieces to render, we create the renderer in the first statement
-             * if the model cache already has our model, we take it from there and store it
-             * if the model cache does not have our model, and the file exists, we load the model and store it into our model cache
-             * if an object has a different archive name than the object name, we load that object name instead
-             * if all else fails, we just load a color cube
-             */
+                 * Rendering the proper BMD files can be a little complicated, so let's break this down
+                 * If the object has multiple pieces to render, we create the renderer in the first statement
+                 * if the model cache already has our model, we take it from there and store it
+                 * if the model cache does not have our model, and the file exists, we load the model and store it into our model cache
+                 * if an object has a different archive name than the object name, we load that object name instead
+                 * if all else fails, we just load a color cube
+                 */
             if (cMultiRenderObjs.ContainsKey(mName))
             {
                 mRenderer = new MultiBmdRenderer(cMultiRenderObjs[mName]);
@@ -263,7 +212,7 @@ namespace Takochu.smg.obj
 
                 rarc.Close();
             }
-            else if (SP_ObjectName.ContainsKey(mName)) 
+            else if (SP_ObjectName.ContainsKey(mName))
             {
                 var tmpname = SP_ObjectName[mName];
                 RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item1}.arc"));
