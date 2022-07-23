@@ -152,7 +152,14 @@
     <Compile Include="rnd\RenderBase.cs" />
     <Compile Include="smg\img\ImageHolder.cs" />
     <Compile Include="smg\msg\MessageBase.cs" />
+    <Compile Include="smg\obj\ObjectSubData\InfoData.cs" />
     <Compile Include="smg\ZoneAttributes.cs" />
+    <Compile Include="ui\AddObjectWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ui\AddObjectWindow.Designer.cs">
+      <DependentUpon>AddObjectWindow.cs</DependentUpon>
+    </Compile>
     <Compile Include="ui\EditorWindowSys\DataGridViewEdit.cs" />
     <Compile Include="ui\HashGenForm.cs">
       <SubType>Form</SubType>
@@ -270,6 +277,8 @@
     <Compile Include="ui\MessageEditor.Designer.cs">
       <DependentUpon>MessageEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="util\GameVer\IGameVersion.cs" />
+    <Compile Include="util\GameVer\SMG2.cs" />
     <Compile Include="util\ImageUtil.cs" />
     <Compile Include="util\ObjectPropertyGridSettings.cs" />
     <Compile Include="util\ProgramUtil.cs" />
@@ -287,6 +296,9 @@
     <EmbeddedResource Include="Properties\PropertyGrid_JP.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>PropertyGrid_JP.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ui\AddObjectWindow.resx">
+      <DependentUpon>AddObjectWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ui\IntroEditor.resx">
       <DependentUpon>IntroEditor.cs</DependentUpon>
@@ -405,6 +417,7 @@
   <ItemGroup>
     <Folder Include="fmt\SectionData\" />
     <Folder Include="smg\obj\parameters\" />
+    <Folder Include="ui\AddObjectWindowSys\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

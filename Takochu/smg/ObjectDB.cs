@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Windows.Forms;
 
 namespace Takochu.smg
 {
@@ -16,6 +17,10 @@ namespace Takochu.smg
 
         public static Dictionary<string, Actor> Actors;
         public static Dictionary<string, Object> Objects;
+
+        public static TreeNode[] ObjectNodes;
+
+        //public static string[] ObjectNames;
 
         public static void GenDB()
         {
@@ -49,7 +54,7 @@ namespace Takochu.smg
         public static void Load()
         {
             Generate_WhenNotfound();
-            
+
 
             Actors = new Dictionary<string, Actor>();
             Objects = new Dictionary<string, Object>();
@@ -57,19 +62,19 @@ namespace Takochu.smg
             XmlDocument db = new XmlDocument();
             db.Load(Xml_PathString);
 
-            XmlNode actors = db.DocumentElement.ChildNodes[0];
+            XmlNode actorsNode = db.DocumentElement.ChildNodes[0];
 
-            foreach(XmlNode actrs in actors.ChildNodes)
+            foreach(XmlNode actorNode in actorsNode.ChildNodes)
             {
-                Actor actor = new Actor();
+                Actor actorData = new Actor();
 
-                actor.ActorName = actrs.Attributes["id"].Value;
+                actorData.ActorName = actorNode.Attributes["id"].Value;
 
-                XmlNode generalFlags = actrs["flags"];
-                actor.IsKnown = Convert.ToInt32(generalFlags.Attributes["known"].Value);
-                actor.IsComplete = Convert.ToInt32(generalFlags.Attributes["complete"].Value);
-                actor.Fields = new List<ActorField>();
-                XmlNode fields = actrs["fields"];
+                XmlNode generalFlags = actorNode["flags"];
+                actorData.IsKnown = Convert.ToInt32(generalFlags.Attributes["known"].Value);
+                actorData.IsComplete = Convert.ToInt32(generalFlags.Attributes["complete"].Value);
+                actorData.Fields = new List<ActorField>();
+                XmlNode fields = actorNode["fields"];
 
                 foreach(XmlNode field in fields.ChildNodes)
                 {
@@ -80,10 +85,10 @@ namespace Takochu.smg
                     f.Type = field.Attributes["type"].Value;
                     f.Value = field.Attributes["values"].Value;
                     f.Notes = field.Attributes["notes"].Value;
-                    actor.Fields.Add(f);
+                    actorData.Fields.Add(f);
                 }
 
-                Actors.Add(actor.ActorName, actor);
+                Actors.Add(actorData.ActorName, actorData);
             }
 
             XmlNode objects = db.DocumentElement.ChildNodes[1];
@@ -102,6 +107,12 @@ namespace Takochu.smg
                 obj.Game = Int32.Parse(generalFlags["flags"].Attributes["games"].Value);
 
                 Objects.Add(obj.InternalName, obj);
+            }
+
+            ObjectNodes = new TreeNode[Objects.Count];
+            for(int i = 0; i<Objects.Count; i++) 
+            {
+                ObjectNodes[i] = new TreeNode( Objects.ElementAt(i).Key);
             }
         }
 

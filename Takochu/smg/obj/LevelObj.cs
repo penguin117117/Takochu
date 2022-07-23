@@ -48,15 +48,78 @@ namespace Takochu.smg.obj
             { "SplashPieceBlock" , ("CoinBlock","None") },
             { "GreenStar" , ("PowerStar","None") }
         };
-         
+
+        public LevelObj(string objectName,Zone parentZone,string path):base(objectName,parentZone) 
+        {
+            //string[] content = path.Split('/');
+            //mDirectory = content[0];
+            //mLayer = content[1];
+            //mFile = content[2];
+
+            Set_DirectoryAndLayerAndFileString(path);
+
+            mEntry.Add("name", mName = objectName);
+            mEntry.Add("l_id", mID = 0);
+
+            mObjArgs = new int[8];
+
+            for (int i = 0; i < 8; i++)
+                mEntry.Add($"Obj_arg{i}", mObjArgs[i] = -1);
+
+            mType = "Obj";
+
+            mEntry.Add("CameraSetId", mCameraSetID = -1);
+            mEntry.Add("SW_APPEAR", mSwitchAppear = -1);
+            mEntry.Add("SW_DEAD", mSwitchDead = -1);
+            mEntry.Add("SW_A", mSwitchActivate = -1);
+            mEntry.Add("SW_B", mSwitchDeactivate = -1);
+            if (GameUtil.IsSMG2())
+            {
+                mEntry.Add("SW_AWAKE", mSwitchAwake = -1);
+                mEntry.Add("SW_PARAM", mSwitchParameter = -1);
+                mEntry.Add("ParamScale", mParamScale = 1);
+                mEntry.Add("Obj_ID", mObjID = -1);
+                mEntry.Add("GeneratorID", mGeneratorID = -1);
+            }
+            mEntry.Add("MessageId", mMessageID = -1);
+
+            mTruePosition = Vector3.Zero;
+            mEntry.Add("pos_x", mTruePosition.X);
+            mEntry.Add("pos_y", mTruePosition.Y);
+            mEntry.Add("pos_z", mTruePosition.Z);
+
+            mTrueRotation = Vector3.Zero;
+            mEntry.Add("dir_x", mTrueRotation.X);
+            mEntry.Add("dir_y", mTrueRotation.Y);
+            mEntry.Add("dir_z", mTrueRotation.Z);
+
+            mScale = Vector3.One;
+            mEntry.Add("scale_x", mScale.X);
+            mEntry.Add("scale_y", mScale.Y);
+            mEntry.Add("scale_z", mScale.Z);
+
+            mEntry.Add("CastId", mCastID = -1);
+            mEntry.Add("ViewGroupId", mViewGroupID = -1);
+            mEntry.Add("ShapeModelNo", mShapeModelNo = -1);
+            mEntry.Add("CommonPath_ID", mPathID = -1);
+            mEntry.Add("ClippingGroupId", mClippingGroupID = -1);
+            mEntry.Add("GroupId", mGroupID = -1);
+            mEntry.Add("DemoGroupId", mDemoGroupID = -1);
+            mEntry.Add("MapParts_ID", mMapPartsID = -1);
+
+            BMD_Rendering();
+        }
+
         public LevelObj(BCSV.Entry entry, Zone parentZone, string path) : base(entry)
         {
             
             mParentZone = parentZone;
-            string[] content = path.Split('/');
-            mDirectory = content[0];
-            mLayer = content[1];
-            mFile = content[2];
+            Set_DirectoryAndLayerAndFileString(path);
+
+            //string[] content = path.Split('/');
+            //mDirectory = content[0];
+            //mLayer = content[1];
+            //mFile = content[2];
 
             mType = "Obj";
 
@@ -99,14 +162,27 @@ namespace Takochu.smg.obj
             mDemoGroupID = Get<short>("DemoGroupId");
             mMapPartsID = Get<short>("MapParts_ID");
 
+            BMD_Rendering();
+        }
+
+        private void Set_DirectoryAndLayerAndFileString(string path) 
+        {
+            string[] content = path.Split('/');
+            mDirectory = content[0];
+            mLayer = content[1];
+            mFile = content[2];
+        }
+
+        private void BMD_Rendering() 
+        {
             /* 
-             * Rendering the proper BMD files can be a little complicated, so let's break this down
-             * If the object has multiple pieces to render, we create the renderer in the first statement
-             * if the model cache already has our model, we take it from there and store it
-             * if the model cache does not have our model, and the file exists, we load the model and store it into our model cache
-             * if an object has a different archive name than the object name, we load that object name instead
-             * if all else fails, we just load a color cube
-             */
+                 * Rendering the proper BMD files can be a little complicated, so let's break this down
+                 * If the object has multiple pieces to render, we create the renderer in the first statement
+                 * if the model cache already has our model, we take it from there and store it
+                 * if the model cache does not have our model, and the file exists, we load the model and store it into our model cache
+                 * if an object has a different archive name than the object name, we load that object name instead
+                 * if all else fails, we just load a color cube
+                 */
             if (cMultiRenderObjs.ContainsKey(mName))
             {
                 mRenderer = new MultiBmdRenderer(cMultiRenderObjs[mName]);
@@ -136,7 +212,7 @@ namespace Takochu.smg.obj
 
                 rarc.Close();
             }
-            else if (SP_ObjectName.ContainsKey(mName)) 
+            else if (SP_ObjectName.ContainsKey(mName))
             {
                 var tmpname = SP_ObjectName[mName];
                 RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{tmpname.Item1}.arc"));
@@ -314,7 +390,6 @@ namespace Takochu.smg.obj
                 mEntry.Set("GeneratorID", mGeneratorID);
             }
             mEntry.Set("MessageId", mMessageID);
-            
 
             mEntry.Set("pos_x", mTruePosition.X);
             mEntry.Set("pos_y", mTruePosition.Y);
