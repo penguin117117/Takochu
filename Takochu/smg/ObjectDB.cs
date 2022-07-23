@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Windows.Forms;
 
 namespace Takochu.smg
 {
@@ -16,6 +17,10 @@ namespace Takochu.smg
 
         public static Dictionary<string, Actor> Actors;
         public static Dictionary<string, Object> Objects;
+
+        public static TreeNode[] ObjectNodes;
+
+        //public static string[] ObjectNames;
 
         public static void GenDB()
         {
@@ -49,7 +54,7 @@ namespace Takochu.smg
         public static void Load()
         {
             Generate_WhenNotfound();
-            
+
 
             Actors = new Dictionary<string, Actor>();
             Objects = new Dictionary<string, Object>();
@@ -102,6 +107,12 @@ namespace Takochu.smg
                 obj.Game = Int32.Parse(generalFlags["flags"].Attributes["games"].Value);
 
                 Objects.Add(obj.InternalName, obj);
+            }
+
+            ObjectNodes = new TreeNode[Objects.Count];
+            for(int i = 0; i<Objects.Count; i++) 
+            {
+                ObjectNodes[i] = new TreeNode( Objects.ElementAt(i).Key);
             }
         }
 

@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Takochu.smg;
 using Takochu.smg.obj;
 using Takochu.util.GameVer;
+using ObjDB = Takochu.smg.ObjectDB;
 
 namespace Takochu.ui
 {
@@ -18,6 +19,8 @@ namespace Takochu.ui
         private readonly IGameVersion _gameVer;
         public List<AbstractObj> Objects { get; private set; }
         private Dictionary<string, Zone> _usedZones;
+        public static bool IsChanged { get; private set; } = false;
+        
 
         public AddObjectWindow(IGameVersion gameVer,Dictionary<string,Zone> usedZones)
         {
@@ -27,6 +30,7 @@ namespace Takochu.ui
 
             _usedZones = usedZones;
 
+
             foreach (var usedZoneName in usedZones) 
             {
                 ZoneComboBox.Items.Add(usedZoneName.Value.ZoneName);
@@ -34,6 +38,24 @@ namespace Takochu.ui
                 
 
             ZoneComboBox.SelectedIndex = 0;
+
+            ObjectDataTreeView.Visible = false;
+
+            ObjectDataTreeView.Nodes.AddRange(ObjDB.ObjectNodes);
+
+            //foreach (string obj in ObjDB.Objects.Keys)
+            //    ObjectDataTreeView.Nodes.Add(obj);
+
+            //int objcount = ObjDB.Objects.Keys.Count;
+
+
+            //for (int i = 0; i < objcount; i++) 
+            //{
+
+            //    ObjectDataTreeView.Nodes.Add(ObjDB.Objects.ElementAt(i).Key);
+            //}
+
+            ObjectDataTreeView.Visible = true;
 
         }
 
@@ -43,9 +65,11 @@ namespace Takochu.ui
             string targetLyerName = LayerComboBox.Text;
             string targetLayerAndObjectType = $"Placement/{targetLyerName}/ObjInfo";
 
-            _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(new LevelObj("Kuribo", _usedZones[targetZoneName], targetLayerAndObjectType));
+            _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(new LevelObj(ObjectDataTreeView.SelectedNode.Text, _usedZones[targetZoneName], targetLayerAndObjectType));
 
             Objects = _usedZones[targetZoneName].mObjects["Map"][targetLyerName];
+
+            IsChanged = true;
         }
 
         private void ZoneComboBox_SelectedIndexChanged(object sender, EventArgs e)
