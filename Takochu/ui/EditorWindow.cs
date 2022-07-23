@@ -1936,11 +1936,27 @@ namespace Takochu.ui
 
         private void glLevelView_MouseWheel(object sender, MouseEventArgs e)
         {
-            float delta = -((e.Delta / 120f) * 0.1f);
-            m_CamTarget.X += delta * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-            m_CamTarget.Y += delta * (float)Math.Sin(m_CamRotation.Y);
-            m_CamTarget.Z += delta * (float)Math.Sin(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-
+            if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
+            {
+                if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
+                {
+                    if (e.Delta > 0) m_CamRotation.Y += ((float)Math.PI / 180) * 90;
+                    if (e.Delta < 0) m_CamRotation.Y += ((float)Math.PI / 180) * -90;
+                }
+                else
+                {
+                    if (e.Delta > 0) m_CamRotation.X += ((float)Math.PI / 180) * 90;
+                    if (e.Delta < 0) m_CamRotation.X += ((float)Math.PI / 180) * -90;
+                }
+                Console.WriteLine(e.Delta);
+            }
+            else
+            {
+                float delta = -((e.Delta / 120f) * 0.1f);
+                m_CamTarget.X += delta * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
+                m_CamTarget.Y += delta * (float)Math.Sin(m_CamRotation.Y);
+                m_CamTarget.Z += delta * (float)Math.Sin(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
+            }
             UpdateCamera();
 
             glLevelView.Refresh();
