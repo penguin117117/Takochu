@@ -232,33 +232,33 @@ namespace Takochu.smg
             }
         }
 
-        public void AddObject(string archive, string directory, string file) 
-        {
-            string layer = "Common";
-            string path = $"{directory}/{layer}/{file}";
-            //List<string> layers = mMapFiles[archive].GetDirectories("/root/jmp/" + directory);
+        //public void AddObject(string archive, string directory, string file) 
+        //{
+        //    string layer = "Common";
+        //    string path = $"{directory}/{layer}/{file}";
+        //    //List<string> layers = mMapFiles[archive].GetDirectories("/root/jmp/" + directory);
 
-            //if (layers == null)
-            //{
-            //    return;
-            //}
+        //    //if (layers == null)
+        //    //{
+        //    //    return;
+        //    //}
 
-            string[] data = path.Split('/');
-            //string layer = data[1];
-            //string dir = data[2];
-            BCSV bcsv = new BCSV(mMapFiles[archive].OpenFile($"/stage/jmp/{path}"));
-            //var a = new AbstractObj("Kuribo", this);
-            //var b = a as LevelObj;
-            var b =new  LevelObj("Kuribo", this, path);
-            b.mParentZone.ZoneName = "BigGalaxy";
+        //    //string[] data = path.Split('/');
+        //    //string layer = data[1];
+        //    //string dir = data[2];
+        //    //BCSV bcsv = new BCSV(mMapFiles[archive].OpenFile($"/stage/jmp/{path}"));
+        //    //var a = new AbstractObj("Kuribo", this);
+        //    //var b = a as LevelObj;
+        //    var b =new  LevelObj("Kuribo", this, path);
+        //    b.mParentZone.ZoneName = "BigGalaxy";
             
 
-            Console.WriteLine(b.mParentZone.ZoneName);
-            //bcsv.mEntries.Add(b.mEntry);
+        //    Console.WriteLine(b.mParentZone.ZoneName);
+        //    //bcsv.mEntries.Add(b.mEntry);
             
 
-            mObjects[archive][layer].Add(b);
-        }
+        //    mObjects[archive][layer].Add(b);
+        //}
 
         public void AssignsObjectsToList(string archive, string path)
         {

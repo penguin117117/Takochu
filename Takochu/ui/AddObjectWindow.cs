@@ -17,6 +17,7 @@ namespace Takochu.ui
     {
         private readonly IGameVersion _gameVer;
         public List<AbstractObj> Objects { get; private set; }
+        private Dictionary<string, Zone> _usedZones;
 
         public AddObjectWindow(IGameVersion gameVer,Dictionary<string,Zone> usedZones)
         {
@@ -24,15 +25,42 @@ namespace Takochu.ui
 
             _gameVer = gameVer;
 
-            //"Map", "placement", "objinfo"
-            usedZones["BigGalaxy"].AddObject("Map" , "Placement" ,"ObjInfo");
-            Objects = usedZones["BigGalaxy"].mObjects["Map"]["Common"];
-            //usedZones["BigGalaxy"].mObjects["Map"]["Common"].Add(new AbstractObj("Kuribo", usedZones["BigGalaxy"]));
+            _usedZones = usedZones;
+
+            foreach (var usedZoneName in usedZones) 
+            {
+                ZoneComboBox.Items.Add(usedZoneName.Value.ZoneName);
+            }
+                
+
+            ZoneComboBox.SelectedIndex = 0;
+
         }
 
         private void AddObjectButton_Click(object sender, EventArgs e)
         {
+            string targetZoneName = ZoneComboBox.Text;
+            string targetLyerName = LayerComboBox.Text;
+            string targetLayerAndObjectType = $"Placement/{targetLyerName}/ObjInfo";
 
+            _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(new LevelObj("Kuribo", _usedZones[targetZoneName], targetLayerAndObjectType));
+
+            Objects = _usedZones[targetZoneName].mObjects["Map"][targetLyerName];
+        }
+
+        private void ZoneComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var layers = _usedZones[ZoneComboBox.Text].GetLayersUsedOnZoneForCurrentScenario();
+
+            if (LayerComboBox.Items.Count > 0)
+                LayerComboBox.Items.Clear();
+
+            foreach (var layer in layers) 
+            {
+                LayerComboBox.Items.Add(layer);
+            }
+
+            LayerComboBox.SelectedIndex = 0;
         }
     }
 }

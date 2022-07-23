@@ -152,6 +152,7 @@
     <Compile Include="rnd\RenderBase.cs" />
     <Compile Include="smg\img\ImageHolder.cs" />
     <Compile Include="smg\msg\MessageBase.cs" />
+    <Compile Include="smg\obj\ObjectSubData\InfoData.cs" />
     <Compile Include="smg\ZoneAttributes.cs" />
     <Compile Include="ui\AddObjectWindow.cs">
       <SubType>Form</SubType>

@@ -55,9 +55,16 @@ namespace Takochu.ui
 
             AddObjectWindow addObjectWindow = new AddObjectWindow(GameVersion,_galaxyScenario.GetZones());
             addObjectWindow.ShowDialog();
+
+            //オブジェクトが追加されていない場合はこの処理を実行しないようにする。
             var objCount = addObjectWindow.Objects.Count();
             mObjects.Add(addObjectWindow.Objects[objCount-1]);
-            
+
+            Scenario_ReLoad();
+
+            //この下にオブジェクト追加後に
+            //フォームを閉じるボタンを押したときに警告が出るようにするためのコードを書く必要がある
+
         }
 
         public EditorWindow(string galaxyName)
