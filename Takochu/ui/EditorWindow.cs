@@ -57,12 +57,12 @@ namespace Takochu.ui
             addObjectWindow.ShowDialog();
 
             //オブジェクトが追加されていない場合はこの処理を実行しないようにする。
-            if (AddObjectWindow.IsChanged) 
-            {
-                var objCount = addObjectWindow.Objects.Count();
-                mObjects.Add(addObjectWindow.Objects[objCount - 1]);
-                Scenario_ReLoad();
-            }
+            //if (AddObjectWindow.IsChanged) 
+            //{
+            //    var objCount = addObjectWindow.Objects.Count();
+            //    mObjects.Add(addObjectWindow.Objects[objCount - 1]);
+            //    Scenario_ReLoad();
+            //}
             
             //この下にオブジェクト追加後に
             //フォームを閉じるボタンを押したときに警告が出るようにするためのコードを書く必要がある
@@ -948,7 +948,7 @@ namespace Takochu.ui
         private void glLevelView_MouseUp(object sender, MouseEventArgs e)
         {
             if (e.Button != m_MouseDown) return;
-
+            var rayTest1 = ScreenToRay(e.Location);
             // this checks to make sure that we are just clicking, and not coming off of a drag while left clicking
             if ((Math.Abs(e.X - m_LastMouseClick.X) < 3) && (Math.Abs(e.Y - m_LastMouseClick.Y) < 3) &&
                 (m_PickingFrameBuffer[4] == m_PickingFrameBuffer[1]) &&
@@ -980,6 +980,31 @@ namespace Takochu.ui
 
                     mSelectedObject = obj;
 
+
+
+                    if (AddObjectWindow.AddTargetObject != null)
+                    {
+                        var raytest2 = ScreenToRay(e.Location);
+                        //Console.WriteLine($"RayTest::{rayTest1.Origin}{rayTest1}");
+
+                        //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
+                        //レイの方向の制御は行っていません
+                        AddObjectWindow.AddTargetObject.SetPosition(Vector3.Multiply(Vector3.Multiply(raytest2.Origin,10000f) + obj.mTruePosition,1)/2);
+                        if (AddObjectWindow.IsChanged)
+                        {
+                            var objCount = AddObjectWindow.Objects.Count();
+                            mObjects.Add(AddObjectWindow.Objects[objCount - 1]);
+                            
+
+                            
+                            Scenario_ReLoad();
+                            SelectTreeNodeWithUnique(AddObjectWindow.AddTargetObject.mUnique);
+                            ChangeToNode(objectsListTreeView.SelectedNode,true);
+
+                            AddObjectWindow.AddTargetObject = null;
+                        }
+                        break;
+                    }
                     if (obj is PathPointObj)
                     {
                         SelectTreeNodeWithUnique(id);
@@ -1521,18 +1546,24 @@ namespace Takochu.ui
 
             //vector_x,y,z,speed. camera bese.
             Vector3 ray = new Vector3((float)System.Math.Tan(mousePosrayrad_xy[0]),
-                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), -1f);
+                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), 0.0f);
+
+            
 
             //rotate
             Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamTarget.X),
                                                  (float)System.Math.Cos(m_CamTarget.Y),
                                                  (float)System.Math.Cos(m_CamTarget.Z)
                                                  );
-
+            //CamPositionRad = calc.RotAfin.GetPositionAfterRotation(m_CamTarget, new Vector3(m_CamRotation.X, m_CamRotation.Y,0f), calc.RotAfin.TargetVector.Y);
 
             ray.X *= CamPositionRad.Y * CamPositionRad.Z;
             ray.Y *= CamPositionRad.X * CamPositionRad.Z;
             ray.Z *= CamPositionRad.X * CamPositionRad.Y;
+
+            //m_CamPosition.X = m_CamDistance * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
+            //m_CamPosition.Y = m_CamDistance * (float)Math.Sin(m_CamRotation.Y);
+            //m_CamPosition.Z = m_CamDistance * (float)Math.Sin(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
 
             return new Ray(m_CamPosition, ray);
         }

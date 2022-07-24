@@ -71,7 +71,7 @@ namespace Takochu.ui
             this.AddObjectButton.Name = "AddObjectButton";
             this.AddObjectButton.Size = new System.Drawing.Size(75, 23);
             this.AddObjectButton.TabIndex = 3;
-            this.AddObjectButton.Text = "button1";
+            this.AddObjectButton.Text = "AddObject";
             this.AddObjectButton.UseVisualStyleBackColor = true;
             this.AddObjectButton.Click += new System.EventHandler(this.AddObjectButton_Click);
             // 

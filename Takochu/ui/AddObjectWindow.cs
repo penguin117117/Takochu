@@ -17,10 +17,13 @@ namespace Takochu.ui
     public partial class AddObjectWindow : Form
     {
         private readonly IGameVersion _gameVer;
-        public List<AbstractObj> Objects { get; private set; }
+        public static List<AbstractObj> Objects { get; private set; }
         private Dictionary<string, Zone> _usedZones;
         public static bool IsChanged { get; private set; } = false;
-        
+
+        public static AbstractObj AddTargetObject = null;
+
+        //public static bool IsAddObject;
 
         public AddObjectWindow(IGameVersion gameVer,Dictionary<string,Zone> usedZones)
         {
@@ -38,33 +41,18 @@ namespace Takochu.ui
 
             ZoneComboBox.SelectedIndex = 0;
 
-            //ObjectDataTreeView.BeginUpdate();
-            //Console.WriteLine(MainWindow.ObjectDBTreeView.Created);
+            //if(!ObjectDataTreeView.Created)
+            //var a = NewObjectDB.ObjectNodes;
+            ObjectDataTreeView.Nodes.Clear();
 
+            //Console.WriteLine(ObjectDataTreeView.Nodes);
+            //if(ObjectDataTreeView.Nodes.Count < 1)
 
+            TreeNode[] a = NewObjectDB.ObjectNodes;
 
-            //ObjectDataTreeView.EndUpdate();
-            ObjectDataTreeView.Nodes.AddRange(NewObjectDB.ObjectNodes);
-            //ObjectDataTreeView.BeginUpdate();
+            ObjectDataTreeView.Nodes.AddRange(a);
 
-            //MessageBox.Show($"{ObjDB.ObjectTreeView.Nodes.Count}");
-            //ObjDB.ObjectTreeView = ObjectDataTreeView;
-
-
-            //ObjectDataTreeView.EndUpdate();
-            //ObjectDataTreeView.Refresh();
-
-            //foreach (string obj in ObjDB.Objects.Keys)
-            //    ObjectDataTreeView.Nodes.Add(obj);
-
-            //int objcount = ObjDB.Objects.Keys.Count;
-
-
-            //for (int i = 0; i < objcount; i++) 
-            //{
-
-            //    ObjectDataTreeView.Nodes.Add(ObjDB.Objects.ElementAt(i).Key);
-            //}
+            
 
 
         }
@@ -76,17 +64,23 @@ namespace Takochu.ui
                 MessageBox.Show("Select the object to be added.", "Error");
                 return;
             }
-                
+            if (ObjectDataTreeView.SelectedNode.Tag is NewObjectDB.Object == false) return;
 
             string targetZoneName = ZoneComboBox.Text;
             string targetLyerName = LayerComboBox.Text;
             string targetLayerAndObjectType = $"Placement/{targetLyerName}/ObjInfo";
 
-            _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(new LevelObj(ObjectDataTreeView.SelectedNode.Name, _usedZones[targetZoneName], targetLayerAndObjectType));
+
+            AddTargetObject = new LevelObj((ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object).DisplayName, _usedZones[targetZoneName], targetLayerAndObjectType);
+            _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(AddTargetObject);
 
             Objects = _usedZones[targetZoneName].mObjects["Map"][targetLyerName];
 
             IsChanged = true;
+
+            //このツリーノードの削除は必須なので消さないこと
+            //消してしまうと二度目にこのウィンドウを開く際にエラーが発生します。
+            ObjectDataTreeView.Nodes.Clear();
 
             Close();
         }
@@ -108,18 +102,14 @@ namespace Takochu.ui
 
         private void ObjectDataTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            //if (ObjectDataTreeView.Nodes == null) return;
-
-            //var objectInfo = ObjectDataTreeView.SelectedNode.Tag as ObjectDB.Object;
-
-            //textBox1.Text = objectInfo.Notes;
-
             if (ObjectDataTreeView.Nodes == null) return;
-            var a = ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object;
-            var objectInfo = NewObjectDB.Categories[(ushort)ObjectDataTreeView.SelectedNode.Parent.Index][a.FileName];
+            if (ObjectDataTreeView.SelectedNode.Parent == null) return;
+            if (ObjectDataTreeView.SelectedNode.Tag is NewObjectDB.Object == false) return;
+
+            var objectNodeTag = ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object;
+            var objectInfo = NewObjectDB.Categories[(ushort)ObjectDataTreeView.SelectedNode.Parent.Index][objectNodeTag.FileName];
 
             textBox1.Text = objectInfo.Notes;
-            Console.WriteLine(objectInfo.Notes);
         }
 
         private void ObjectDataTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
