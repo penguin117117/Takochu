@@ -54,6 +54,7 @@ namespace Takochu.ui
         {
             ObjectDB.GenDB();
             ObjectDB.Load();
+            NewObjectDB.Load();
             DbInfoLbl.Text = "ObjectDatabase last generated on: " + File.GetLastWriteTime(ObjectDB.Xml_PathString).ToString();
         }
 

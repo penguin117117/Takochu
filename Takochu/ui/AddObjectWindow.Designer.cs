@@ -35,6 +35,9 @@ namespace Takochu.ui
             this.AddObjectButton = new System.Windows.Forms.Button();
             this.ZoneComboBox = new System.Windows.Forms.ComboBox();
             this.LayerComboBox = new System.Windows.Forms.ComboBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // SearchLabel
@@ -59,10 +62,12 @@ namespace Takochu.ui
             this.ObjectDataTreeView.Name = "ObjectDataTreeView";
             this.ObjectDataTreeView.Size = new System.Drawing.Size(252, 407);
             this.ObjectDataTreeView.TabIndex = 2;
+            this.ObjectDataTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.ObjectDataTreeView_AfterSelect);
+            this.ObjectDataTreeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.ObjectDataTreeView_NodeMouseClick);
             // 
             // AddObjectButton
             // 
-            this.AddObjectButton.Location = new System.Drawing.Point(509, 217);
+            this.AddObjectButton.Location = new System.Drawing.Point(601, 29);
             this.AddObjectButton.Name = "AddObjectButton";
             this.AddObjectButton.Size = new System.Drawing.Size(75, 23);
             this.AddObjectButton.TabIndex = 3;
@@ -87,11 +92,30 @@ namespace Takochu.ui
             this.LayerComboBox.Size = new System.Drawing.Size(121, 20);
             this.LayerComboBox.TabIndex = 5;
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.textBox1);
+            this.groupBox1.Location = new System.Drawing.Point(272, 339);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(404, 99);
+            this.groupBox1.TabIndex = 6;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "groupBox1";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(6, 18);
+            this.textBox1.Multiline = true;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(392, 75);
+            this.textBox1.TabIndex = 0;
+            // 
             // AddObjectWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.LayerComboBox);
             this.Controls.Add(this.ZoneComboBox);
             this.Controls.Add(this.AddObjectButton);
@@ -100,6 +124,8 @@ namespace Takochu.ui
             this.Controls.Add(this.SearchLabel);
             this.Name = "AddObjectWindow";
             this.Text = "AddObjectWindow";
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -113,5 +139,7 @@ namespace Takochu.ui
         private System.Windows.Forms.Button AddObjectButton;
         private System.Windows.Forms.ComboBox ZoneComboBox;
         private System.Windows.Forms.ComboBox LayerComboBox;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }

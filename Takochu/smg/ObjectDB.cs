@@ -10,6 +10,144 @@ using System.Windows.Forms;
 
 namespace Takochu.smg
 {
+    class NewObjectDB 
+    {
+        public const string Xml_PathString = "res/New_objectdb.xml";
+        public const string URL_LinkString = "https://raw.githubusercontent.com/SunakazeKun/galaxydatabase/main/objectdb.xml";
+
+        public static Dictionary<ushort, Dictionary<string, Object>> Categories;
+        public static Dictionary<string, Object> Objects;
+
+        public static TreeNode[] ObjectNodes;
+
+        public static void GenDB()
+        {
+            using (var webClient = new WebClient())
+            {
+                try
+                {
+                    webClient.DownloadFile(URL_LinkString, Xml_PathString);
+                }
+                catch (WebException webEx)
+                {
+                    if (webEx.Status == WebExceptionStatus.NameResolutionFailure)
+                    {
+                        File.WriteAllText(Xml_PathString, Properties.Resources.objectdb);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
+
+        public static void Generate_WhenNotfound()
+        {
+            var AppCurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            if (File.Exists(AppCurrentDirectory + Xml_PathString) == false)
+                GenDB();
+        }
+
+        public static void Load()
+        {
+            Generate_WhenNotfound();
+
+            
+            //Actors = new Dictionary<string, Actor>();
+            Objects = new Dictionary<string, Object>();
+
+            XmlDocument xmlDB_Doc = new XmlDocument();
+            xmlDB_Doc.Load(Xml_PathString);
+
+            var dbNodesCount = xmlDB_Doc.DocumentElement.ChildNodes.Count;
+
+            Categories = new Dictionary<ushort, Dictionary<string, Object>>();
+
+            
+
+            for (int dbNodeNo = 0; dbNodeNo < dbNodesCount; dbNodeNo++) 
+            {
+                //カテゴリーノードの読み取り
+                if (dbNodeNo == 0) 
+                {
+                    XmlNode CategoriesNode = xmlDB_Doc.DocumentElement.ChildNodes[0];
+                    Categories = new Dictionary<ushort, Dictionary<string, Object>>();
+
+                    var categoryNodeCount = CategoriesNode.ChildNodes.Count;
+                    ObjectNodes = new TreeNode[categoryNodeCount];
+                    for (ushort i = 0; i < categoryNodeCount; i++)
+                    {
+                        XmlNode categoryXmlNode = CategoriesNode.ChildNodes[i];
+                        ushort categoryID = Convert.ToUInt16(categoryXmlNode.Attributes["id"].Value);
+                        Categories[i] = new Dictionary<string, Object>();
+                        //Categories.Add(categoryID,default);
+                        ObjectNodes[i] = new TreeNode
+                        {
+                            Text = categoryXmlNode.InnerText,
+                            Tag = categoryID
+                        };
+                    }
+                    continue;
+                }
+
+                //オブジェクトデータ読み取り
+                XmlNode objectNode = xmlDB_Doc.DocumentElement.ChildNodes[dbNodeNo];
+                XmlNode flagsNode = objectNode["flags"];
+                FlagData flags = new FlagData(flagsNode);
+                Object objectData = new Object(objectNode,flags);
+                Categories[objectData.CategoryID].Add(objectNode.Attributes["id"].Value, objectData);
+                ObjectNodes[objectData.CategoryID].Nodes.Add(objectData.DisplayName/*objectNode.Attributes["id"].Value*/);
+                ObjectNodes[objectData.CategoryID].Nodes[ObjectNodes[objectData.CategoryID].Nodes.Count -1].Tag = objectData;
+            }
+            
+            //ObjectNodes = new TreeNode[Objects.Count];
+            //for (int i = 0; i < Objects.Count; i++)
+            //{
+            //    ObjectNodes[i] = new TreeNode(Objects.ElementAt(i).Key)
+            //    {
+            //        Tag = Objects.ElementAt(i).Value
+            //    };
+            //}
+        }
+
+        public class Object 
+        {
+            public string FileName;
+            public string DisplayName;
+            public FlagData Flags;
+            public ushort CategoryID;
+            public string TypeName;
+            public string Notes;
+
+            public Object(XmlNode objectNode,FlagData flags) 
+            {
+                FileName = objectNode.Attributes["id"].Value;
+                DisplayName = objectNode["name"].InnerText;
+                Flags = flags;
+                CategoryID = Convert.ToUInt16(objectNode["category"].Attributes["id"].Value);
+                TypeName = objectNode["preferredfile"].Attributes["name"].Value;
+                Notes = objectNode["notes"].InnerText;
+            }
+        }
+
+        public struct FlagData 
+        {
+            public short Games;
+            public short Known;
+            public short Complete;
+            public short NeedsPaths;
+
+            public FlagData(XmlNode flagsNode) 
+            {
+                Games        = Convert.ToInt16  (flagsNode.Attributes["games"].Value);
+                Known        = Convert.ToInt16  (flagsNode.Attributes["known"].Value);
+                Complete     = Convert.ToInt16  (flagsNode.Attributes["complete"].Value);
+                NeedsPaths   = Convert.ToInt16  (flagsNode.Attributes["needsPaths"].Value);
+            }
+        }
+    }
+
     class ObjectDB
     {
         public const string Xml_PathString = "res/objectdb.xml";
@@ -19,6 +157,10 @@ namespace Takochu.smg
         public static Dictionary<string, Object> Objects;
 
         public static TreeNode[] ObjectNodes;
+
+        //public static TreeView ObjectTreeView = new TreeView();
+
+        //public static TreeNodeCollection ObjectTreeNodeCollection { get; private set; }
 
         //public static string[] ObjectNames;
 
@@ -112,8 +254,18 @@ namespace Takochu.smg
             ObjectNodes = new TreeNode[Objects.Count];
             for(int i = 0; i<Objects.Count; i++) 
             {
-                ObjectNodes[i] = new TreeNode( Objects.ElementAt(i).Key);
+                
+                ObjectNodes[i] = new TreeNode(Objects.ElementAt(i).Key);
+                ObjectNodes[i].Tag = Objects.ElementAt(i).Value;
+                //ObjectNodes[i].Text = Objects.ElementAt(i).Key;
+                //ObjectNodes[i].Name = Objects.ElementAt(i).Key;
             }
+
+            //ObjectTreeNodeCollection = new TreeNodeCollection(ObjectNodes);
+            //ObjectTreeNodeCollection.AddRange(ObjectNodes);
+
+            //ObjectTreeView = new TreeView();
+            //ObjectTreeView.Nodes.AddRange(ObjectNodes);
         }
 
         public static string GetFriendlyObjNameFromObj(string objName)

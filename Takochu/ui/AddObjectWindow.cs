@@ -30,7 +30,6 @@ namespace Takochu.ui
 
             _usedZones = usedZones;
 
-
             foreach (var usedZoneName in usedZones) 
             {
                 ZoneComboBox.Items.Add(usedZoneName.Value.ZoneName);
@@ -39,9 +38,21 @@ namespace Takochu.ui
 
             ZoneComboBox.SelectedIndex = 0;
 
-            ObjectDataTreeView.Visible = false;
+            //ObjectDataTreeView.BeginUpdate();
+            //Console.WriteLine(MainWindow.ObjectDBTreeView.Created);
 
-            ObjectDataTreeView.Nodes.AddRange(ObjDB.ObjectNodes);
+
+
+            //ObjectDataTreeView.EndUpdate();
+            ObjectDataTreeView.Nodes.AddRange(NewObjectDB.ObjectNodes);
+            //ObjectDataTreeView.BeginUpdate();
+
+            //MessageBox.Show($"{ObjDB.ObjectTreeView.Nodes.Count}");
+            //ObjDB.ObjectTreeView = ObjectDataTreeView;
+
+
+            //ObjectDataTreeView.EndUpdate();
+            //ObjectDataTreeView.Refresh();
 
             //foreach (string obj in ObjDB.Objects.Keys)
             //    ObjectDataTreeView.Nodes.Add(obj);
@@ -55,21 +66,29 @@ namespace Takochu.ui
             //    ObjectDataTreeView.Nodes.Add(ObjDB.Objects.ElementAt(i).Key);
             //}
 
-            ObjectDataTreeView.Visible = true;
 
         }
 
         private void AddObjectButton_Click(object sender, EventArgs e)
         {
+            if (ObjectDataTreeView.SelectedNode == null) 
+            {
+                MessageBox.Show("Select the object to be added.", "Error");
+                return;
+            }
+                
+
             string targetZoneName = ZoneComboBox.Text;
             string targetLyerName = LayerComboBox.Text;
             string targetLayerAndObjectType = $"Placement/{targetLyerName}/ObjInfo";
 
-            _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(new LevelObj(ObjectDataTreeView.SelectedNode.Text, _usedZones[targetZoneName], targetLayerAndObjectType));
+            _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(new LevelObj(ObjectDataTreeView.SelectedNode.Name, _usedZones[targetZoneName], targetLayerAndObjectType));
 
             Objects = _usedZones[targetZoneName].mObjects["Map"][targetLyerName];
 
             IsChanged = true;
+
+            Close();
         }
 
         private void ZoneComboBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -85,6 +104,27 @@ namespace Takochu.ui
             }
 
             LayerComboBox.SelectedIndex = 0;
+        }
+
+        private void ObjectDataTreeView_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            //if (ObjectDataTreeView.Nodes == null) return;
+
+            //var objectInfo = ObjectDataTreeView.SelectedNode.Tag as ObjectDB.Object;
+
+            //textBox1.Text = objectInfo.Notes;
+
+            if (ObjectDataTreeView.Nodes == null) return;
+            var a = ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object;
+            var objectInfo = NewObjectDB.Categories[(ushort)ObjectDataTreeView.SelectedNode.Parent.Index][a.FileName];
+
+            textBox1.Text = objectInfo.Notes;
+            Console.WriteLine(objectInfo.Notes);
+        }
+
+        private void ObjectDataTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            
         }
     }
 }

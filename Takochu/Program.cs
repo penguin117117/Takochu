@@ -23,14 +23,19 @@ namespace Takochu
         [STAThread]
         static void Main()
         {
+            
             BCSV.PopulateHashTable();
             BCSV.PopulateFieldTypeTable();
             CameraUtil.InitCameras();
             ObjectDB.Load();
+            NewObjectDB.Load();
             RenderUtil.AssignColors();
             EditorActionHolder.Initialize();
             Application.EnableVisualStyles();
+
             Application.SetCompatibleTextRenderingDefault(false);
+
+            
             Application.Run(new MainWindow());
         }
     }

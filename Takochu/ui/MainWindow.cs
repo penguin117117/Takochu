@@ -23,6 +23,7 @@ namespace Takochu
     public partial class MainWindow : Form
     {
         public GameDirectory GameDirectory { get; private set; }
+        public static TreeView ObjectDBTreeView { get; private set; }
 
         public MainWindow()
         {
@@ -35,6 +36,27 @@ namespace Takochu
 
             GameDirectory = new GameDirectory();
             SetGalaxyTreeView();
+
+            //MainWindow.ObjectDBTreeView = new TreeView();
+            ////MainWindow.ObjectDBTreeView.CreateControl();
+            //foreach (var node in ObjectDB.ObjectNodes)
+            //{
+            //    MainWindow.ObjectDBTreeView.Nodes.Add(node);
+            //}
+
+            //var count = ObjectDB.ObjectNodes.Count();
+
+            //for (int i = 0; i < count; i++) 
+            //{
+            //    MainWindow.ObjectDBTreeView.Nodes.Add(ObjectDB.ObjectNodes[i]);
+            //}
+
+            //ObjectDBTreeView.CreateControl();
+            //ObjectDBTreeView.Nodes.AddRange(ObjectDB.ObjectNodes);
+            //ObjectDBTreeView.Location = new System.Drawing.Point(14, 31);
+            //ObjectDBTreeView.Name = "ObjectDataTreeView";
+            //ObjectDBTreeView.Size = new System.Drawing.Size(252, 407);
+            //ObjectDBTreeView.TabIndex = 2;
         }
 
         private void SetGalaxyTreeView(bool reSetup = false)
