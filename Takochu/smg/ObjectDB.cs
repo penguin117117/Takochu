@@ -32,7 +32,7 @@ namespace Takochu.smg
                 {
                     if (webEx.Status == WebExceptionStatus.NameResolutionFailure)
                     {
-                        File.WriteAllText(Xml_PathString, Properties.Resources.objectdb);
+                        File.WriteAllText(Xml_PathString, Properties.Resources.New_objectdb);
                     }
                 }
                 catch (Exception ex)
