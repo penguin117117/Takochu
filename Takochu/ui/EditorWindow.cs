@@ -604,7 +604,7 @@ namespace Takochu.ui
 
         private bool m_GLLoaded;
         private float m_AspectRatio;
-        private Vector2 m_CamRotation;
+        private Vector2 m_CamRotation; //X is vertical?, Y is Horizontal?.
         private Vector3 m_CamPosition;
         private Vector3 m_CamTarget;
         private float m_CamDistance;
@@ -985,11 +985,21 @@ namespace Takochu.ui
                     if (AddObjectWindow.AddTargetObject != null)
                     {
                         var raytest2 = ScreenToRay(e.Location);
-                        //Console.WriteLine($"RayTest::{rayTest1.Origin}{rayTest1}");
+                        Console.WriteLine($"RayTest::{raytest2.Origin}{raytest2.Direction}");
 
                         //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
                         //レイの方向の制御は行っていません
-                        AddObjectWindow.AddTargetObject.SetPosition(Vector3.Multiply(Vector3.Multiply(raytest2.Origin,10000f) + obj.mTruePosition,1)/2);
+
+                        float CamDistance = 500f;
+
+                        var ObjectPosition = new Vector3((raytest2.Direction.X * CamDistance), (raytest2.Direction.Y * CamDistance), (raytest2.Direction.Z * CamDistance));
+                        Console.WriteLine($"RayTest2::{raytest2.Origin}{raytest2.Direction}");
+
+                        ObjectPosition += m_CamPosition * 10000;
+
+                        var ObjectPositionSMG = new Vector3(-ObjectPosition.Z, ObjectPosition.Y, ObjectPosition.X);
+
+                        AddObjectWindow.AddTargetObject.SetPosition(ObjectPositionSMG/*Vector3.Multiply(Vector3.Multiply(ObjectPosition,10000f) + obj.mTruePosition,1)/2*/);
                         if (AddObjectWindow.IsChanged)
                         {
                             var objCount = AddObjectWindow.Objects.Count();
@@ -1531,39 +1541,53 @@ namespace Takochu.ui
         private void glLevelView_MouseClick(object sender, MouseEventArgs e)
         {
             //if (e.Button == MouseButtons.Right) return;
-            //var ray = ScreenToRay(e.Location);
+            var ray = ScreenToRay(e.Location);
+            System.Console.WriteLine("Ray rad.(X,Y,Z)");
+            System.Console.WriteLine(ray.Direction.X);
+            System.Console.WriteLine(ray.Direction.Y);
+            System.Console.WriteLine(ray.Direction.Z);
+            //GL.Begin(BeginMode.LineStrip);
+            //GL.Color3(1f, 0f, 0f);
+            //GL.Vertex3(0f,0f,0f);
+            //GL.Vertex3(ScreenToRay(e.Location).Direction * 1000f);
+            //GL.End();
         }
 
         private Ray ScreenToRay(Point mousePos)//現在未使用の可能性あり（オブジェクト選択には使用されていない。）
         {
-            float[] mousePosrayrad_xy = new float[2];
+            //namespace System(cppLang & memo)
+
+            Vector2 mousePosRayRad = new Vector2();
             float k_FOV_dot = k_FOV / glLevelView.Height;
             float k_FOV_harf = k_FOV / 2;
-            //y rad
-            mousePosrayrad_xy[1] = k_FOV_harf - (k_FOV_dot * mousePos.Y);
+            //(mouse move)y rad
+            mousePosRayRad.Y = k_FOV_harf - (k_FOV_dot * mousePos.Y);
             //x rad
-            mousePosrayrad_xy[0] = (k_FOV_harf * m_AspectRatio) - (k_FOV_dot * mousePos.X);
+            mousePosRayRad.X = (k_FOV_harf * m_AspectRatio) - (k_FOV_dot * mousePos.X);
 
-            //vector_x,y,z,speed. camera bese.
-            Vector3 ray = new Vector3((float)System.Math.Tan(mousePosrayrad_xy[0]),
-                                      (float)System.Math.Tan(mousePosrayrad_xy[1]), 0.0f);
+            //convert.
+            Vector2 rotateRad = new Vector2(m_CamRotation.Y, m_CamRotation.X);
 
-            
+            //ray rotate.
+            Vector3 rayRad = new Vector3(
+                (rotateRad.X * (float)Math.Cos(rotateRad.Y)),
+                rotateRad.Y,
+                (rotateRad.X * (float)Math.Sin(rotateRad.Y))
+                );
 
-            //rotate
-            Vector3 CamPositionRad = new Vector3((float)System.Math.Cos(m_CamTarget.X),
-                                                 (float)System.Math.Cos(m_CamTarget.Y),
-                                                 (float)System.Math.Cos(m_CamTarget.Z)
-                                                 );
+            rayRad += new Vector3(
+                (mousePosRayRad.Y * (float)Math.Cos(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.Z) * (float)Math.Sin(rayRad.Y)),
+                mousePosRayRad.X * ((float)Math.Cos(rayRad.X) * (float)Math.Cos(rayRad.Z)),
+                (mousePosRayRad.Y * (float)Math.Sin(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.X) * (float)Math.Cos(rayRad.Y))
+                );
+
+            //ray vector
+
+            Vector3 ray = new Vector3((float)Math.Sin(rayRad.Y),
+                                      (float)(Math.Cos(rayRad.Y) * Math.Sin(rayRad.X)) + (float)(Math.Sin(rayRad.Y) * Math.Sin(rayRad.Z)),
+                                      (float)Math.Cos(rayRad.Y)
+                                      );
             //CamPositionRad = calc.RotAfin.GetPositionAfterRotation(m_CamTarget, new Vector3(m_CamRotation.X, m_CamRotation.Y,0f), calc.RotAfin.TargetVector.Y);
-
-            ray.X *= CamPositionRad.Y * CamPositionRad.Z;
-            ray.Y *= CamPositionRad.X * CamPositionRad.Z;
-            ray.Z *= CamPositionRad.X * CamPositionRad.Y;
-
-            //m_CamPosition.X = m_CamDistance * (float)Math.Cos(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
-            //m_CamPosition.Y = m_CamDistance * (float)Math.Sin(m_CamRotation.Y);
-            //m_CamPosition.Z = m_CamDistance * (float)Math.Sin(m_CamRotation.X) * (float)Math.Cos(m_CamRotation.Y);
 
             return new Ray(m_CamPosition, ray);
         }
