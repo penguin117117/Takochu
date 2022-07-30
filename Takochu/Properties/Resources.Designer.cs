@@ -61,6 +61,28 @@ namespace Takochu.Properties {
         }
         
         /// <summary>
+        ///   &lt;database timestamp=&quot;1658515855&quot;&gt;
+        ///	&lt;categories&gt;
+        ///		&lt;category id=&quot;0&quot;&gt;Stage Parts&lt;/category&gt;
+        ///		&lt;category id=&quot;1&quot;&gt;Level Features&lt;/category&gt;
+        ///		&lt;category id=&quot;2&quot;&gt;Backgrounds&lt;/category&gt;
+        ///		&lt;category id=&quot;3&quot;&gt;Enemies&lt;/category&gt;
+        ///		&lt;category id=&quot;4&quot;&gt;Bosses&lt;/category&gt;
+        ///		&lt;category id=&quot;5&quot;&gt;NPCs&lt;/category&gt;
+        ///		&lt;category id=&quot;6&quot;&gt;Items&lt;/category&gt;
+        ///		&lt;category id=&quot;7&quot;&gt;Particles&lt;/category&gt;
+        ///		&lt;category id=&quot;8&quot;&gt;Areas&lt;/category&gt;
+        ///		&lt;category id=&quot;9&quot;&gt;Gravities&lt;/category&gt;
+        ///		&lt;category id=&quot;10&quot;&gt;Cutscenes&lt;/category&gt;
+        ///		&lt;category id=&quot;11&quot;&gt;Controllers&lt; [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string New_objectdb {
+            get {
+                return ResourceManager.GetString("New_objectdb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
         ///
         ///&lt;!-- SMG1/2 Object Database, generated 03/11/2022 20:05:04 --&gt;

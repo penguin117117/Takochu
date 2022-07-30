@@ -835,6 +835,7 @@ namespace Takochu.ui
             m_CamMatrix = Matrix4.Mult(Matrix4.CreateScale(0.0001f), m_CamMatrix);
         }
 
+        [Obsolete]
         private void glLevelView_Paint(object sender, PaintEventArgs e)
         {
             if (!m_GLLoaded) return;
@@ -987,19 +988,20 @@ namespace Takochu.ui
                         var raytest2 = ScreenToRay(e.Location);
                         Console.WriteLine($"RayTest::{raytest2.Origin}{raytest2.Direction}");
 
+                        var objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
+                        var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
+
+                        Console.WriteLine($"ZoneName::{obj.mParentZone.ZoneName}");
+
+                        var positionWithZoneRotation = calc.RotAfin.GetPositionAfterRotation(obj.mTruePosition,objTrueRot,calc.RotAfin.TargetVector.All);
+
                         //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
                         //レイの方向の制御は行っていません
 
-                        float CamDistance = 500f;
+                        var rayPos = Vector3.Multiply(raytest2.Origin, 10000f);
+                        var selectedObjTruePosition = objTruePos + positionWithZoneRotation;
 
-                        var ObjectPosition = new Vector3((raytest2.Direction.X * CamDistance), (raytest2.Direction.Y * CamDistance), (raytest2.Direction.Z * CamDistance));
-                        Console.WriteLine($"RayTest2::{raytest2.Origin}{raytest2.Direction}");
-
-                        ObjectPosition += m_CamPosition * 10000;
-
-                        var ObjectPositionSMG = new Vector3(-ObjectPosition.Z, ObjectPosition.Y, ObjectPosition.X);
-
-                        AddObjectWindow.AddTargetObject.SetPosition(ObjectPositionSMG/*Vector3.Multiply(Vector3.Multiply(ObjectPosition,10000f) + obj.mTruePosition,1)/2*/);
+                        AddObjectWindow.AddTargetObject.SetPosition(Vector3.Multiply(rayPos + (selectedObjTruePosition)/*obj.mTruePosition*/,1f) / 2);
                         if (AddObjectWindow.IsChanged)
                         {
                             var objCount = AddObjectWindow.Objects.Count();
@@ -1009,7 +1011,7 @@ namespace Takochu.ui
                             
                             Scenario_ReLoad();
                             SelectTreeNodeWithUnique(AddObjectWindow.AddTargetObject.mUnique);
-                            ChangeToNode(objectsListTreeView.SelectedNode,true);
+                            ChangeToNode(objectsListTreeView.SelectedNode,false);
 
                             AddObjectWindow.AddTargetObject = null;
                         }
@@ -1386,9 +1388,10 @@ namespace Takochu.ui
         private void AreaToolStripMenuItem_Click(object sender, EventArgs e)
         {
             List<string> zones = _galaxyScenario.GetZonesUsedOnCurrentScenario();
-            Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
-
-            ids.Add(_galaxyScenario.mName, _galaxyScenario.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("AreaObj"));
+            Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>
+            {
+                { _galaxyScenario.mName, _galaxyScenario.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("AreaObj") }
+            };
 
             foreach (string z in zones)
             {

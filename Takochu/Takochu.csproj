@@ -364,7 +364,7 @@
     <EmbeddedResource Include="Resources\objectdb.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <Content Include="Resources\New_objectdb.xml" />
+    <None Include="Resources\New_objectdb.xml" />
     <Content Include="res\FieldTypes.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
