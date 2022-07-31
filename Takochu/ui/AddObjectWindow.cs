@@ -71,7 +71,7 @@ namespace Takochu.ui
             string targetLayerAndObjectType = $"Placement/{targetLyerName}/ObjInfo";
 
 
-            AddTargetObject = new LevelObj((ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object).DisplayName, _usedZones[targetZoneName], targetLayerAndObjectType);
+            AddTargetObject = new LevelObj((ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object).FileName, _usedZones[targetZoneName], targetLayerAndObjectType);
             _usedZones[targetZoneName].mObjects["Map"][targetLyerName].Add(AddTargetObject);
 
             Objects = _usedZones[targetZoneName].mObjects["Map"][targetLyerName];
