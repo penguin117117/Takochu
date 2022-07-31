@@ -78,9 +78,7 @@ namespace Takochu.ui
 
             IsChanged = true;
 
-            //このツリーノードの削除は必須なので消さないこと
-            //消してしまうと二度目にこのウィンドウを開く際にエラーが発生します。
-            ObjectDataTreeView.Nodes.Clear();
+            
 
             Close();
         }
@@ -115,6 +113,13 @@ namespace Takochu.ui
         private void ObjectDataTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
             
+        }
+
+        private void AddObjectWindow_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            //このツリーノードの削除は必須なので消さないこと
+            //消してしまうと二度目にこのウィンドウを開く際にエラーが発生します。
+            ObjectDataTreeView.Nodes.Clear();
         }
     }
 }

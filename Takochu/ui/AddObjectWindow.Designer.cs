@@ -124,6 +124,7 @@ namespace Takochu.ui
             this.Controls.Add(this.SearchLabel);
             this.Name = "AddObjectWindow";
             this.Text = "AddObjectWindow";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.AddObjectWindow_FormClosed);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
