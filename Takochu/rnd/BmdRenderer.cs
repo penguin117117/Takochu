@@ -394,81 +394,100 @@ namespace Takochu.rnd
                     lastmatrixtable = mtxtable;
 
                     //BMDファイルのレンダリングの核
-                    foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
-                    {
-                        //描画タイプの配列初期化
-                        BeginMode[] primtypes = { BeginMode.Quads, BeginMode.Points, BeginMode.Triangles, BeginMode.TriangleStrip,
-                                                    BeginMode.TriangleFan, BeginMode.Lines, BeginMode.LineStrip, BeginMode.Points };
-
-                        //描画タイプ決定
-                        GL.Begin(primtypes[(prim.PrimitiveType - 0x80) / 8]);
-                        //GL.Begin(BeginMode.Points);
-
-                        if (info.Mode != RenderMode.Picking)
-                        {
-                            //頂点それぞれに行う
-                            for (int i = 0; i < prim.NumIndices; i++)
-                            {
-
-                                if ((prim.ArrayMask & (1 << 11)) != 0) GL.Color4(m_Model.ColorArray[0][prim.ColorIndices[0][i]]);
-
-                                if (m_HasShaders)
-                                {
-                                    if ((prim.ArrayMask & (1 << 12)) != 0)
-                                    {
-                                        Vector4 color2 = m_Model.ColorArray[1][prim.ColorIndices[1][i]];
-                                        GL.SecondaryColor3(color2.X, color2.Y, color2.Z);
-                                    }
-
-                                    if ((prim.ArrayMask & (1 << 13)) != 0) GL.MultiTexCoord2(TextureUnit.Texture0, ref m_Model.TexcoordArray[0][prim.TexcoordIndices[0][i]]);
-                                    if ((prim.ArrayMask & (1 << 14)) != 0) GL.MultiTexCoord2(TextureUnit.Texture1, ref m_Model.TexcoordArray[1][prim.TexcoordIndices[1][i]]);
-                                    if ((prim.ArrayMask & (1 << 15)) != 0) GL.MultiTexCoord2(TextureUnit.Texture2, ref m_Model.TexcoordArray[2][prim.TexcoordIndices[2][i]]);
-                                    if ((prim.ArrayMask & (1 << 16)) != 0) GL.MultiTexCoord2(TextureUnit.Texture3, ref m_Model.TexcoordArray[3][prim.TexcoordIndices[3][i]]);
-                                    if ((prim.ArrayMask & (1 << 17)) != 0) GL.MultiTexCoord2(TextureUnit.Texture4, ref m_Model.TexcoordArray[4][prim.TexcoordIndices[4][i]]);
-                                    if ((prim.ArrayMask & (1 << 18)) != 0) GL.MultiTexCoord2(TextureUnit.Texture5, ref m_Model.TexcoordArray[5][prim.TexcoordIndices[5][i]]);
-                                    if ((prim.ArrayMask & (1 << 19)) != 0) GL.MultiTexCoord2(TextureUnit.Texture6, ref m_Model.TexcoordArray[6][prim.TexcoordIndices[6][i]]);
-                                    if ((prim.ArrayMask & (1 << 20)) != 0) GL.MultiTexCoord2(TextureUnit.Texture7, ref m_Model.TexcoordArray[7][prim.TexcoordIndices[7][i]]);
-                                }
-                                else
-                                {
-                                    if ((prim.ArrayMask & (1 << 13)) != 0) GL.TexCoord2(m_Model.TexcoordArray[0][prim.TexcoordIndices[0][i]]);
-                                }
-                                //if ((prim.ArrayMask & (1 << 0)) != 0) GL.Color4(debug[prim.PosMatrixIndices[i]]);
-
-                                if ((prim.ArrayMask & (1 << 10)) != 0) GL.Normal3(m_Model.NormalArray[prim.NormalIndices[i]]);
-
-                                //頂点インデックスにあった頂点番号の頂点を順番にセット
-                                Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[i]], 1.0f);
-                                //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
-                                if ((prim.ArrayMask & (1 << 0)) != 0) Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[i]], out pos);
-                                else Vector4.Transform(ref pos, ref mtxtable[0], out pos);
-                                GL.Vertex3(pos.X, pos.Y, pos.Z);
-                            }
-                        }
-                        else
-                        {
-                            for (int i = 0; i < prim.NumIndices; i++)
-                            {
-                                Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[i]], 1.0f);
-
-                                if ((prim.ArrayMask & 1) != 0)
-                                    Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[i]], out pos);
-                                else
-                                    Vector4.Transform(ref pos, ref mtxtable[0], out pos);
-
-                                GL.Vertex3(pos.X, pos.Y, pos.Z);
-                            }
-                        }
-
-
-
-                        GL.End();
-                    }
+                    RenderingCore(packet,info.Mode,mtxtable);
                 }
 
                 //if (batch.MatrixType == 1 || batch.MatrixType == 2)
                 //     GL.PopMatrix();
             }
+        }
+
+        private void RenderingCore(BMD.Batch.Packet packet,RenderMode renderMode, Matrix4[] mtxtable) 
+        {
+            //描画タイプの配列初期化
+            BeginMode[] beginMode = {
+                BeginMode.Quads, 
+                BeginMode.Points, 
+                BeginMode.Triangles, 
+                BeginMode.TriangleStrip,
+                BeginMode.TriangleFan, 
+                BeginMode.Lines, 
+                BeginMode.LineStrip, 
+                BeginMode.Points 
+            };
+
+            foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
+            {
+                //描画タイプ決定
+                GL.Begin(beginMode[(prim.PrimitiveType - 0x80) / 8]);
+                //GL.Begin(BeginMode.Points);
+
+                if (renderMode != RenderMode.Picking)
+                {
+                    //頂点それぞれに行う
+                    for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
+                    {
+
+                        if ((prim.ArrayMask & (1 << 11)) != 0) 
+                            GL.Color4(m_Model.ColorArray[0][prim.ColorIndices[0][vertexIndex]]);
+
+                        if (m_HasShaders)
+                        {
+                            if ((prim.ArrayMask & (1 << 12)) != 0)
+                            {
+                                Vector4 color2 = m_Model.ColorArray[1][prim.ColorIndices[1][vertexIndex]];
+                                GL.SecondaryColor3(color2.X, color2.Y, color2.Z);
+                            }
+
+                            if ((prim.ArrayMask & (1 << 13)) != 0) GL.MultiTexCoord2(TextureUnit.Texture0, ref m_Model.TexcoordArray[0][prim.TexcoordIndices[0][vertexIndex]]);
+                            if ((prim.ArrayMask & (1 << 14)) != 0) GL.MultiTexCoord2(TextureUnit.Texture1, ref m_Model.TexcoordArray[1][prim.TexcoordIndices[1][vertexIndex]]);
+                            if ((prim.ArrayMask & (1 << 15)) != 0) GL.MultiTexCoord2(TextureUnit.Texture2, ref m_Model.TexcoordArray[2][prim.TexcoordIndices[2][vertexIndex]]);
+                            if ((prim.ArrayMask & (1 << 16)) != 0) GL.MultiTexCoord2(TextureUnit.Texture3, ref m_Model.TexcoordArray[3][prim.TexcoordIndices[3][vertexIndex]]);
+                            if ((prim.ArrayMask & (1 << 17)) != 0) GL.MultiTexCoord2(TextureUnit.Texture4, ref m_Model.TexcoordArray[4][prim.TexcoordIndices[4][vertexIndex]]);
+                            if ((prim.ArrayMask & (1 << 18)) != 0) GL.MultiTexCoord2(TextureUnit.Texture5, ref m_Model.TexcoordArray[5][prim.TexcoordIndices[5][vertexIndex]]);
+                            if ((prim.ArrayMask & (1 << 19)) != 0) GL.MultiTexCoord2(TextureUnit.Texture6, ref m_Model.TexcoordArray[6][prim.TexcoordIndices[6][vertexIndex]]);
+                            if ((prim.ArrayMask & (1 << 20)) != 0) GL.MultiTexCoord2(TextureUnit.Texture7, ref m_Model.TexcoordArray[7][prim.TexcoordIndices[7][vertexIndex]]);
+                        }
+                        else
+                        {
+                            if ((prim.ArrayMask & (1 << 13)) != 0) 
+                                GL.TexCoord2(m_Model.TexcoordArray[0][prim.TexcoordIndices[0][vertexIndex]]);
+                        }
+                        //if ((prim.ArrayMask & (1 << 0)) != 0) GL.Color4(debug[prim.PosMatrixIndices[i]]);
+
+                        if ((prim.ArrayMask & (1 << 10)) != 0) 
+                            GL.Normal3(m_Model.NormalArray[prim.NormalIndices[vertexIndex]]);
+
+                        //頂点インデックスにあった頂点番号の頂点を順番にセット
+                        Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
+                        ReadAndSetVertex3(pos, prim, mtxtable, vertexIndex);
+                    }
+                }
+                else
+                {
+                    for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
+                    {
+                        //頂点インデックスにあった頂点番号の頂点を順番にセット
+                        Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
+                        ReadAndSetVertex3(pos,prim,mtxtable,vertexIndex);
+                    }
+                }
+
+
+
+                GL.End();
+            }
+        }
+
+        private void ReadAndSetVertex3(Vector4 pos, BMD.Batch.Packet.Primitive prim, Matrix4[] mtxtable, int vertexIndex) 
+        {
+            //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
+            if ((prim.ArrayMask & 1) != 0)
+                Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[vertexIndex]], out pos);
+            else
+                Vector4.Transform(ref pos, ref mtxtable[0], out pos);
+
+            GL.Vertex3(pos.X, pos.Y, pos.Z);
         }
 
 
