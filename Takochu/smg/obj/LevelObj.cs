@@ -237,6 +237,7 @@ namespace Takochu.smg.obj
                 {
                     mRenderer2 = new BmdRenderer(new BMD(rarc1.OpenFile($"/root/{tmpname.Item2}.bdl")));
                     ModelCache.AddRenderer(tmpname.Item2, (BmdRenderer)mRenderer2);
+                    
                 }
                 else
                 {
@@ -308,24 +309,10 @@ namespace Takochu.smg.obj
 
             //Vector3Values
             {
-                mTruePosition =
-                    new Vector3(
-                        ObjectTypeChange.ToFloat(mEntry.Get("pos_x")),
-                        ObjectTypeChange.ToFloat(mEntry.Get("pos_y")),
-                        ObjectTypeChange.ToFloat(mEntry.Get("pos_z"))
-                    );
-                mTrueRotation =
-                    new Vector3(
-                        ObjectTypeChange.ToFloat(mEntry.Get("dir_x")),
-                        ObjectTypeChange.ToFloat(mEntry.Get("dir_y")),
-                        ObjectTypeChange.ToFloat(mEntry.Get("dir_z"))
-                    );
-                mScale =
-                    new Vector3(
-                        ObjectTypeChange.ToFloat(mEntry.Get("scale_x")),
-                        ObjectTypeChange.ToFloat(mEntry.Get("scale_y")),
-                        ObjectTypeChange.ToFloat(mEntry.Get("scale_z"))
-                    );
+                mTruePosition = GetVector3_FromEntry("pos_x", "pos_y", "pos_z");
+                mTrueRotation = GetVector3_FromEntry("dir_x", "dir_y", "dir_z");
+                mScale        = GetVector3_FromEntry("scale_x", "scale_y", "scale_z");
+                
                 mPosition = new Vector3(mTruePosition) / 100;
                 mRotation = new Vector3(mTrueRotation) / 100;
             }
@@ -335,16 +322,14 @@ namespace Takochu.smg.obj
 
         public override void Render(RenderMode mode)
         {
-            RenderInfo inf = new RenderInfo();
-            inf.Mode = mode;
+            RenderInfo inf = new RenderInfo
+            {
+                Mode = mode
+            };
 
             if (!mRenderer.GottaRender(inf))
                 return;
-            if (mRenderer2 != null)
-            {
-                mRenderer2.GottaRender(inf);
-            }
-
+            
             GL.PushMatrix();
             {
                 GL.Translate(mTruePosition);
@@ -357,12 +342,6 @@ namespace Takochu.smg.obj
             }
 
             mRenderer.Render(inf);
-
-            if (mRenderer2 != null) 
-            {
-                //if (mRenderer2.GottaRender(inf))
-                    mRenderer2.Render(inf);
-            }
             
             GL.PopMatrix();
         }

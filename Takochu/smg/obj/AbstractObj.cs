@@ -10,6 +10,7 @@ using OpenTK.Graphics;
 using System.Drawing;
 using static Takochu.util.EditorUtil;
 using Takochu.util;
+using Takochu.calc;
 
 namespace Takochu.smg.obj
 {
@@ -144,7 +145,16 @@ namespace Takochu.smg.obj
             mPosition = new Vector3(pos.X / 100, pos.Y / 100, pos.Z / 100);
         }
 
-        
+        protected Vector3 GetVector3_FromEntry(string xName, string yName, string zName)
+        {
+            return new Vector3(
+                        ObjectTypeChange.ToFloat(mEntry.Get(xName)),
+                        ObjectTypeChange.ToFloat(mEntry.Get(yName)),
+                        ObjectTypeChange.ToFloat(mEntry.Get(zName))
+                        );
+        }
+
+
         public BCSV.Entry mEntry { get; protected set; }
         public Zone mParentZone { get; protected set; }
 
