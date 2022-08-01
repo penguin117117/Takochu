@@ -998,10 +998,21 @@ namespace Takochu.ui
                         //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
                         //レイの方向の制御は行っていません
 
-                        var rayPos = Vector3.Multiply(raytest2.Origin, 10000f);
-                        var selectedObjTruePosition = objTruePos + positionWithZoneRotation;
+                        var rayPos = Vector3.Multiply(raytest2.Origin , 10000f);
+                        var selectedObjGlobalPosition = objTruePos + positionWithZoneRotation;
 
-                        AddObjectWindow.AddTargetObject.SetPosition(Vector3.Multiply(rayPos + (selectedObjTruePosition)/*obj.mTruePosition*/,1f) / 2);
+                        //距離の計算
+                        var ToCameraFromObj3d = new Vector3(selectedObjGlobalPosition - rayPos);
+
+                        ToCameraFromObj3d = new Vector3((float)Math.Pow(Math.Abs(ToCameraFromObj3d.X), 2), (float)Math.Pow(Math.Abs(ToCameraFromObj3d.Y), 2), (float)Math.Pow(Math.Abs(ToCameraFromObj3d.Z), 2));
+
+                        var ToCameraFromObj = ToCameraFromObj3d.X + ToCameraFromObj3d.Y + ToCameraFromObj3d.Z;
+
+                        ToCameraFromObj = (float)Math.Sqrt(ToCameraFromObj);
+
+                        //AddObjectWindow.AddTargetObject.SetPosition((rayPos + Vector3.Multiply(raytest2.Direction/*obj.mTruePosition*/, ToCameraFromObj)) / 2);
+                        AddObjectWindow.AddTargetObject.SetPosition(Vector3.Multiply(raytest2.Direction, ToCameraFromObj) + rayPos);
+
                         if (AddObjectWindow.IsChanged)
                         {
                             var objCount = AddObjectWindow.Objects.Count();
@@ -1559,38 +1570,55 @@ namespace Takochu.ui
         private Ray ScreenToRay(Point mousePos)//現在未使用の可能性あり（オブジェクト選択には使用されていない。）
         {
             //namespace System(cppLang & memo)
+            //GL系の座標で計算してSMG系の座標に変換しています。（vector2のX座標がSMGのZ座標のため）
 
             Vector2 mousePosRayRad = new Vector2();
-            float k_FOV_dot = k_FOV / glLevelView.Height;
+            float k_FOV_RadPerDot = k_FOV / glLevelView.Height;
             float k_FOV_harf = k_FOV / 2;
             //(mouse move)y rad
-            mousePosRayRad.Y = k_FOV_harf - (k_FOV_dot * mousePos.Y);
+            mousePosRayRad.Y = k_FOV_harf - (k_FOV_RadPerDot * mousePos.Y);
             //x rad
-            mousePosRayRad.X = (k_FOV_harf * m_AspectRatio) - (k_FOV_dot * mousePos.X);
+            mousePosRayRad.X = ((k_FOV_harf * m_AspectRatio) - ((k_FOV_RadPerDot) * mousePos.X));
 
             //convert.
-            Vector2 rotateRad = new Vector2(m_CamRotation.Y, m_CamRotation.X);
+            Vector3 rotateRad = new Vector3(-m_CamRotation.Y, -m_CamRotation.X, 0f);
 
             //ray rotate.
-            Vector3 rayRad = new Vector3(
-                (rotateRad.X * (float)Math.Cos(rotateRad.Y)),
-                rotateRad.Y,
-                (rotateRad.X * (float)Math.Sin(rotateRad.Y))
-                );
+            //Vector3 rayRad = new Vector3(
+            //    (rotateRad.X * (float)Math.Cos(rotateRad.Y)),
+            //    rotateRad.Y,
+            //    (-rotateRad.X * (float)Math.Sin(rotateRad.Y))
+            //    );
 
-            rayRad += new Vector3(
-                (mousePosRayRad.Y * (float)Math.Cos(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.Z) * (float)Math.Sin(rayRad.Y)),
-                mousePosRayRad.X * ((float)Math.Cos(rayRad.X) * (float)Math.Cos(rayRad.Z)),
-                (mousePosRayRad.Y * (float)Math.Sin(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.X) * (float)Math.Cos(rayRad.Y))
-                );
+            //rayRad += new Vector3(
+            //    (mousePosRayRad.Y * (float)Math.Cos(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.Z) * (float)Math.Sin(rayRad.Y)),
+            //    mousePosRayRad.X * ((float)Math.Cos(rayRad.X) * (float)Math.Cos(rayRad.Z)),
+            //    (mousePosRayRad.Y * (float)Math.Sin(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.X) * (float)Math.Cos(rayRad.Y))
+            //    );
 
-            //ray vector
+            //yz rotate.
+            //Vector3 ray = new Vector3((float)((Math.Sin(mousePosRayRad.X) * Math.Cos(rotateRad.Y)) + ((1 - Math.Cos(mousePosRayRad.X)) * Math.Sin(rotateRad.Y))),
+            //                          0f,
+            //                          (float)((Math.Sin(mousePosRayRad.X) * Math.Sin(-rotateRad.Y)) + ((1 - Math.Cos(mousePosRayRad.X)) * -Math.Cos(rotateRad.Y)))
+            //                          );
 
-            Vector3 ray = new Vector3((float)Math.Sin(rayRad.Y),
-                                      (float)(Math.Cos(rayRad.Y) * Math.Sin(rayRad.X)) + (float)(Math.Sin(rayRad.Y) * Math.Sin(rayRad.Z)),
-                                      (float)Math.Cos(rayRad.Y)
-                                      );
+            //x rotate only.
+            rotateRad += new Vector3(mousePosRayRad.Y,
+                                     0f,
+                                     0f
+                                     );
+
+            //rad to vector
+            //Vector3 ray = new Vector3(); //test
+
+            Vector3 ray = new Vector3((float)((Math.Sin(rotateRad.Y) * Math.Cos(rotateRad.X))),
+                              (float)((Math.Sin(rotateRad.X) * Math.Cos(rotateRad.Z)) + (Math.Sin(rotateRad.Y) * Math.Sin(rotateRad.Z))),
+                              (float)((Math.Cos(rotateRad.Y) * Math.Cos(rotateRad.X)))
+                              );
             //CamPositionRad = calc.RotAfin.GetPositionAfterRotation(m_CamTarget, new Vector3(m_CamRotation.X, m_CamRotation.Y,0f), calc.RotAfin.TargetVector.Y);
+
+                       //Convert vector to SMG
+            ray = new Vector3(-ray.Z, ray.Y, ray.X);
 
             return new Ray(m_CamPosition, ray);
         }
@@ -2057,6 +2085,7 @@ namespace Takochu.ui
         {
             if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
             {
+                //回転方向は右ねじの法則とSMG座標系に合わせてます。
                 if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
                 {
                     if (e.Delta > 0) m_CamRotation.Y += ((float)Math.PI / 180) * 90;
@@ -2064,8 +2093,8 @@ namespace Takochu.ui
                 }
                 else
                 {
-                    if (e.Delta > 0) m_CamRotation.X += ((float)Math.PI / 180) * 90;
-                    if (e.Delta < 0) m_CamRotation.X += ((float)Math.PI / 180) * -90;
+                    if (e.Delta > 0) m_CamRotation.X += ((float)Math.PI / 180) * -90;
+                    if (e.Delta < 0) m_CamRotation.X += ((float)Math.PI / 180) * 90;
                 }
                 Console.WriteLine(e.Delta);
             }
