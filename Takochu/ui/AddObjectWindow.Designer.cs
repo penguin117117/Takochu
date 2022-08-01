@@ -44,6 +44,7 @@ namespace Takochu.ui
             this.FileNameTextBox = new System.Windows.Forms.TextBox();
             this.NameLabel = new System.Windows.Forms.Label();
             this.NameTextBox = new System.Windows.Forms.TextBox();
+            this.SearchClearButton = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -60,7 +61,7 @@ namespace Takochu.ui
             // 
             this.SearchTextBox.Location = new System.Drawing.Point(14, 27);
             this.SearchTextBox.Name = "SearchTextBox";
-            this.SearchTextBox.Size = new System.Drawing.Size(362, 19);
+            this.SearchTextBox.Size = new System.Drawing.Size(261, 19);
             this.SearchTextBox.TabIndex = 1;
             this.SearchTextBox.TextChanged += new System.EventHandler(this.SearchTextBox_TextChanged);
             // 
@@ -75,7 +76,7 @@ namespace Takochu.ui
             // 
             // AddObjectButton
             // 
-            this.AddObjectButton.Location = new System.Drawing.Point(297, 357);
+            this.AddObjectButton.Location = new System.Drawing.Point(297, 383);
             this.AddObjectButton.Name = "AddObjectButton";
             this.AddObjectButton.Size = new System.Drawing.Size(101, 23);
             this.AddObjectButton.TabIndex = 3;
@@ -86,7 +87,7 @@ namespace Takochu.ui
             // ZoneComboBox
             // 
             this.ZoneComboBox.FormattingEnabled = true;
-            this.ZoneComboBox.Location = new System.Drawing.Point(8, 319);
+            this.ZoneComboBox.Location = new System.Drawing.Point(8, 347);
             this.ZoneComboBox.Name = "ZoneComboBox";
             this.ZoneComboBox.Size = new System.Drawing.Size(285, 20);
             this.ZoneComboBox.TabIndex = 4;
@@ -95,7 +96,7 @@ namespace Takochu.ui
             // LayerComboBox
             // 
             this.LayerComboBox.FormattingEnabled = true;
-            this.LayerComboBox.Location = new System.Drawing.Point(8, 357);
+            this.LayerComboBox.Location = new System.Drawing.Point(8, 385);
             this.LayerComboBox.Name = "LayerComboBox";
             this.LayerComboBox.Size = new System.Drawing.Size(285, 20);
             this.LayerComboBox.TabIndex = 5;
@@ -122,7 +123,7 @@ namespace Takochu.ui
             // 
             // NoteTextBox
             // 
-            this.NoteTextBox.Location = new System.Drawing.Point(8, 221);
+            this.NoteTextBox.Location = new System.Drawing.Point(8, 249);
             this.NoteTextBox.Multiline = true;
             this.NoteTextBox.Name = "NoteTextBox";
             this.NoteTextBox.ReadOnly = true;
@@ -134,7 +135,7 @@ namespace Takochu.ui
             // FilenNameLabel
             // 
             this.FilenNameLabel.AutoSize = true;
-            this.FilenNameLabel.Location = new System.Drawing.Point(6, 169);
+            this.FilenNameLabel.Location = new System.Drawing.Point(6, 197);
             this.FilenNameLabel.Name = "FilenNameLabel";
             this.FilenNameLabel.Size = new System.Drawing.Size(55, 12);
             this.FilenNameLabel.TabIndex = 1;
@@ -143,7 +144,7 @@ namespace Takochu.ui
             // TargetZoneLabel
             // 
             this.TargetZoneLabel.AutoSize = true;
-            this.TargetZoneLabel.Location = new System.Drawing.Point(6, 304);
+            this.TargetZoneLabel.Location = new System.Drawing.Point(6, 332);
             this.TargetZoneLabel.Name = "TargetZoneLabel";
             this.TargetZoneLabel.Size = new System.Drawing.Size(63, 12);
             this.TargetZoneLabel.TabIndex = 6;
@@ -152,7 +153,7 @@ namespace Takochu.ui
             // TagetLayerLabel
             // 
             this.TagetLayerLabel.AutoSize = true;
-            this.TagetLayerLabel.Location = new System.Drawing.Point(6, 342);
+            this.TagetLayerLabel.Location = new System.Drawing.Point(6, 370);
             this.TagetLayerLabel.Name = "TagetLayerLabel";
             this.TagetLayerLabel.Size = new System.Drawing.Size(66, 12);
             this.TagetLayerLabel.TabIndex = 7;
@@ -161,7 +162,7 @@ namespace Takochu.ui
             // NoteLabel
             // 
             this.NoteLabel.AutoSize = true;
-            this.NoteLabel.Location = new System.Drawing.Point(6, 206);
+            this.NoteLabel.Location = new System.Drawing.Point(6, 234);
             this.NoteLabel.Name = "NoteLabel";
             this.NoteLabel.Size = new System.Drawing.Size(31, 12);
             this.NoteLabel.TabIndex = 8;
@@ -169,7 +170,7 @@ namespace Takochu.ui
             // 
             // FileNameTextBox
             // 
-            this.FileNameTextBox.Location = new System.Drawing.Point(8, 184);
+            this.FileNameTextBox.Location = new System.Drawing.Point(8, 212);
             this.FileNameTextBox.Name = "FileNameTextBox";
             this.FileNameTextBox.Size = new System.Drawing.Size(392, 19);
             this.FileNameTextBox.TabIndex = 9;
@@ -190,11 +191,22 @@ namespace Takochu.ui
             this.NameTextBox.Size = new System.Drawing.Size(392, 19);
             this.NameTextBox.TabIndex = 11;
             // 
+            // SearchClearButton
+            // 
+            this.SearchClearButton.Location = new System.Drawing.Point(281, 27);
+            this.SearchClearButton.Name = "SearchClearButton";
+            this.SearchClearButton.Size = new System.Drawing.Size(95, 19);
+            this.SearchClearButton.TabIndex = 7;
+            this.SearchClearButton.Text = "SearchClear";
+            this.SearchClearButton.UseVisualStyleBackColor = true;
+            this.SearchClearButton.Click += new System.EventHandler(this.SearchClearButton_Click);
+            // 
             // AddObjectWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.SearchClearButton);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.ObjectDataTreeView);
             this.Controls.Add(this.SearchTextBox);
@@ -226,5 +238,6 @@ namespace Takochu.ui
         private System.Windows.Forms.Label NoteLabel;
         private System.Windows.Forms.TextBox NameTextBox;
         private System.Windows.Forms.Label NameLabel;
+        private System.Windows.Forms.Button SearchClearButton;
     }
 }

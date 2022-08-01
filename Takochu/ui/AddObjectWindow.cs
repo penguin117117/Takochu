@@ -175,5 +175,10 @@ namespace Takochu.ui
             //MessageBox.Show("OK");
 
         }
+
+        private void SearchClearButton_Click(object sender, EventArgs e)
+        {
+            SearchTextBox.Text = string.Empty;
+        }
     }
 }
