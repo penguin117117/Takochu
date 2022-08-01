@@ -28,7 +28,7 @@ namespace Takochu
             BCSV.PopulateFieldTypeTable();
             CameraUtil.InitCameras();
             ObjectDB.Load();
-            NewObjectDB.Load();
+            
             RenderUtil.AssignColors();
             EditorActionHolder.Initialize();
             Application.EnableVisualStyles();

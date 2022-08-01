@@ -41,6 +41,10 @@ namespace Takochu.util.GameVer
         //    "Path",
         //    "PathPoint"
         //};
+        public short GameTypeNo() 
+        {
+            return 2;
+        }
 
         public override string ToString()
         {

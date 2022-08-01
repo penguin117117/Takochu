@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Takochu.smg
 {
@@ -18,7 +19,7 @@ namespace Takochu.smg
         public static Dictionary<ushort, Dictionary<string, Object>> Categories;
         public static Dictionary<string, Object> Objects;
 
-        public static TreeNode[] ObjectNodes;
+        public static TreeNode[] ObjectNodes { get; private set; }
 
         public static void GenDB()
         {
@@ -49,7 +50,7 @@ namespace Takochu.smg
                 GenDB();
         }
 
-        public static void Load()
+        public static void Load(util.GameVer.IGameVersion gameVersion)
         {
             Generate_WhenNotfound();
 
@@ -95,6 +96,7 @@ namespace Takochu.smg
                 XmlNode objectNode = xmlDB_Doc.DocumentElement.ChildNodes[dbNodeNo];
                 XmlNode flagsNode = objectNode["flags"];
                 FlagData flags = new FlagData(flagsNode);
+                if (!(flags.Games == gameVersion.GameTypeNo()) && !(flags.Games == 3)) continue;
                 Object objectData = new Object(objectNode,flags);
                 Categories[objectData.CategoryID].Add(objectNode.Attributes["id"].Value, objectData);
                 ObjectNodes[objectData.CategoryID].Nodes.Add(objectData.DisplayName/*objectNode.Attributes["id"].Value*/);
@@ -110,16 +112,16 @@ namespace Takochu.smg
             //    };
             //}
         }
-
+        
         public class Object 
         {
-            public string FileName;
-            public string DisplayName;
-            public FlagData Flags;
-            public ushort CategoryID;
-            public string TypeName;
-            public string Notes;
-
+            public string FileName { get; private set; }
+            public string DisplayName { get; private set; }
+            public FlagData Flags { get; private set; }
+            public ushort CategoryID { get; private set; }
+            public string TypeName { get; private set; }
+            
+            public string Notes { get; private set; }
             public Object(XmlNode objectNode,FlagData flags) 
             {
                 FileName = objectNode.Attributes["id"].Value;
@@ -128,15 +130,18 @@ namespace Takochu.smg
                 CategoryID = Convert.ToUInt16(objectNode["category"].Attributes["id"].Value);
                 TypeName = objectNode["preferredfile"].Attributes["name"].Value;
                 Notes = objectNode["notes"].InnerText;
+                
             }
         }
 
+        //[TypeConverter(typeof(ExpandableObjectConverter))]
         public struct FlagData 
         {
-            public short Games;
-            public short Known;
-            public short Complete;
-            public short NeedsPaths;
+            public short Games { get; private set; }
+            public short Known { get; private set; }
+            public short Complete { get; private set; }
+            
+            public short NeedsPaths { get; private set; }
 
             public FlagData(XmlNode flagsNode) 
             {

@@ -23,6 +23,8 @@ namespace Takochu.ui
 
         public static AbstractObj AddTargetObject = null;
 
+        private List<TreeNode> _searchTreeNodes;
+
         //public static bool IsAddObject;
 
         public AddObjectWindow(IGameVersion gameVer,Dictionary<string,Zone> usedZones)
@@ -101,13 +103,27 @@ namespace Takochu.ui
         private void ObjectDataTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (ObjectDataTreeView.Nodes == null) return;
+            
+            if (_searchTreeNodes != default &&_searchTreeNodes.Count > 0) 
+            {
+                var searchObjectNodeTag = ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object;
+                //var searchObjectInfo = NewObjectDB.Categories[(ushort)ObjectDataTreeView.SelectedNode.Parent.Index][searchObjectNodeTag.FileName];
+
+                NoteTextBox.Text = searchObjectNodeTag.Notes;
+                FileNameTextBox.Text = searchObjectNodeTag.FileName;
+                NameTextBox.Text = searchObjectNodeTag.DisplayName;
+            }
             if (ObjectDataTreeView.SelectedNode.Parent == null) return;
             if (ObjectDataTreeView.SelectedNode.Tag is NewObjectDB.Object == false) return;
 
             var objectNodeTag = ObjectDataTreeView.SelectedNode.Tag as NewObjectDB.Object;
             var objectInfo = NewObjectDB.Categories[(ushort)ObjectDataTreeView.SelectedNode.Parent.Index][objectNodeTag.FileName];
 
-            textBox1.Text = objectInfo.Notes;
+            FileNameTextBox.Text = objectInfo.FileName;
+            NameTextBox.Text = objectInfo.DisplayName;
+            NoteTextBox.Text = objectInfo.Notes;
+            //propertyGrid1.AccessibleDescription = objectInfo.Notes;
+            //propertyGrid1.SelectedObject = objectInfo;
         }
 
         private void ObjectDataTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -120,6 +136,44 @@ namespace Takochu.ui
             //このツリーノードの削除は必須なので消さないこと
             //消してしまうと二度目にこのウィンドウを開く際にエラーが発生します。
             ObjectDataTreeView.Nodes.Clear();
+        }
+
+        private void SearchTextBox_TextChanged(object sender, EventArgs e)
+        {
+            //検索のテキストボックスの文字がなくなった場合にオブジェクトデータベースのデータを使用する。
+            if (SearchTextBox.Text == string.Empty) 
+            {
+                ObjectDataTreeView.Nodes.Clear();
+                ObjectDataTreeView.Nodes.AddRange(NewObjectDB.ObjectNodes);
+                return;
+            }
+
+            _searchTreeNodes = new List<TreeNode>();
+
+            foreach (TreeNode categoryNode in NewObjectDB.ObjectNodes) 
+            {
+                foreach (TreeNode objectNode in categoryNode.Nodes) 
+                {
+                    var obj = objectNode.Tag as NewObjectDB.Object;
+                    if (obj.DisplayName.StartsWith(SearchTextBox.Text)) 
+                    {
+                        TreeNode tn = new TreeNode(obj.DisplayName);
+                        tn.Tag = obj;
+                        _searchTreeNodes.Add(tn);
+                    }
+                }
+            }
+
+            //オブジェクトが見つからない場合何もしない
+            if (_searchTreeNodes.Count < 1) return;
+
+            ObjectDataTreeView.Nodes.Clear();
+            
+            ObjectDataTreeView.Nodes.AddRange(_searchTreeNodes.ToArray());
+
+
+            //MessageBox.Show("OK");
+
         }
     }
 }

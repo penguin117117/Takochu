@@ -21,8 +21,6 @@ namespace Takochu.rnd
     {
         public string debugshaders;
 
-
-
         public BmdRenderer(BMD model)
         {
             m_Model = model;
@@ -30,7 +28,7 @@ namespace Takochu.rnd
             string[] extensions = GL.GetString(StringName.Extensions).Split(' ');
 
             //シェーダー持ってるかのチェック
-            m_HasShaders = 
+            m_HasShaders =
                 extensions.Contains("GL_ARB_shading_language_100") &&
                 extensions.Contains("GL_ARB_shader_objects") &&
                 extensions.Contains("GL_ARB_vertex_shader") &&
@@ -40,39 +38,39 @@ namespace Takochu.rnd
             UploadTextures();
 
 
-            if (m_HasShaders)
+            if (!m_HasShaders) return;
+
+            //シェーダーの情報を格納
+            m_Shaders = new Shader[model.Materials.Length];
+
+            //シェーダー初期化
+            for (int i = 0; i < model.Materials.Length; i++)
             {
-                //シェーダーの情報を格納
-                m_Shaders = new Shader[model.Materials.Length];
-
-                //シェーダー初期化
-                for (int i = 0; i < model.Materials.Length; i++)
+                try
                 {
-                    try 
-                    {
-                        //shaderSettingの初期化
-                        ShaderSetting shaderSetting = new ShaderSetting(model, i);
+                    //shaderSettingの初期化
+                    ShaderSetting shaderSetting = new ShaderSetting(model, i);
 
-                        //シェーダー生成
-                        shaderSetting.GenerateShader(ref m_Shaders);
-                        //GenerateShaders(i);
-                    }
-                    catch (Exception ex)
+                    //シェーダー生成
+                    shaderSetting.GenerateShader(ref m_Shaders);
+                    //GenerateShaders(i);
+                }
+                catch (Exception ex)
+                {
+                    // really ugly hack
+                    if (ex.Message[0] == '!')
                     {
-                        // really ugly hack
-                        if (ex.Message[0] == '!')
-                        {
-                            //StringBuilder src = new StringBuilder(10000); int lolz;
-                            //GL.GetShaderSource(m_Shaders[i].FragmentShader, 10000, out lolz, src);
-                            //System.Windows.Forms.MessageBox.Show(ex.Message + "\n" + src.ToString());
-                            //throw ex;
-                        }
-
-                        //全ての構造体の配列のプログラムを0にする。(後処理？)
-                        m_Shaders[i].Program = 0;
+                        //StringBuilder src = new StringBuilder(10000); int lolz;
+                        //GL.GetShaderSource(m_Shaders[i].FragmentShader, 10000, out lolz, src);
+                        //System.Windows.Forms.MessageBox.Show(ex.Message + "\n" + src.ToString());
+                        //throw ex;
                     }
+
+                    //全ての構造体の配列のプログラムを0にする。(後処理？)
+                    m_Shaders[i].Program = 0;
                 }
             }
+
         }
 
         private void UploadTextures()
@@ -119,7 +117,7 @@ namespace Takochu.rnd
             m_Model.Close();
         }
 
- 
+
         /// <summary>
         /// マテリアル内の描画方法が透明の場合trueを返す関数
         /// </summary>
@@ -127,7 +125,7 @@ namespace Takochu.rnd
         /// <returns></returns>
         public override bool GottaRender(RenderInfo info)
         {
-            
+
             if (info.Mode == RenderMode.Picking)
             {
                 return true;
@@ -394,7 +392,7 @@ namespace Takochu.rnd
                     lastmatrixtable = mtxtable;
 
                     //BMDファイルのレンダリングの核
-                    RenderingCore(packet,info.Mode,mtxtable);
+                    BMDRenderingCore(packet, info.Mode, mtxtable);
                 }
 
                 //if (batch.MatrixType == 1 || batch.MatrixType == 2)
@@ -402,18 +400,18 @@ namespace Takochu.rnd
             }
         }
 
-        private void RenderingCore(BMD.Batch.Packet packet,RenderMode renderMode, Matrix4[] mtxtable) 
+        private void BMDRenderingCore(BMD.Batch.Packet packet, RenderMode renderMode, Matrix4[] mtxtable)
         {
             //描画タイプの配列初期化
             BeginMode[] beginMode = {
-                BeginMode.Quads, 
-                BeginMode.Points, 
-                BeginMode.Triangles, 
+                BeginMode.Quads,
+                BeginMode.Points,
+                BeginMode.Triangles,
                 BeginMode.TriangleStrip,
-                BeginMode.TriangleFan, 
-                BeginMode.Lines, 
-                BeginMode.LineStrip, 
-                BeginMode.Points 
+                BeginMode.TriangleFan,
+                BeginMode.Lines,
+                BeginMode.LineStrip,
+                BeginMode.Points
             };
 
             foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
@@ -422,13 +420,13 @@ namespace Takochu.rnd
                 GL.Begin(beginMode[(prim.PrimitiveType - 0x80) / 8]);
                 //GL.Begin(BeginMode.Points);
 
-                if (renderMode != RenderMode.Picking)
-                {
-                    //頂点それぞれに行う
-                    for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
-                    {
 
-                        if ((prim.ArrayMask & (1 << 11)) != 0) 
+                //頂点それぞれに行う
+                for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
+                {
+                    if (renderMode != RenderMode.Picking)
+                    {
+                        if ((prim.ArrayMask & (1 << 11)) != 0)
                             GL.Color4(m_Model.ColorArray[0][prim.ColorIndices[0][vertexIndex]]);
 
                         if (m_HasShaders)
@@ -450,36 +448,24 @@ namespace Takochu.rnd
                         }
                         else
                         {
-                            if ((prim.ArrayMask & (1 << 13)) != 0) 
+                            if ((prim.ArrayMask & (1 << 13)) != 0)
                                 GL.TexCoord2(m_Model.TexcoordArray[0][prim.TexcoordIndices[0][vertexIndex]]);
                         }
                         //if ((prim.ArrayMask & (1 << 0)) != 0) GL.Color4(debug[prim.PosMatrixIndices[i]]);
 
-                        if ((prim.ArrayMask & (1 << 10)) != 0) 
+                        if ((prim.ArrayMask & (1 << 10)) != 0)
                             GL.Normal3(m_Model.NormalArray[prim.NormalIndices[vertexIndex]]);
-
-                        //頂点インデックスにあった頂点番号の頂点を順番にセット
-                        Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
-                        ReadAndSetVertex3(pos, prim, mtxtable, vertexIndex);
                     }
+
+                    //頂点インデックスにあった頂点番号の頂点を順番にセット
+                    Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
+                    ReadAndSetVertex3(pos, prim, mtxtable, vertexIndex);
                 }
-                else
-                {
-                    for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
-                    {
-                        //頂点インデックスにあった頂点番号の頂点を順番にセット
-                        Vector4 pos = new Vector4(m_Model.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
-                        ReadAndSetVertex3(pos,prim,mtxtable,vertexIndex);
-                    }
-                }
-
-
-
                 GL.End();
             }
         }
 
-        private void ReadAndSetVertex3(Vector4 pos, BMD.Batch.Packet.Primitive prim, Matrix4[] mtxtable, int vertexIndex) 
+        private void ReadAndSetVertex3(Vector4 pos, BMD.Batch.Packet.Primitive prim, Matrix4[] mtxtable, int vertexIndex)
         {
             //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
             if ((prim.ArrayMask & 1) != 0)

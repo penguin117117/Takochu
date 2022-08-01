@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Takochu.smg;
 using Takochu.util;
+using Takochu.util.GameVer;
 
 namespace Takochu.ui
 {
@@ -18,6 +19,8 @@ namespace Takochu.ui
     {
         internal static string User = "shibbo";
         private static TreeView GalaxyNameTreeView;
+
+        public IGameVersion GameVersion { get; private set; }
 
         public SettingsForm(TreeView tb)
         {
@@ -54,7 +57,8 @@ namespace Takochu.ui
         {
             ObjectDB.GenDB();
             ObjectDB.Load();
-            NewObjectDB.Load();
+            GameVersion = GameUtil.IsSMG1() ? new SMG2() : new SMG2();
+            NewObjectDB.Load(GameVersion);
             DbInfoLbl.Text = "ObjectDatabase last generated on: " + File.GetLastWriteTime(ObjectDB.Xml_PathString).ToString();
         }
 
