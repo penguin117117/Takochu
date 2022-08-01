@@ -7,5 +7,6 @@ namespace Takochu.util.GameVer
     {
         List<string> AddObjectList { get; }
         //Dictionary<string, AbstractObj> AddObjectDictionary{get;}
+        short GameTypeNo();
     }
 }

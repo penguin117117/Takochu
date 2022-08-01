@@ -17,6 +17,7 @@ using Takochu.ui;
 using Takochu.util;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Takochu.ui.MainWindowSys;
+using Takochu.util.GameVer;
 
 namespace Takochu
 {
@@ -24,6 +25,7 @@ namespace Takochu
     {
         public GameDirectory GameDirectory { get; private set; }
         public static TreeView ObjectDBTreeView { get; private set; }
+        public IGameVersion GameVersion { get; private set; }
 
         public MainWindow()
         {
@@ -36,6 +38,7 @@ namespace Takochu
 
             GameDirectory = new GameDirectory();
             SetGalaxyTreeView();
+            
 
             //MainWindow.ObjectDBTreeView = new TreeView();
             ////MainWindow.ObjectDBTreeView.CreateControl();
@@ -131,6 +134,8 @@ namespace Takochu
             if (galaxyTreeView.SelectedNode != null)
             {
                 EditorWindow win = new EditorWindow(Convert.ToString(galaxyTreeView.SelectedNode.Tag));
+                GameVersion = GameUtil.IsSMG1() ? new SMG2() : new SMG2();
+                NewObjectDB.Load(GameVersion);
                 win.Show();
 
             }
