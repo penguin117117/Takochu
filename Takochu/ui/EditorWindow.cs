@@ -1567,7 +1567,7 @@ namespace Takochu.ui
             //GL.End();
         }
 
-        private Ray ScreenToRay(Point mousePos)//現在未使用の可能性あり（オブジェクト選択には使用されていない。）
+        private Ray ScreenToRay(Point mousePos)//カメラZ軸非対応(Incompatible :: cam Z rotate.)
         {
             //namespace System(cppLang & memo)
             //GL系の座標で計算してSMG系の座標に変換しています。（vector2のX座標がSMGのZ座標のため）
@@ -1583,41 +1583,18 @@ namespace Takochu.ui
             //convert.
             Vector3 rotateRad = new Vector3(-m_CamRotation.Y, -m_CamRotation.X, 0f);
 
-            //ray rotate.
-            //Vector3 rayRad = new Vector3(
-            //    (rotateRad.X * (float)Math.Cos(rotateRad.Y)),
-            //    rotateRad.Y,
-            //    (-rotateRad.X * (float)Math.Sin(rotateRad.Y))
-            //    );
-
-            //rayRad += new Vector3(
-            //    (mousePosRayRad.Y * (float)Math.Cos(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.Z) * (float)Math.Sin(rayRad.Y)),
-            //    mousePosRayRad.X * ((float)Math.Cos(rayRad.X) * (float)Math.Cos(rayRad.Z)),
-            //    (mousePosRayRad.Y * (float)Math.Sin(rayRad.Y)) + (mousePosRayRad.X * (float)Math.Sin(rayRad.X) * (float)Math.Cos(rayRad.Y))
-            //    );
-
-            //yz rotate.
-            //Vector3 ray = new Vector3((float)((Math.Sin(mousePosRayRad.X) * Math.Cos(rotateRad.Y)) + ((1 - Math.Cos(mousePosRayRad.X)) * Math.Sin(rotateRad.Y))),
-            //                          0f,
-            //                          (float)((Math.Sin(mousePosRayRad.X) * Math.Sin(-rotateRad.Y)) + ((1 - Math.Cos(mousePosRayRad.X)) * -Math.Cos(rotateRad.Y)))
-            //                          );
-
-            //x rotate only.
+            //x rotate only.(view y rotate)
             rotateRad += new Vector3(mousePosRayRad.Y,
                                      0f,
                                      0f
                                      );
 
-            //rad to vector
-            //Vector3 ray = new Vector3(); //test
+            //yz rotate add.(view x rotate)
+            Vector3 ray = new Vector3((float)((Math.Sin(rotateRad.Y) * Math.Cos(rotateRad.X)) + (Math.Cos(rotateRad.Y) * Math.Sin(mousePosRayRad.X))),
+                                      (float)((Math.Sin(rotateRad.X) * (Math.Cos(mousePosRayRad.X)))),
+                                      (float)((Math.Cos(rotateRad.Y) * Math.Cos(rotateRad.X)) + (Math.Sin(-rotateRad.Y) * Math.Sin(mousePosRayRad.X)))
+                                      );
 
-            Vector3 ray = new Vector3((float)((Math.Sin(rotateRad.Y) * Math.Cos(rotateRad.X))),
-                              (float)((Math.Sin(rotateRad.X) * Math.Cos(rotateRad.Z)) + (Math.Sin(rotateRad.Y) * Math.Sin(rotateRad.Z))),
-                              (float)((Math.Cos(rotateRad.Y) * Math.Cos(rotateRad.X)))
-                              );
-            //CamPositionRad = calc.RotAfin.GetPositionAfterRotation(m_CamTarget, new Vector3(m_CamRotation.X, m_CamRotation.Y,0f), calc.RotAfin.TargetVector.Y);
-
-                       //Convert vector to SMG
             ray = new Vector3(-ray.Z, ray.Y, ray.X);
 
             return new Ray(m_CamPosition, ray);
