@@ -721,6 +721,9 @@ namespace Takochu.smg
                         return pathPointObj;
                     }*/
                 }
+
+                if(pathObj.mUnique == id)
+                    return pathObj;
             }
 
             return null;

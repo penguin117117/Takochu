@@ -1669,9 +1669,10 @@ namespace Takochu.ui
         private void pathsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             List<string> zones = _galaxyScenario.GetZonesUsedOnCurrentScenario();
-            Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>();
-
-            ids.Add(_galaxyScenario.mName, _galaxyScenario.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj"));
+            Dictionary<string, List<int>> ids = new Dictionary<string, List<int>>
+            {
+                { _galaxyScenario.mName, _galaxyScenario.GetMainGalaxyZone().GetAllUniqueIDsFromObjectsOfType("PathObj") }
+            };
 
             foreach (string z in zones)
             {
