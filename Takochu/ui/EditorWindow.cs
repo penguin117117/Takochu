@@ -20,6 +20,7 @@ using OpenTK.Graphics.OpenGL;
 using static Takochu.util.RenderUtil;
 using System.Runtime.InteropServices;
 using Takochu.util.GameVer;
+using System.Diagnostics;
 
 namespace Takochu.ui
 {
@@ -44,7 +45,7 @@ namespace Takochu.ui
 
         private void AddObject_ToolStripItem_ObjectNameClick(object sender, EventArgs e)
         {
-            if (scenarioTreeView.SelectedNode == null) 
+            if (scenarioTreeView.SelectedNode == null)
             {
                 Console.WriteLine("シナリオが選択されていません。");
                 return;
@@ -53,7 +54,7 @@ namespace Takochu.ui
             var toolStripMenuItem = sender as ToolStripMenuItem;
             Console.WriteLine(toolStripMenuItem.Text);
 
-            AddObjectWindow addObjectWindow = new AddObjectWindow(GameVersion,_galaxyScenario.GetZones());
+            AddObjectWindow addObjectWindow = new AddObjectWindow(GameVersion, _galaxyScenario.GetZones());
             addObjectWindow.ShowDialog();
 
             //オブジェクトが追加されていない場合はこの処理を実行しないようにする。
@@ -63,7 +64,7 @@ namespace Takochu.ui
             //    mObjects.Add(addObjectWindow.Objects[objCount - 1]);
             //    Scenario_ReLoad();
             //}
-            
+
             //この下にオブジェクト追加後に
             //フォームを閉じるボタンを押したときに警告が出るようにするためのコードを書く必要がある
 
@@ -212,7 +213,7 @@ namespace Takochu.ui
                 currentLayers.AddRange(GameUtil.GetGalaxyLayers(mZoneMasks[zoneName]));
 
                 objectsListTreeView.Nodes.Add(zoneNode);
-                
+
                 Zone zone = _galaxyScenario.GetZone(zoneName);
 
                 if (zone.mLights != null)
@@ -981,7 +982,109 @@ namespace Takochu.ui
 
                     mSelectedObject = obj;
 
+                    RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{obj.mName}.arc"));
 
+                    if (rarc.DoesFileExist($"/root/{obj.mName}.bdl"))
+                    {
+                        BMD bmd = new BMD(rarc.OpenFile($"/root/{obj.mName}.bdl"));
+                        foreach (BMD.Batch batch in bmd.Batches)
+                        {
+                            Matrix4[] lastmatrixtable = null;
+
+                            foreach (BMD.Batch.Packet packet in batch.Packets)
+                            {
+                                Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
+                                int[] mtx_debug = new int[packet.MatrixTable.Length];
+
+                                for (int i = 0; i < packet.MatrixTable.Length; i++)
+                                {
+                                    if (packet.MatrixTable[i] == 0xFFFF)
+                                    {
+                                        mtxtable[i] = lastmatrixtable[i];
+                                        mtx_debug[i] = 2;
+                                    }
+                                    else
+                                    {
+                                        BMD.MatrixType mtxtype = bmd.MatrixTypes[packet.MatrixTable[i]];
+
+                                        if (mtxtype.IsWeighted)
+                                        {
+                                            //throw new NotImplementedException("weighted matrix");
+
+                                            // code inspired from bmdview2, except doesn't work right
+                                            /*Matrix4 mtx = new Matrix4();
+                                            Bmd.MultiMatrix mm = m_Model.MultiMatrices[mtxtype.Index];
+                                            for (int j = 0; j < mm.NumMatrices; j++)
+                                            {
+                                                Matrix4 wmtx = mm.Matrices[j];
+                                                float weight = mm.MatrixWeights[j];
+
+                                                Matrix4.Mult(ref wmtx, ref m_Model.Joints[mm.MatrixIndices[j]].Matrix, out wmtx);
+
+                                                Vector4.Mult(ref wmtx.Row0, weight, out wmtx.Row0);
+                                                Vector4.Mult(ref wmtx.Row1, weight, out wmtx.Row1);
+                                                Vector4.Mult(ref wmtx.Row2, weight, out wmtx.Row2);
+                                                //Vector4.Mult(ref wmtx.Row3, weight, out wmtx.Row3);
+
+                                                Vector4.Add(ref mtx.Row0, ref wmtx.Row0, out mtx.Row0);
+                                                Vector4.Add(ref mtx.Row1, ref wmtx.Row1, out mtx.Row1);
+                                                Vector4.Add(ref mtx.Row2, ref wmtx.Row2, out mtx.Row2);
+                                                //Vector4.Add(ref mtx.Row3, ref wmtx.Row3, out mtx.Row3);
+                                            }
+                                            mtx.M44 = 1f;
+                                            mtxtable[i] = mtx;*/
+
+                                            // seems fine in most cases
+                                            // but hey, certainly not right, that data has to be used in some way
+                                            mtxtable[i] = Matrix4.Identity;
+
+                                            mtx_debug[i] = 1;
+                                        }
+                                        else
+                                        {
+                                            mtxtable[i] = bmd.Joints[mtxtype.Index].FinalMatrix;
+                                            mtx_debug[i] = 0;
+                                        }
+                                    }
+                                }
+
+                                lastmatrixtable = mtxtable;
+
+                                foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
+                                {
+                                    //描画タイプの配列初期化
+                                    BeginMode[] beginMode =
+                                    {
+                                            BeginMode.Quads,
+                                            BeginMode.Points,
+                                            BeginMode.Triangles,
+                                            BeginMode.TriangleStrip,
+                                            BeginMode.TriangleFan,
+                                            BeginMode.Lines,
+                                            BeginMode.LineStrip,
+                                            BeginMode.Points
+                                    };
+                                    //面情報
+                                    Debug.WriteLine(beginMode[(prim.PrimitiveType - 0x80) / 8]);
+                                    for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
+                                    {
+                                        //頂点情報
+
+                                        //頂点インデックスにあった頂点番号の頂点を順番にセット
+                                        Vector4 pos = new Vector4(bmd.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
+
+                                        //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
+                                        if ((prim.ArrayMask & 1) != 0)
+                                            Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[vertexIndex]], out pos);
+                                        else
+                                            Vector4.Transform(ref pos, ref mtxtable[0], out pos);
+
+                                        Debug.WriteLine(pos);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     if (AddObjectWindow.AddTargetObject != null)
                     {
@@ -993,12 +1096,12 @@ namespace Takochu.ui
 
                         Console.WriteLine($"ZoneName::{obj.mParentZone.ZoneName}");
 
-                        var positionWithZoneRotation = calc.RotAfin.GetPositionAfterRotation(obj.mTruePosition,objTrueRot,calc.RotAfin.TargetVector.All);
+                        var positionWithZoneRotation = calc.RotAfin.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotAfin.TargetVector.All);
 
                         //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
                         //レイの方向の制御は行っていません
 
-                        var rayPos = Vector3.Multiply(raytest2.Origin , 10000f);
+                        var rayPos = Vector3.Multiply(raytest2.Origin, 10000f);
                         var selectedObjGlobalPosition = objTruePos + positionWithZoneRotation;
 
                         //距離の計算
@@ -1017,12 +1120,12 @@ namespace Takochu.ui
                         {
                             var objCount = AddObjectWindow.Objects.Count();
                             mObjects.Add(AddObjectWindow.Objects[objCount - 1]);
-                            
 
-                            
+
+
                             Scenario_ReLoad();
                             SelectTreeNodeWithUnique(AddObjectWindow.AddTargetObject.mUnique);
-                            ChangeToNode(objectsListTreeView.SelectedNode,false);
+                            ChangeToNode(objectsListTreeView.SelectedNode, false);
 
                             AddObjectWindow.AddTargetObject = null;
                         }
