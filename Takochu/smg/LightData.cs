@@ -14,7 +14,7 @@ namespace Takochu.smg
         public static void Initialize()
         {
             mLights = new List<LightEntry>();
-            var a = Program.sGame.mFilesystem.OpenFile(GameUtil.IsSMG1() ? "/ObjectData/LightData.arc" : "/LightData/LightData.arc");
+            var a = Program.sGame.Filesystem.OpenFile(GameUtil.IsSMG1() ? "/ObjectData/LightData.arc" : "/LightData/LightData.arc");
             mFilesystem = new RARCFilesystem(a);
             //a.Close();
             mBCSV = new BCSV(mFilesystem.OpenFile("/LightData/LightData.bcsv"));

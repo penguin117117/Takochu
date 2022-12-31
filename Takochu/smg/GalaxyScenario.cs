@@ -15,26 +15,29 @@ using Takochu.io.SpecificNameARC;
 
 namespace Takochu.smg
 {
-    public class Galaxy
+    public class GalaxyScenario
     {
+        public Game mGame { get; private set; }
+        private FilesystemBase mFilesystem;
+        public int mScenarioNo { get; private set; }
+
+        public string mName { get; private set; }
+        private List<string> mRemovedZones;
+        public string mHolderName { get; private set; }
+        public string mCurScenarioName { get; private set; }
         public ScenarioArcFile ScenarioARC { get; private set; }
 
-        public Galaxy(Game game, string galaxyName)
+        public GalaxyScenario(Game game, string galaxyName)
         {
             mGame = game;
-            mFilesystem = game.mFilesystem;
+            mFilesystem = game.Filesystem;
             mName = galaxyName;
             mRemovedZones = new List<string>();
             //mZones = new Dictionary<string, Zone>();
             //mZoneEntries = new Dictionary<string, BCSV.Entry>();
 
-            System.Diagnostics.Stopwatch s = new System.Diagnostics.Stopwatch();
-            Console.WriteLine("ReadStart---------------");
-            s.Start();
+            
             ReadScenarioArc();
-            s.Stop();
-
-            Console.WriteLine("ReadScenario: "+s.Elapsed.TotalSeconds);
 
             if (!NameHolder.HasGalaxyName(galaxyName))
                 return;
@@ -297,13 +300,6 @@ namespace Takochu.smg
             ScenarioARC.RARCFileStream.Save();
         }
 
-        public Game mGame { get; private set; }
-        private FilesystemBase mFilesystem;
-        public int mScenarioNo { get; private set; }
-
-        public string mName { get; private set; }
-        private List<string> mRemovedZones;
-        public string mHolderName { get; private set; }
-        public string mCurScenarioName { get; private set; }
+        
     }
 }

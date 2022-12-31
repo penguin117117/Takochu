@@ -17,7 +17,7 @@ namespace Takochu.smg.img
         {
             mImages = new Dictionary<string, BTI>();
 
-            RARCFilesystem fs = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile("/ObjectData/GalaxyInfoTexture.arc"));
+            RARCFilesystem fs = new RARCFilesystem(Program.sGame.Filesystem.OpenFile("/ObjectData/GalaxyInfoTexture.arc"));
 
             List<string> files = fs.GetFiles("/root/");
 

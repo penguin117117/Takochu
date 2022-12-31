@@ -6,23 +6,187 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Takochu.smg
 {
-    class ObjectDB
+    class NewObjectDB 
     {
-        public const string Xml_PathString = "res/objectdb.xml";
+        public const string Xml_PathString = "res/New_objectdb.xml";
+        public const string URL_LinkString = "https://raw.githubusercontent.com/SunakazeKun/galaxydatabase/main/objectdb.xml";
+
+        public static Dictionary<ushort, Dictionary<string, Object>> Categories;
+        public static Dictionary<string, Object> Objects;
+
+        public static TreeNode[] ObjectNodes { get; private set; }
+
         public static void GenDB()
         {
-            using (var c = new WebClient())
+            using (var webClient = new WebClient())
             {
                 try
                 {
-                    c.DownloadFile("http://shibboleet.us.to/new_db/generate.php", Xml_PathString);
+                    webClient.DownloadFile(URL_LinkString, Xml_PathString);
                 }
-                catch
+                catch (WebException webEx)
                 {
-                    // do nothing
+                    if (webEx.Status == WebExceptionStatus.NameResolutionFailure)
+                    {
+                        File.WriteAllText(Xml_PathString, Properties.Resources.New_objectdb);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
+
+        public static void Generate_WhenNotfound()
+        {
+            var AppCurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            if (File.Exists(AppCurrentDirectory + Xml_PathString) == false)
+                GenDB();
+        }
+
+        public static void Load(util.GameVer.IGameVersion gameVersion)
+        {
+            Generate_WhenNotfound();
+
+            
+            //Actors = new Dictionary<string, Actor>();
+            Objects = new Dictionary<string, Object>();
+
+            XmlDocument xmlDB_Doc = new XmlDocument();
+            xmlDB_Doc.Load(Xml_PathString);
+
+            var dbNodesCount = xmlDB_Doc.DocumentElement.ChildNodes.Count;
+
+            Categories = new Dictionary<ushort, Dictionary<string, Object>>();
+
+            
+
+            for (int dbNodeNo = 0; dbNodeNo < dbNodesCount; dbNodeNo++) 
+            {
+                //カテゴリーノードの読み取り
+                if (dbNodeNo == 0) 
+                {
+                    XmlNode CategoriesNode = xmlDB_Doc.DocumentElement.ChildNodes[0];
+                    Categories = new Dictionary<ushort, Dictionary<string, Object>>();
+
+                    var categoryNodeCount = CategoriesNode.ChildNodes.Count;
+                    ObjectNodes = new TreeNode[categoryNodeCount];
+                    for (ushort i = 0; i < categoryNodeCount; i++)
+                    {
+                        XmlNode categoryXmlNode = CategoriesNode.ChildNodes[i];
+                        ushort categoryID = Convert.ToUInt16(categoryXmlNode.Attributes["id"].Value);
+                        Categories[i] = new Dictionary<string, Object>();
+                        //Categories.Add(categoryID,default);
+                        ObjectNodes[i] = new TreeNode
+                        {
+                            Text = categoryXmlNode.InnerText,
+                            Tag = categoryID
+                        };
+                    }
+                    continue;
+                }
+
+                //オブジェクトデータ読み取り
+                XmlNode objectNode = xmlDB_Doc.DocumentElement.ChildNodes[dbNodeNo];
+                XmlNode flagsNode = objectNode["flags"];
+                FlagData flags = new FlagData(flagsNode);
+                if (!(flags.Games == gameVersion.GameTypeNo()) && !(flags.Games == 3)) continue;
+                Object objectData = new Object(objectNode,flags);
+                Categories[objectData.CategoryID].Add(objectNode.Attributes["id"].Value, objectData);
+                ObjectNodes[objectData.CategoryID].Nodes.Add(objectData.DisplayName/*objectNode.Attributes["id"].Value*/);
+                ObjectNodes[objectData.CategoryID].Nodes[ObjectNodes[objectData.CategoryID].Nodes.Count -1].Tag = objectData;
+            }
+            
+            //ObjectNodes = new TreeNode[Objects.Count];
+            //for (int i = 0; i < Objects.Count; i++)
+            //{
+            //    ObjectNodes[i] = new TreeNode(Objects.ElementAt(i).Key)
+            //    {
+            //        Tag = Objects.ElementAt(i).Value
+            //    };
+            //}
+        }
+        
+        public class Object 
+        {
+            public string FileName { get; private set; }
+            public string DisplayName { get; private set; }
+            public FlagData Flags { get; private set; }
+            public ushort CategoryID { get; private set; }
+            public string TypeName { get; private set; }
+            
+            public string Notes { get; private set; }
+            public Object(XmlNode objectNode,FlagData flags) 
+            {
+                FileName = objectNode.Attributes["id"].Value;
+                DisplayName = objectNode["name"].InnerText;
+                Flags = flags;
+                CategoryID = Convert.ToUInt16(objectNode["category"].Attributes["id"].Value);
+                TypeName = objectNode["preferredfile"].Attributes["name"].Value;
+                Notes = objectNode["notes"].InnerText;
+                
+            }
+        }
+
+        //[TypeConverter(typeof(ExpandableObjectConverter))]
+        public struct FlagData 
+        {
+            public short Games { get; private set; }
+            public short Known { get; private set; }
+            public short Complete { get; private set; }
+            
+            public short NeedsPaths { get; private set; }
+
+            public FlagData(XmlNode flagsNode) 
+            {
+                Games        = Convert.ToInt16  (flagsNode.Attributes["games"].Value);
+                Known        = Convert.ToInt16  (flagsNode.Attributes["known"].Value);
+                Complete     = Convert.ToInt16  (flagsNode.Attributes["complete"].Value);
+                NeedsPaths   = Convert.ToInt16  (flagsNode.Attributes["needsPaths"].Value);
+            }
+        }
+    }
+
+    class ObjectDB
+    {
+        public const string Xml_PathString = "res/objectdb.xml";
+        public const string URL_LinkString = "http://shibboleet.us.to/new_db/generate.php";
+
+        public static Dictionary<string, Actor> Actors;
+        public static Dictionary<string, Object> Objects;
+
+        public static TreeNode[] ObjectNodes;
+
+        //public static TreeView ObjectTreeView = new TreeView();
+
+        //public static TreeNodeCollection ObjectTreeNodeCollection { get; private set; }
+
+        //public static string[] ObjectNames;
+
+        public static void GenDB()
+        {
+            using (var webClient = new WebClient())
+            {
+                try
+                {
+                    webClient.DownloadFile(URL_LinkString, Xml_PathString);
+                }
+                catch (WebException webEx)
+                {
+                    if (webEx.Status == WebExceptionStatus.NameResolutionFailure) 
+                    {
+                        File.WriteAllText(Xml_PathString, Properties.Resources.objectdb);
+                    }
+                }
+                catch (Exception ex) 
+                {
+                    Console.WriteLine(ex.Message);
                 }
             }
         }
@@ -37,7 +201,7 @@ namespace Takochu.smg
         public static void Load()
         {
             Generate_WhenNotfound();
-            
+
 
             Actors = new Dictionary<string, Actor>();
             Objects = new Dictionary<string, Object>();
@@ -45,19 +209,19 @@ namespace Takochu.smg
             XmlDocument db = new XmlDocument();
             db.Load(Xml_PathString);
 
-            XmlNode actors = db.DocumentElement.ChildNodes[0];
+            XmlNode actorsNode = db.DocumentElement.ChildNodes[0];
 
-            foreach(XmlNode actrs in actors.ChildNodes)
+            foreach(XmlNode actorNode in actorsNode.ChildNodes)
             {
-                Actor actor = new Actor();
+                Actor actorData = new Actor();
 
-                actor.ActorName = actrs.Attributes["id"].Value;
+                actorData.ActorName = actorNode.Attributes["id"].Value;
 
-                XmlNode generalFlags = actrs["flags"];
-                actor.IsKnown = Convert.ToInt32(generalFlags.Attributes["known"].Value);
-                actor.IsComplete = Convert.ToInt32(generalFlags.Attributes["complete"].Value);
-                actor.Fields = new List<ActorField>();
-                XmlNode fields = actrs["fields"];
+                XmlNode generalFlags = actorNode["flags"];
+                actorData.IsKnown = Convert.ToInt32(generalFlags.Attributes["known"].Value);
+                actorData.IsComplete = Convert.ToInt32(generalFlags.Attributes["complete"].Value);
+                actorData.Fields = new List<ActorField>();
+                XmlNode fields = actorNode["fields"];
 
                 foreach(XmlNode field in fields.ChildNodes)
                 {
@@ -68,10 +232,10 @@ namespace Takochu.smg
                     f.Type = field.Attributes["type"].Value;
                     f.Value = field.Attributes["values"].Value;
                     f.Notes = field.Attributes["notes"].Value;
-                    actor.Fields.Add(f);
+                    actorData.Fields.Add(f);
                 }
 
-                Actors.Add(actor.ActorName, actor);
+                Actors.Add(actorData.ActorName, actorData);
             }
 
             XmlNode objects = db.DocumentElement.ChildNodes[1];
@@ -91,6 +255,22 @@ namespace Takochu.smg
 
                 Objects.Add(obj.InternalName, obj);
             }
+
+            ObjectNodes = new TreeNode[Objects.Count];
+            for(int i = 0; i<Objects.Count; i++) 
+            {
+                
+                ObjectNodes[i] = new TreeNode(Objects.ElementAt(i).Key);
+                ObjectNodes[i].Tag = Objects.ElementAt(i).Value;
+                //ObjectNodes[i].Text = Objects.ElementAt(i).Key;
+                //ObjectNodes[i].Name = Objects.ElementAt(i).Key;
+            }
+
+            //ObjectTreeNodeCollection = new TreeNodeCollection(ObjectNodes);
+            //ObjectTreeNodeCollection.AddRange(ObjectNodes);
+
+            //ObjectTreeView = new TreeView();
+            //ObjectTreeView.Nodes.AddRange(ObjectNodes);
         }
 
         public static string GetFriendlyObjNameFromObj(string objName)
@@ -202,7 +382,6 @@ namespace Takochu.smg
             public string Notes;
         }
 
-        public static Dictionary<string, Actor> Actors;
-        public static Dictionary<string, Object> Objects;
+       
     }
 }

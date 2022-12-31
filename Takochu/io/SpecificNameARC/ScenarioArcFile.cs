@@ -17,10 +17,10 @@ namespace Takochu.io.SpecificNameARC
         public Dictionary<string, BCSV.Entry> ZoneListBCSV_Entries { get; private set; }
         public Dictionary<int, ScenarioEntry> ScenarioDataBCSV { get; private set; }
 
-        private readonly Galaxy _galaxy;
+        private readonly GalaxyScenario _galaxy;
 
 
-        public ScenarioArcFile(FilesystemBase fsb, Galaxy galaxy)
+        public ScenarioArcFile(FilesystemBase fsb, GalaxyScenario galaxy)
         {
             _galaxy = galaxy;
             var galaxyName = galaxy.mName;

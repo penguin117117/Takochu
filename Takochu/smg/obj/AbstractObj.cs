@@ -10,6 +10,7 @@ using OpenTK.Graphics;
 using System.Drawing;
 using static Takochu.util.EditorUtil;
 using Takochu.util;
+using Takochu.calc;
 
 namespace Takochu.smg.obj
 {
@@ -22,6 +23,32 @@ namespace Takochu.smg.obj
             { "PatakuriBig" , new List<string>(){"PatakuriWingBig","KuriboChief" } }
         };
 
+        public AbstractObj(string objectName,Zone parentZone) 
+        {
+            mEntry = new BCSV.Entry();
+            mParentZone = parentZone;
+
+            if (this is PathPointObj)
+            {
+                PathPointObj path = this as PathPointObj;
+                path.mPointColors = new Color[3];
+                path.mPointIDs = new int[3];
+                for (int pointID = 0; pointID < 3; pointID++)
+                {
+                    path.mPointIDs[pointID] = Program.sUniqueID++;
+                    Color color = GetRandomColor();
+                    ColorHolder.Add(path.mPointIDs[pointID], color);
+                    path.mPointColors[pointID] = color;
+                }
+            }
+            else
+            {
+                mUnique = Program.sUniqueID++;
+                mPicking = GetRandomColor();
+                ColorHolder.Add(mUnique, mPicking);
+            }
+        }
+
         public AbstractObj(BCSV.Entry entry)
         {
             mEntry = entry;
@@ -33,20 +60,25 @@ namespace Takochu.smg.obj
                 PathPointObj path = this as PathPointObj;
                 path.mPointColors = new Color[3];
                 path.mPointIDs = new int[3];
-                for (int i = 0; i < 3; i++)
+                for (int pointID = 0; pointID < 3; pointID++)
                 {
-                    path.mPointIDs[i] = Program.sUniqueID++;
-                    Color c = Color.FromArgb(0xFF, GlobalRandom.GetNext(256), GlobalRandom.GetNext(256), GlobalRandom.GetNext(256));
-                    ColorHolder.Add(path.mPointIDs[i], c);
-                    path.mPointColors[i] = c;
+                    path.mPointIDs[pointID] = Program.sUniqueID++;
+                    Color color = GetRandomColor();
+                    ColorHolder.Add(path.mPointIDs[pointID], color);
+                    path.mPointColors[pointID] = color;
                 }
             }
             else
             {
                 mUnique = Program.sUniqueID++;
-                mPicking = Color.FromArgb(0xFF, GlobalRandom.GetNext(256), GlobalRandom.GetNext(256), GlobalRandom.GetNext(256));
+                mPicking = GetRandomColor();
                 ColorHolder.Add(mUnique, mPicking);
             }
+        }
+
+        private Color GetRandomColor() 
+        {
+            return Color.FromArgb(0xFF, GlobalRandom.GetNext(256), GlobalRandom.GetNext(256), GlobalRandom.GetNext(256));
         }
 
         public bool CanUsePath()
@@ -113,7 +145,16 @@ namespace Takochu.smg.obj
             mPosition = new Vector3(pos.X / 100, pos.Y / 100, pos.Z / 100);
         }
 
-        
+        protected Vector3 GetVector3_FromEntry(string xName, string yName, string zName)
+        {
+            return new Vector3(
+                        ObjectTypeChange.ToFloat(mEntry.Get(xName)),
+                        ObjectTypeChange.ToFloat(mEntry.Get(yName)),
+                        ObjectTypeChange.ToFloat(mEntry.Get(zName))
+                        );
+        }
+
+
         public BCSV.Entry mEntry { get; protected set; }
         public Zone mParentZone { get; protected set; }
 

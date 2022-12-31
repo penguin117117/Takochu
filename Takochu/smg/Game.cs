@@ -11,17 +11,17 @@ namespace Takochu.smg
     public class Game
     {
         private const string Only_SMG2_File = "/ObjectData/ProductMapObjDataTable.arc";
+        public FilesystemBase Filesystem { get; private set; }
 
         public Game(FilesystemBase filesystem)
         {
-            mFilesystem = filesystem;
+            Filesystem = filesystem;
             SetGameVer();
-            
         }
 
         private void SetGameVer() 
         {
-            if (mFilesystem.DoesFileExist(Only_SMG2_File))
+            if (Filesystem.DoesFileExist(Only_SMG2_File))
                 GameUtil.SetGame(GameUtil.Game.SMG2);
             else
                 GameUtil.SetGame(GameUtil.Game.SMG1);
@@ -29,37 +29,37 @@ namespace Takochu.smg
 
         public void Close()
         {
-            mFilesystem.Close();
+            Filesystem.Close();
         }
 
         public bool DoesFileExist(string file)
         {
-            return mFilesystem.DoesFileExist(file);
+            return Filesystem.DoesFileExist(file);
         }
 
         public bool HasScenario(string galaxy)
         {
             // this solution works for both games
-            return mFilesystem.DoesFileExist($"/StageData/{galaxy}/{galaxy}Scenario.arc");
+            return Filesystem.DoesFileExist($"/StageData/{galaxy}/{galaxy}Scenario.arc");
         }
 
         public List<string> GetGalaxies()
         {
             // this solution works for both games
-            List<string> stageDataDirs = mFilesystem.GetDirectories("/StageData");
+            List<string> stageDataDirs = Filesystem.GetDirectories("/StageData");
             return stageDataDirs.FindAll(galaxyName => HasScenario(galaxyName));
         }
 
-        public Galaxy OpenGalaxy(string galaxy)
+        public GalaxyScenario OpenGalaxy(string galaxy)
         {
             if (!HasScenario(galaxy))
             {
                 throw new Exception("Game::OpenGalaxy() -- Requested name is not a Galaxy.");
             }
 
-            return new Galaxy(this, galaxy);
+            return new GalaxyScenario(this, galaxy);
         }
 
-        public FilesystemBase mFilesystem;
+        
     }
 }

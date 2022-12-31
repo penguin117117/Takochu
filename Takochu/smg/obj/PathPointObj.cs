@@ -144,7 +144,7 @@ namespace Takochu.smg.obj
 
         public override string ToString()
         {
-            return $"[{mParent.mID}] {mParent.mName} (Point {mID}) ({mParent.mZone.mZoneName})";
+            return $"[{mParent.mID}] {mParent.mName} (Point {mID}) ({mParent.mZone.ZoneName})";
         }
 
         public PathObj mParent;

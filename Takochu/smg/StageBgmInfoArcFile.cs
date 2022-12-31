@@ -14,7 +14,7 @@ namespace Takochu.smg
 
         public static void Initialize()
         {
-            mFilesystem = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile(StageBgmInfoArcPath));
+            mFilesystem = new RARCFilesystem(Program.sGame.Filesystem.OpenFile(StageBgmInfoArcPath));
 
             //StageBGMInfoを読み込む
             BCSV stageBgm = new BCSV(mFilesystem.OpenFile("/StageBgmInfo/StageBgmInfo.bcsv"));
