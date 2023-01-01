@@ -152,6 +152,7 @@
     <Compile Include="rnd\RenderBase.cs" />
     <Compile Include="smg\img\ImageHolder.cs" />
     <Compile Include="smg\msg\MessageBase.cs" />
+    <Compile Include="smg\obj\ObjectSubData\BMDInfo.cs" />
     <Compile Include="smg\obj\ObjectSubData\InfoData.cs" />
     <Compile Include="smg\ZoneAttributes.cs" />
     <Compile Include="ui\AddObjectWindow.cs">
@@ -356,6 +357,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="smg\obj\ObjectSubData\BMDInfo.puml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

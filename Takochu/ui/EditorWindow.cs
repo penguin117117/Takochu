@@ -21,6 +21,7 @@ using static Takochu.util.RenderUtil;
 using System.Runtime.InteropServices;
 using Takochu.util.GameVer;
 using System.Diagnostics;
+using Takochu.smg.obj.ObjectSubData;
 
 namespace Takochu.ui
 {
@@ -982,109 +983,120 @@ namespace Takochu.ui
 
                     mSelectedObject = obj;
 
-                    RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{obj.mName}.arc"));
+                    //選択したオブジェクトのBMDファイル内の三角面情報の一覧を取得する。
+                    BMDInfo.BMDTriangleData bmdTriangleData = BMDInfo.GetTriangles(obj);
 
-                    if (rarc.DoesFileExist($"/root/{obj.mName}.bdl"))
-                    {
-                        BMD bmd = new BMD(rarc.OpenFile($"/root/{obj.mName}.bdl"));
-                        foreach (BMD.Batch batch in bmd.Batches)
-                        {
-                            Matrix4[] lastmatrixtable = null;
+                    //カメラのRayと三角面の位置情報から交差判定を行う。
 
-                            foreach (BMD.Batch.Packet packet in batch.Packets)
-                            {
-                                Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
-                                int[] mtx_debug = new int[packet.MatrixTable.Length];
 
-                                for (int i = 0; i < packet.MatrixTable.Length; i++)
-                                {
-                                    if (packet.MatrixTable[i] == 0xFFFF)
-                                    {
-                                        mtxtable[i] = lastmatrixtable[i];
-                                        mtx_debug[i] = 2;
-                                    }
-                                    else
-                                    {
-                                        BMD.MatrixType mtxtype = bmd.MatrixTypes[packet.MatrixTable[i]];
 
-                                        if (mtxtype.IsWeighted)
-                                        {
-                                            //throw new NotImplementedException("weighted matrix");
 
-                                            // code inspired from bmdview2, except doesn't work right
-                                            /*Matrix4 mtx = new Matrix4();
-                                            Bmd.MultiMatrix mm = m_Model.MultiMatrices[mtxtype.Index];
-                                            for (int j = 0; j < mm.NumMatrices; j++)
-                                            {
-                                                Matrix4 wmtx = mm.Matrices[j];
-                                                float weight = mm.MatrixWeights[j];
 
-                                                Matrix4.Mult(ref wmtx, ref m_Model.Joints[mm.MatrixIndices[j]].Matrix, out wmtx);
 
-                                                Vector4.Mult(ref wmtx.Row0, weight, out wmtx.Row0);
-                                                Vector4.Mult(ref wmtx.Row1, weight, out wmtx.Row1);
-                                                Vector4.Mult(ref wmtx.Row2, weight, out wmtx.Row2);
-                                                //Vector4.Mult(ref wmtx.Row3, weight, out wmtx.Row3);
 
-                                                Vector4.Add(ref mtx.Row0, ref wmtx.Row0, out mtx.Row0);
-                                                Vector4.Add(ref mtx.Row1, ref wmtx.Row1, out mtx.Row1);
-                                                Vector4.Add(ref mtx.Row2, ref wmtx.Row2, out mtx.Row2);
-                                                //Vector4.Add(ref mtx.Row3, ref wmtx.Row3, out mtx.Row3);
-                                            }
-                                            mtx.M44 = 1f;
-                                            mtxtable[i] = mtx;*/
+                    //RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{obj.mName}.arc"));
 
-                                            // seems fine in most cases
-                                            // but hey, certainly not right, that data has to be used in some way
-                                            mtxtable[i] = Matrix4.Identity;
+                    //if (rarc.DoesFileExist($"/root/{obj.mName}.bdl"))
+                    //{
+                    //    BMD bmd = new BMD(rarc.OpenFile($"/root/{obj.mName}.bdl"));
+                    //    foreach (BMD.Batch batch in bmd.Batches)
+                    //    {
+                    //        Matrix4[] lastmatrixtable = null;
 
-                                            mtx_debug[i] = 1;
-                                        }
-                                        else
-                                        {
-                                            mtxtable[i] = bmd.Joints[mtxtype.Index].FinalMatrix;
-                                            mtx_debug[i] = 0;
-                                        }
-                                    }
-                                }
+                    //        foreach (BMD.Batch.Packet packet in batch.Packets)
+                    //        {
+                    //            Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
+                    //            int[] mtx_debug = new int[packet.MatrixTable.Length];
 
-                                lastmatrixtable = mtxtable;
+                    //            for (int i = 0; i < packet.MatrixTable.Length; i++)
+                    //            {
+                    //                if (packet.MatrixTable[i] == 0xFFFF)
+                    //                {
+                    //                    mtxtable[i] = lastmatrixtable[i];
+                    //                    mtx_debug[i] = 2;
+                    //                }
+                    //                else
+                    //                {
+                    //                    BMD.MatrixType mtxtype = bmd.MatrixTypes[packet.MatrixTable[i]];
 
-                                foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
-                                {
-                                    //描画タイプの配列初期化
-                                    BeginMode[] beginMode =
-                                    {
-                                            BeginMode.Quads,
-                                            BeginMode.Points,
-                                            BeginMode.Triangles,
-                                            BeginMode.TriangleStrip,
-                                            BeginMode.TriangleFan,
-                                            BeginMode.Lines,
-                                            BeginMode.LineStrip,
-                                            BeginMode.Points
-                                    };
-                                    //面情報
-                                    Debug.WriteLine(beginMode[(prim.PrimitiveType - 0x80) / 8]);
-                                    for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
-                                    {
-                                        //頂点情報
+                    //                    if (mtxtype.IsWeighted)
+                    //                    {
+                    //                        //throw new NotImplementedException("weighted matrix");
 
-                                        //頂点インデックスにあった頂点番号の頂点を順番にセット
-                                        Vector4 pos = new Vector4(bmd.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
+                    //                        // code inspired from bmdview2, except doesn't work right
+                    //                        /*Matrix4 mtx = new Matrix4();
+                    //                        Bmd.MultiMatrix mm = m_Model.MultiMatrices[mtxtype.Index];
+                    //                        for (int j = 0; j < mm.NumMatrices; j++)
+                    //                        {
+                    //                            Matrix4 wmtx = mm.Matrices[j];
+                    //                            float weight = mm.MatrixWeights[j];
 
-                                        //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
-                                        if ((prim.ArrayMask & 1) != 0)
-                                            Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[vertexIndex]], out pos);
-                                        else
-                                            Vector4.Transform(ref pos, ref mtxtable[0], out pos);
+                    //                            Matrix4.Mult(ref wmtx, ref m_Model.Joints[mm.MatrixIndices[j]].Matrix, out wmtx);
 
-                                        Debug.WriteLine(pos);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    //                            Vector4.Mult(ref wmtx.Row0, weight, out wmtx.Row0);
+                    //                            Vector4.Mult(ref wmtx.Row1, weight, out wmtx.Row1);
+                    //                            Vector4.Mult(ref wmtx.Row2, weight, out wmtx.Row2);
+                    //                            //Vector4.Mult(ref wmtx.Row3, weight, out wmtx.Row3);
+
+                    //                            Vector4.Add(ref mtx.Row0, ref wmtx.Row0, out mtx.Row0);
+                    //                            Vector4.Add(ref mtx.Row1, ref wmtx.Row1, out mtx.Row1);
+                    //                            Vector4.Add(ref mtx.Row2, ref wmtx.Row2, out mtx.Row2);
+                    //                            //Vector4.Add(ref mtx.Row3, ref wmtx.Row3, out mtx.Row3);
+                    //                        }
+                    //                        mtx.M44 = 1f;
+                    //                        mtxtable[i] = mtx;*/
+
+                    //                        // seems fine in most cases
+                    //                        // but hey, certainly not right, that data has to be used in some way
+                    //                        mtxtable[i] = Matrix4.Identity;
+
+                    //                        mtx_debug[i] = 1;
+                    //                    }
+                    //                    else
+                    //                    {
+                    //                        mtxtable[i] = bmd.Joints[mtxtype.Index].FinalMatrix;
+                    //                        mtx_debug[i] = 0;
+                    //                    }
+                    //                }
+                    //            }
+
+                    //            lastmatrixtable = mtxtable;
+
+                    //            foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
+                    //            {
+                    //                //描画タイプの配列初期化
+                    //                BeginMode[] beginMode =
+                    //                {
+                    //                        BeginMode.Quads,
+                    //                        BeginMode.Points,
+                    //                        BeginMode.Triangles,
+                    //                        BeginMode.TriangleStrip,
+                    //                        BeginMode.TriangleFan,
+                    //                        BeginMode.Lines,
+                    //                        BeginMode.LineStrip,
+                    //                        BeginMode.Points
+                    //                };
+                    //                //面情報
+                    //                Debug.WriteLine(beginMode[(prim.PrimitiveType - 0x80) / 8]);
+                    //                for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
+                    //                {
+                    //                    //頂点情報
+
+                    //                    //頂点インデックスにあった頂点番号の頂点を順番にセット
+                    //                    Vector4 pos = new Vector4(bmd.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
+
+                    //                    //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
+                    //                    if ((prim.ArrayMask & 1) != 0)
+                    //                        Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[vertexIndex]], out pos);
+                    //                    else
+                    //                        Vector4.Transform(ref pos, ref mtxtable[0], out pos);
+
+                    //                    Debug.WriteLine(pos);
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //}
 
                     if (AddObjectWindow.AddTargetObject != null)
                     {

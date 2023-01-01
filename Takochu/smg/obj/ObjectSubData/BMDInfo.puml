@@ -1,0 +1,19 @@
+﻿@startuml
+'' BMDInfo
+title BMDInfo
+class PrimitiveData
+{
+	
+	#List<TrianglePosition>
+} 
+
+class TrianglePosition <<構造体>>
+{
+	-Vector4 V1
+	-Vector4 V2
+	-Vector4 V3
+}
+
+PrimitiveData +-- TrianglePosition
+
+@enduml
