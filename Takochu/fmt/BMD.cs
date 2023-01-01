@@ -1156,17 +1156,20 @@ namespace Takochu.fmt
         {
             public class Packet
             {
+                /// <summary>
+                /// 基本図形(Primitive)の情報を保持します。
+                /// </summary>
                 public class Primitive
                 {
                     
                     /// <summary>
-                    /// 頂点(インデックス)数
+                    /// 基本図形の総頂点(インデックス)数
                     /// </summary>
                     public int NumIndices;
 
 
                     /// <summary>
-                    /// 描画タイプ
+                    /// 基本図形の描画タイプ
                     /// </summary>
                     public byte PrimitiveType;
 
