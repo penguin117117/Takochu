@@ -988,6 +988,52 @@ namespace Takochu.ui
 
                     //カメラのRayと三角面の位置情報から交差判定を行う。
 
+                    float nearest_hitpoint_distance = float.MaxValue; // 最も近い交差点とカメラとの距離を記録する
+                    Vector3? nearest_hitpoint_position = null; // 最も近い交差点の交差位置を記録する
+
+                    // クリックしたオブジェクトが含む三角面の数だけ繰り返す
+                    foreach (var triangle in bmdTriangleData.TriangleDataList)
+                    {
+                        float t, u, v;
+
+                        Vector3 v0 = triangle.V0.Xyz;
+                        Vector3 v1 = triangle.V1.Xyz;
+                        Vector3 v2 = triangle.V2.Xyz;
+                        Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v2 - v0, v1 - v0));
+
+                        // 交差点の位置ベクトルは Ray.org + t * Ray.dir = v0 + u(v1-v0) + v(v2-v0)
+                        t = (1.0f / Vector3.Dot(Vector3.Cross(rayTest1.Direction, (v2 - v0)), (v1 - v0))) * Vector3.Dot(Vector3.Cross(rayTest1.Origin - v0, v1 - v0), v2 - v0);
+                        u = (1.0f / Vector3.Dot(Vector3.Cross(rayTest1.Direction, (v2 - v0)), (v1 - v0))) * Vector3.Dot(Vector3.Cross(rayTest1.Direction, v2 - v0), rayTest1.Origin - v0);
+                        v = (1.0f / Vector3.Dot(Vector3.Cross(rayTest1.Direction, (v2 - v0)), (v1 - v0))) * Vector3.Dot(Vector3.Cross(rayTest1.Origin - v0, v1 - v0), rayTest1.Direction);
+
+                        // この条件に引っかかればその三角面とは交差していない
+                        // 三角面を含む平面について，レイと平面の交点は三角面の外側 もしくは レイが三角面の裏面から入射
+                        if (u < 0 || v < 0 || u + v > 1 || Vector3.Dot(rayTest1.Direction, normal_vector) >= 0)
+                        {
+                            Debug.WriteLine($"DEBUG: the position you clicked is {nearest_hitpoint_position}");
+                            continue;
+                        }
+                            
+
+                        // 三角面とマウスクリックした点におけるカメラの視線は交差している
+
+                        // これまでの交差点において最も近い交差点を確認する．
+                        // この条件に引っかかればこれまでの任意の交差点よりも近くの交差点である．
+                        if(t < nearest_hitpoint_distance)
+                        {
+                            nearest_hitpoint_distance = t;
+                            nearest_hitpoint_position = rayTest1.Origin + t * rayTest1.Direction;
+                        }
+                    }
+
+                    // nearest_hitpoint_position =: クリックした3次元座標
+
+                    // if条件: どの三角面とも交差していない場合にif内部に入る(何もしない)
+                    if(nearest_hitpoint_distance == float.MaxValue)
+                    {
+
+                    }
+                    else Debug.WriteLine("DEBUG: the position you clicked is " + nearest_hitpoint_position.ToString());
 
 
 
