@@ -1004,7 +1004,7 @@ namespace Takochu.ui
                         Vector3 v0 = triangle.V0.Xyz;
                         Vector3 v1 = triangle.V1.Xyz;
                         Vector3 v2 = triangle.V2.Xyz;
-                        Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v2 - v0, v1 - v0));
+                        Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
 
                         // 交差点の位置ベクトルは Ray.org + t * Ray.dir = v0 + u(v1-v0) + v(v2-v0)
                         t = (1.0f / Vector3.Dot(Vector3.Cross(rayTest1.Direction, (v2 - v0)), (v1 - v0))) * Vector3.Dot(Vector3.Cross(rayTest1.Origin - v0, v1 - v0), v2 - v0);
@@ -1748,11 +1748,12 @@ namespace Takochu.ui
             System.Console.WriteLine(ray.Direction.X);
             System.Console.WriteLine(ray.Direction.Y);
             System.Console.WriteLine(ray.Direction.Z);
-            //GL.Begin(BeginMode.LineStrip);
-            //GL.Color3(1f, 0f, 0f);
-            //GL.Vertex3(0f,0f,0f);
-            //GL.Vertex3(ScreenToRay(e.Location).Direction * 1000f);
-            //GL.End();
+            GL.Begin(BeginMode.LineStrip);
+            GL.Color3(1f, 0f, 0f);
+            GL.Vertex3(ray.Origin);
+            GL.Vertex3(ray.Origin + 100000f * ray.Direction);
+            GL.End();
+            Debug.WriteLine("camera ray direction: " + ray.Direction);
         }
 
         private Ray ScreenToRay(Point mousePos)//カメラZ軸非対応(Incompatible :: cam Z rotate.)
@@ -1786,6 +1787,7 @@ namespace Takochu.ui
             ray = new Vector3(-ray.Z, ray.Y, ray.X);
 
             ray = Vector3.Normalize(ray);
+
 
             return new Ray(m_CamTarget, ray);
         }
