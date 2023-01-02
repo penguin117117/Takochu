@@ -79,6 +79,8 @@
             this.OpenSaveStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.DebugPage6 = new System.Windows.Forms.TabPage();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage4.SuspendLayout();
             this.tabPage5.SuspendLayout();
@@ -114,6 +116,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.DebugPage6);
             this.tabControl1.Location = new System.Drawing.Point(2, 27);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -165,6 +168,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.textBox1);
             this.tabPage1.Controls.Add(this.dataGridView1);
             this.tabPage1.Controls.Add(this.toolStrip3);
             this.tabPage1.Controls.Add(this.objectsListTreeView);
@@ -590,6 +594,24 @@
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
+            // DebugPage6
+            // 
+            this.DebugPage6.Location = new System.Drawing.Point(4, 22);
+            this.DebugPage6.Name = "DebugPage6";
+            this.DebugPage6.Padding = new System.Windows.Forms.Padding(3);
+            this.DebugPage6.Size = new System.Drawing.Size(342, 689);
+            this.DebugPage6.TabIndex = 5;
+            this.DebugPage6.Text = "Debug";
+            this.DebugPage6.UseVisualStyleBackColor = true;
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(206, 0);
+            this.textBox1.Multiline = true;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(130, 28);
+            this.textBox1.TabIndex = 0;
+            // 
             // EditorWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -680,5 +702,7 @@
         private System.Windows.Forms.ToolStripMenuItem redoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem attrFinderToolStripMenuItem;
+        private System.Windows.Forms.TabPage DebugPage6;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }

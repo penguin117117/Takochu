@@ -983,6 +983,11 @@ namespace Takochu.ui
 
                     mSelectedObject = obj;
 
+                    if (!(obj is LevelObj)) 
+                    {
+                        return;
+                    } 
+
                     //選択したオブジェクトのBMDファイル内の三角面情報の一覧を取得する。
                     BMDInfo.BMDTriangleData bmdTriangleData = BMDInfo.GetTriangles(obj);
 
@@ -1008,9 +1013,9 @@ namespace Takochu.ui
 
                         // この条件に引っかかればその三角面とは交差していない
                         // 三角面を含む平面について，レイと平面の交点は三角面の外側 もしくは レイが三角面の裏面から入射
-                        if (u < 0 || v < 0 || u + v > 1 || Vector3.Dot(rayTest1.Direction, normal_vector) >= 0)
+                        if (((u < 0.0f || v < 0.0f) || (u + v > 1.0f)) || (Vector3.Dot(rayTest1.Direction, normal_vector) >= 0.0f))
                         {
-                            Debug.WriteLine($"DEBUG: the position you clicked is {nearest_hitpoint_position}");
+                            Debug.WriteLine($"DEBUG: the position you clicked is t:{t} u:{u} v:{v}");
                             continue;
                         }
                             
@@ -1029,11 +1034,15 @@ namespace Takochu.ui
                     // nearest_hitpoint_position =: クリックした3次元座標
 
                     // if条件: どの三角面とも交差していない場合にif内部に入る(何もしない)
-                    if(nearest_hitpoint_distance == float.MaxValue)
+                    if (nearest_hitpoint_distance == float.MaxValue)
                     {
-
+                        Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
                     }
-                    else Debug.WriteLine("DEBUG: the position you clicked is " + nearest_hitpoint_position.ToString());
+                    else 
+                    {
+                        textBox1.Text = "☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString();
+                        Debug.WriteLine("☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString());
+                    } 
 
 
 
@@ -1180,7 +1189,7 @@ namespace Takochu.ui
                             mObjects.Add(AddObjectWindow.Objects[objCount - 1]);
 
 
-
+                           
                             Scenario_ReLoad();
                             SelectTreeNodeWithUnique(AddObjectWindow.AddTargetObject.mUnique);
                             ChangeToNode(objectsListTreeView.SelectedNode, false);
@@ -1210,10 +1219,28 @@ namespace Takochu.ui
 
         private void glLevelView_MouseDown(object sender, MouseEventArgs e)
         {
+            var raytest2 = ScreenToRay(e.Location);
+
+            //textBox1.Text = raytest2.Direction.ToString();
+
+            
+            GL.PushMatrix();
+            GL.LineWidth(3.0f);
+            GL.Begin(BeginMode.Lines);
+            GL.Color3(1f, 0f, 1f);
+            GL.Vertex3(raytest2.Origin * 10000.0f);
+            GL.Vertex3(raytest2.Origin * 10000.0f + (1000000f * raytest2.Direction));
+            GL.End();
+            GL.PopMatrix();
+            glLevelView.SwapBuffers();
+
             if (m_MouseDown != MouseButtons.None) return;
 
             m_MouseDown = e.Button;
             m_LastMouseMove = m_LastMouseClick = e.Location;
+
+            
+
         }
 
         private void ChangeToNode(TreeNode node, bool changeCamera = false)
@@ -1761,7 +1788,8 @@ namespace Takochu.ui
 
             ray = Vector3.Normalize(ray);
 
-            return new Ray(m_CamPosition, ray);
+
+            return new Ray(m_CamTarget, ray);
         }
 
         private void lightsTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
