@@ -990,6 +990,7 @@ namespace Takochu.ui
 
                     //選択したオブジェクトのBMDファイル内の三角面情報の一覧を取得する。
                     BMDInfo.BMDTriangleData bmdTriangleData = BMDInfo.GetTriangles(obj);
+                    glLevelView.SwapBuffers();
 
                     //カメラのRayと三角面の位置情報から交差判定を行う。
 
@@ -1001,9 +1002,9 @@ namespace Takochu.ui
                     {
                         float t, u, v;
 
-                        Vector3 v0 = triangle.V0.Xyz;
-                        Vector3 v1 = triangle.V1.Xyz;
-                        Vector3 v2 = triangle.V2.Xyz;
+                        Vector3 v0 = triangle.V0.Zxy;
+                        Vector3 v1 = triangle.V1.Zyx;
+                        Vector3 v2 = triangle.V2.Zyx;
                         Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v2 - v0, v1 - v0));
 
                         // 交差点の位置ベクトルは Ray.org + t * Ray.dir = v0 + u(v1-v0) + v(v2-v0)
@@ -1015,7 +1016,7 @@ namespace Takochu.ui
                         // 三角面を含む平面について，レイと平面の交点は三角面の外側 もしくは レイが三角面の裏面から入射
                         if (((u < 0.0f || v < 0.0f) || (u + v > 1.0f)) || (Vector3.Dot(rayTest1.Direction, normal_vector) >= 0.0f))
                         {
-                            Debug.WriteLine($"DEBUG: the position you clicked is t:{t} u:{u} v:{v}");
+                            //Debug.WriteLine($"DEBUG: the position you clicked is t:{t} u:{u} v:{v}");
                             continue;
                         }
                             
@@ -1036,7 +1037,11 @@ namespace Takochu.ui
                     // if条件: どの三角面とも交差していない場合にif内部に入る(何もしない)
                     if (nearest_hitpoint_distance == float.MaxValue)
                     {
-                        Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
+                        
+
+                        MessageBox.Show("交点なし");
+                        return;
+                        //Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
                     }
                     else 
                     {
@@ -1046,123 +1051,15 @@ namespace Takochu.ui
 
 
 
-
-
-
-                    //RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{obj.mName}.arc"));
-
-                    //if (rarc.DoesFileExist($"/root/{obj.mName}.bdl"))
-                    //{
-                    //    BMD bmd = new BMD(rarc.OpenFile($"/root/{obj.mName}.bdl"));
-                    //    foreach (BMD.Batch batch in bmd.Batches)
-                    //    {
-                    //        Matrix4[] lastmatrixtable = null;
-
-                    //        foreach (BMD.Batch.Packet packet in batch.Packets)
-                    //        {
-                    //            Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
-                    //            int[] mtx_debug = new int[packet.MatrixTable.Length];
-
-                    //            for (int i = 0; i < packet.MatrixTable.Length; i++)
-                    //            {
-                    //                if (packet.MatrixTable[i] == 0xFFFF)
-                    //                {
-                    //                    mtxtable[i] = lastmatrixtable[i];
-                    //                    mtx_debug[i] = 2;
-                    //                }
-                    //                else
-                    //                {
-                    //                    BMD.MatrixType mtxtype = bmd.MatrixTypes[packet.MatrixTable[i]];
-
-                    //                    if (mtxtype.IsWeighted)
-                    //                    {
-                    //                        //throw new NotImplementedException("weighted matrix");
-
-                    //                        // code inspired from bmdview2, except doesn't work right
-                    //                        /*Matrix4 mtx = new Matrix4();
-                    //                        Bmd.MultiMatrix mm = m_Model.MultiMatrices[mtxtype.Index];
-                    //                        for (int j = 0; j < mm.NumMatrices; j++)
-                    //                        {
-                    //                            Matrix4 wmtx = mm.Matrices[j];
-                    //                            float weight = mm.MatrixWeights[j];
-
-                    //                            Matrix4.Mult(ref wmtx, ref m_Model.Joints[mm.MatrixIndices[j]].Matrix, out wmtx);
-
-                    //                            Vector4.Mult(ref wmtx.Row0, weight, out wmtx.Row0);
-                    //                            Vector4.Mult(ref wmtx.Row1, weight, out wmtx.Row1);
-                    //                            Vector4.Mult(ref wmtx.Row2, weight, out wmtx.Row2);
-                    //                            //Vector4.Mult(ref wmtx.Row3, weight, out wmtx.Row3);
-
-                    //                            Vector4.Add(ref mtx.Row0, ref wmtx.Row0, out mtx.Row0);
-                    //                            Vector4.Add(ref mtx.Row1, ref wmtx.Row1, out mtx.Row1);
-                    //                            Vector4.Add(ref mtx.Row2, ref wmtx.Row2, out mtx.Row2);
-                    //                            //Vector4.Add(ref mtx.Row3, ref wmtx.Row3, out mtx.Row3);
-                    //                        }
-                    //                        mtx.M44 = 1f;
-                    //                        mtxtable[i] = mtx;*/
-
-                    //                        // seems fine in most cases
-                    //                        // but hey, certainly not right, that data has to be used in some way
-                    //                        mtxtable[i] = Matrix4.Identity;
-
-                    //                        mtx_debug[i] = 1;
-                    //                    }
-                    //                    else
-                    //                    {
-                    //                        mtxtable[i] = bmd.Joints[mtxtype.Index].FinalMatrix;
-                    //                        mtx_debug[i] = 0;
-                    //                    }
-                    //                }
-                    //            }
-
-                    //            lastmatrixtable = mtxtable;
-
-                    //            foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
-                    //            {
-                    //                //描画タイプの配列初期化
-                    //                BeginMode[] beginMode =
-                    //                {
-                    //                        BeginMode.Quads,
-                    //                        BeginMode.Points,
-                    //                        BeginMode.Triangles,
-                    //                        BeginMode.TriangleStrip,
-                    //                        BeginMode.TriangleFan,
-                    //                        BeginMode.Lines,
-                    //                        BeginMode.LineStrip,
-                    //                        BeginMode.Points
-                    //                };
-                    //                //面情報
-                    //                Debug.WriteLine(beginMode[(prim.PrimitiveType - 0x80) / 8]);
-                    //                for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
-                    //                {
-                    //                    //頂点情報
-
-                    //                    //頂点インデックスにあった頂点番号の頂点を順番にセット
-                    //                    Vector4 pos = new Vector4(bmd.PositionArray[prim.PositionIndices[vertexIndex]], 1.0f);
-
-                    //                    //モデルの拡大縮小、回転、移動を頂点ごとに適用(モデルビュープロジェクション行列でやるのは適さないから しかし、CPUで計算するので負荷高い)
-                    //                    if ((prim.ArrayMask & 1) != 0)
-                    //                        Vector4.Transform(ref pos, ref mtxtable[prim.PosMatrixIndices[vertexIndex]], out pos);
-                    //                    else
-                    //                        Vector4.Transform(ref pos, ref mtxtable[0], out pos);
-
-                    //                    Debug.WriteLine(pos);
-                    //                }
-                    //            }
-                    //        }
-                    //    }
-                    //}
-
                     if (AddObjectWindow.AddTargetObject != null)
                     {
+                        glLevelView.SwapBuffers();
+
                         var raytest2 = ScreenToRay(e.Location);
-                        Console.WriteLine($"RayTest::{raytest2.Origin}{raytest2.Direction}");
+                        //Console.WriteLine($"RayTest::{raytest2.Origin}{raytest2.Direction}");
 
                         var objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
                         var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
-
-                        Console.WriteLine($"ZoneName::{obj.mParentZone.ZoneName}");
-
                         var positionWithZoneRotation = calc.RotAfin.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotAfin.TargetVector.All);
 
                         //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
@@ -1181,7 +1078,7 @@ namespace Takochu.ui
                         ToCameraFromObj = (float)Math.Sqrt(ToCameraFromObj);
 
                         //AddObjectWindow.AddTargetObject.SetPosition((rayPos + Vector3.Multiply(raytest2.Direction/*obj.mTruePosition*/, ToCameraFromObj)) / 2);
-                        AddObjectWindow.AddTargetObject.SetPosition(Vector3.Multiply(raytest2.Direction, ToCameraFromObj) + rayPos);
+                        AddObjectWindow.AddTargetObject.SetPosition(new Vector3((float)nearest_hitpoint_position.Value.X, (float)nearest_hitpoint_position.Value.Y,(float)nearest_hitpoint_position.Value.Z/*Vector3.Multiply(raytest2.Direction, ToCameraFromObj) + rayPos*/));
 
                         if (AddObjectWindow.IsChanged)
                         {

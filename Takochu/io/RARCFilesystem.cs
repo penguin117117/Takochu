@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Takochu.io
 {
-    public class RARCFilesystem : FilesystemBase
+    public class RARCFilesystem : FilesystemBase,IDisposable
     {
         public RARCFilesystem(FileBase file)
         {
@@ -487,6 +487,11 @@ namespace Takochu.io
             FileEntry f = mFileEntries[PathToKey(file.mFileName)];
             f.mData = file.GetBuffer();
             f.mDataSize = file.GetLength();
+        }
+
+        public void Dispose()
+        {
+            Close();
         }
 
         private class FileEntry
