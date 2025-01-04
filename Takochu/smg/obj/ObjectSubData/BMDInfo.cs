@@ -37,12 +37,12 @@ namespace Takochu.smg.obj.ObjectSubData
 
                 public TrianglesPosition(Vector4[] trianglePositionArray)
                 {
-                    //V0 = new Vector4(-trianglePositionArray[0].Z, trianglePositionArray[0].Y, trianglePositionArray[0].X, trianglePositionArray[0].W)/10000f;
-                    //V1 = new Vector4(-trianglePositionArray[1].Z, trianglePositionArray[1].Y, trianglePositionArray[1].X, trianglePositionArray[1].W) / 10000f;
-                    //V2 = new Vector4(-trianglePositionArray[2].Z, trianglePositionArray[2].Y, trianglePositionArray[2].X, trianglePositionArray[2].W) / 10000f;
-                    V0 = trianglePositionArray[0];
-                    V1 = trianglePositionArray[1];
-                    V2 = trianglePositionArray[2];
+                    V0 = new Vector4(-trianglePositionArray[0].Z, trianglePositionArray[0].Y, trianglePositionArray[0].X, trianglePositionArray[0].W) * 1000f;
+                    V1 = new Vector4(-trianglePositionArray[1].Z, trianglePositionArray[1].Y, trianglePositionArray[1].X, trianglePositionArray[1].W) * 1000f;
+                    V2 = new Vector4(-trianglePositionArray[2].Z, trianglePositionArray[2].Y, trianglePositionArray[2].X, trianglePositionArray[2].W) * 1000f;
+                    //V0 = trianglePositionArray[0];
+                    //V1 = trianglePositionArray[1];
+                    //V2 = trianglePositionArray[2];
                 }
             }
 
