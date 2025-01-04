@@ -90,9 +90,9 @@ namespace Takochu.fmt
             byte r = m_File.ReadByte();
             byte g = m_File.ReadByte();
             byte b = m_File.ReadByte();
-            
+
             //byte a = m_File.ReadByte();
-            return new Vector4(r / 255f, g / 255f, b / 255f , 1f);
+            return new Vector4(r / 255f, g / 255f, b / 255f, 1f);
         }
 
         // support functions for reading sections
@@ -207,7 +207,7 @@ namespace Takochu.fmt
                         case 1:
                             readcolor = ReadColorValue_RGB8; arraysize /= 4;
                             break;
-                        case 5: 
+                        case 5:
                             readcolor = ReadColorValue_RGBA8; arraysize /= 4; break;
                         default: throw new NotImplementedException("Bmd: unsupported color DataType " + datatype.ToString());
                     }
@@ -640,15 +640,17 @@ namespace Takochu.fmt
 
         private void ReadMAT3()
         {
-            
+            const int MagicValueSize = 4;
+            // maybe, "4" is Magic value size?
+            // long sectionstart = m_File.Position() - 4;
 
-            long sectionstart = m_File.Position() - 4;
+            long sectionstart = m_File.Position() - MagicValueSize;
             uint sectionsize = m_File.ReadUInt32();
 
             ushort numMaterials = m_File.ReadUInt16();
-            
+
             //padding
-            m_File.Skip(2);
+            m_File.Skip(2); // short
 
             //マテリアルの個数分のマテリアル型配列を生成
             Materials = new Material[numMaterials];
@@ -657,7 +659,7 @@ namespace Takochu.fmt
             const int NumOfHeaderEntry = 30;
             uint[] offsets = new uint[NumOfHeaderEntry];
 
-            for (int i = 0; i < NumOfHeaderEntry; i++) 
+            for (int i = 0; i < NumOfHeaderEntry; i++)
             {
                 offsets[i] = m_File.ReadUInt32();
             }
@@ -673,10 +675,10 @@ namespace Takochu.fmt
                 m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.StringTableOffset] + nameoffset));
                 mat.Name = m_File.ReadString();
 
-                m_File.Seek((int)(sectionstart + offsets[1] + (i * 2)));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.MaterialRemapTableOffset] + (i * 2)));
                 ushort matindex = m_File.ReadUInt16();
 
-                m_File.Seek((int)(sectionstart + offsets[0] + (matindex * 0x14C)));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.MaterialEntryDataOffset] + (matindex * 0x14C)));
 
                 // giant chunk of crap here.
                 // why everything has to be an index into some silly array, this
@@ -686,18 +688,18 @@ namespace Takochu.fmt
                 byte numchans_id = m_File.ReadByte();
                 byte numtexgens_id = m_File.ReadByte();
                 byte numtev_id = m_File.ReadByte();
-                m_File.Skip(1); // index into matData6 -- 27
+                m_File.Skip(1); // index into matData6 -- 27 // ZCompLocIndex
                 byte zmode_id = m_File.ReadByte();
-                m_File.Skip(1); // index into matData7 -- 28
-                m_File.Skip(4); // color1 -- 5
-                m_File.Skip(8); // chanControls -- 7?
-                m_File.Skip(4); // color2 -- 8
-                m_File.Skip(16); // lights -- 9
+                m_File.Skip(1); // index into matData7 -- 28 // Dither Index
+                m_File.Skip(2 * 2); // material color1 -- 5
+                m_File.Skip(2 * 4); // color channel controls cndex -- 7?
+                m_File.Skip(2 * 2); // ambient color indexes -- 8
+                m_File.Skip(2 * 8); // light color indexes -- 9
                 ushort[] texgen_id = new ushort[8];
                 for (int j = 0; j < 8; j++) texgen_id[j] = m_File.ReadUInt16();
-                m_File.Skip(16); // texGenInfo2 -- 12
-                m_File.Skip(20); // texMatrices -- 13?
-                m_File.Skip(40); // dttMatrices -- 14?
+                m_File.Skip(2 * 8); // post tex gen info indexes -- 12
+                m_File.Skip(2 * 10); // tex matrix indexes -- 13?
+                m_File.Skip(2 * 20); // post tex matrix indexes -- 14?
                 ushort[] texstage_id = new ushort[8];
                 for (int j = 0; j < 8; j++) texstage_id[j] = m_File.ReadUInt16();
                 ushort[] constcolor_id = new ushort[4];
@@ -716,24 +718,24 @@ namespace Takochu.fmt
                 for (int j = 0; j < 16; j++) tevswap_id[j] = m_File.ReadUInt16();
                 ushort[] tevswaptbl_id = new ushort[4];
                 for (int j = 0; j < 4; j++) tevswaptbl_id[j] = m_File.ReadUInt16();
-                m_File.Skip(24);
+                m_File.Skip(24); // (tevswaptbl_idNative.Size() - tevswaptbl_id.Size()) * sizeof(short) = (16 - 4) * 2 = 24;
                 ushort fog_id = m_File.ReadUInt16();
                 ushort alphacomp_id = m_File.ReadUInt16();
                 ushort blendmode_id = m_File.ReadUInt16();
 
-                m_File.Seek((int)(sectionstart + offsets[4] + (cull_id * 4)));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.CullModeInfoOffset] + (cull_id * 4)));
                 mat.CullMode = (byte)m_File.ReadUInt32();
 
-                m_File.Seek((int)(sectionstart + offsets[6] + numchans_id));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.NumColorChannelsOffset] + numchans_id));
                 mat.NumChans = m_File.ReadByte();
 
-                m_File.Seek((int)(sectionstart + offsets[10] + numtexgens_id));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.NumTexGensOffset] + numtexgens_id));
                 mat.NumTexgens = m_File.ReadByte();
 
-                m_File.Seek((int)(sectionstart + offsets[19] + numtev_id));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.NumTevStagesOffset] + numtev_id));
                 mat.NumTevStages = m_File.ReadByte();
 
-                m_File.Seek((int)(sectionstart + offsets[26] + (zmode_id * 4)));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.ZModeInfoOffset] + (zmode_id * 4)));
                 mat.ZMode.EnableZTest = m_File.ReadByte() != 0;
                 mat.ZMode.Func = m_File.ReadByte();
                 mat.ZMode.EnableZWrite = m_File.ReadByte() != 0;
@@ -743,7 +745,7 @@ namespace Takochu.fmt
                 mat.TexGen = new Material.TexGenInfo[mat.NumTexgens];
                 for (int j = 0; j < mat.NumTexgens; j++)
                 {
-                    m_File.Seek((int)(sectionstart + offsets[11] + (texgen_id[j] * 4)));
+                    m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TexGenInfoOffset] + (texgen_id[j] * 4)));
 
                     mat.TexGen[j].Type = m_File.ReadByte();
                     mat.TexGen[j].Src = m_File.ReadByte();
@@ -764,7 +766,7 @@ namespace Takochu.fmt
                         continue;
                     }
 
-                    m_File.Seek((int)(sectionstart + offsets[15] + (texstage_id[j] * 2)));
+                    m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TextureRemapTableOffset] + (texstage_id[j] * 2)));
                     mat.TexStages[j] = m_File.ReadUInt16();
                 }
 
@@ -780,7 +782,7 @@ namespace Takochu.fmt
                     }
                     else
                     {
-                        m_File.Seek((int)(sectionstart + offsets[18] + (constcolor_id[j] * 4)));
+                        m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevKonstColorsOffset] + (constcolor_id[j] * 4)));
                         mat.ConstColors[j].R = m_File.ReadByte();
                         mat.ConstColors[j].G = m_File.ReadByte();
                         mat.ConstColors[j].B = m_File.ReadByte();
@@ -791,7 +793,7 @@ namespace Takochu.fmt
                 mat.TevOrder = new Material.TevOrderInfo[mat.NumTevStages];
                 for (int j = 0; j < mat.NumTevStages; j++)
                 {
-                    m_File.Seek((int)(sectionstart + offsets[16] + (tevorder_id[j] * 4)));
+                    m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevOrderInfoOffset] + (tevorder_id[j] * 4)));
 
                     mat.TevOrder[j].TexcoordId = m_File.ReadByte();
                     mat.TevOrder[j].TexMap = m_File.ReadByte();
@@ -809,7 +811,7 @@ namespace Takochu.fmt
                     }
                     else
                     {
-                        m_File.Seek((int)(sectionstart + offsets[17] + (colors10_id[j] * 8)));
+                        m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevColorsOffset] + (colors10_id[j] * 8)));
                         mat.ColorS10[j].R = m_File.ReadInt16();
                         mat.ColorS10[j].G = m_File.ReadInt16();
                         mat.ColorS10[j].B = m_File.ReadInt16();
@@ -820,7 +822,9 @@ namespace Takochu.fmt
                 mat.TevStage = new Material.TevStageInfo[mat.NumTevStages];
                 for (int j = 0; j < mat.NumTevStages; j++)
                 {
-                    m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevStageInfoOffset] + (tevstage_id[j] * 20) + 1));
+                    const int UnknownByteTypeSize = 1;
+                    m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevStageInfoOffset]
+                        + ((tevstage_id[j] * 20) + UnknownByteTypeSize)));
 
                     mat.TevStage[j].ColorIn = new byte[4];
                     for (int k = 0; k < 4; k++) mat.TevStage[j].ColorIn[k] = m_File.ReadByte();
@@ -849,7 +853,7 @@ namespace Takochu.fmt
                     }
                     else
                     {
-                        m_File.Seek((int)(sectionstart + offsets[21] + (tevswap_id[j] * 4)));
+                        m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevSwapModeInfoOffset] + (tevswap_id[j] * 4)));
 
                         mat.TevSwapMode[j].RasSel = m_File.ReadByte();
                         mat.TevSwapMode[j].TexSel = m_File.ReadByte();
@@ -860,7 +864,7 @@ namespace Takochu.fmt
                 for (int j = 0; j < 4; j++)
                 {
                     if (tevswaptbl_id[j] == 0xFFFF) continue; // safety
-                    m_File.Seek((int)(sectionstart + offsets[22] + (tevswaptbl_id[j] * 4)));
+                    m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevSwapModeTableInfoOffset] + (tevswaptbl_id[j] * 4)));
 
                     mat.TevSwapTable[j].R = m_File.ReadByte();
                     mat.TevSwapTable[j].G = m_File.ReadByte();
@@ -868,14 +872,14 @@ namespace Takochu.fmt
                     mat.TevSwapTable[j].A = m_File.ReadByte();
                 }
 
-                m_File.Seek((int)(sectionstart + offsets[24] + (alphacomp_id * 8)));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.AlphaCompareInfoOffset] + (alphacomp_id * 8)));
                 mat.AlphaComp.Func0 = m_File.ReadByte();
                 mat.AlphaComp.Ref0 = m_File.ReadByte();
                 mat.AlphaComp.MergeFunc = m_File.ReadByte();
                 mat.AlphaComp.Func1 = m_File.ReadByte();
                 mat.AlphaComp.Ref1 = m_File.ReadByte();
 
-                m_File.Seek((int)(sectionstart + offsets[25] + (blendmode_id * 4)));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.BlendModeInfoOffset] + (blendmode_id * 4)));
                 mat.BlendMode.BlendMode = m_File.ReadByte();
                 mat.BlendMode.SrcFactor = m_File.ReadByte();
                 mat.BlendMode.DstFactor = m_File.ReadByte();
@@ -1209,7 +1213,7 @@ namespace Takochu.fmt
                 /// </summary>
                 public class Primitive
                 {
-                    
+
                     /// <summary>
                     /// 基本図形の総頂点(インデックス)数
                     /// </summary>
