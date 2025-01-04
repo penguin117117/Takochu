@@ -997,14 +997,20 @@ namespace Takochu.ui
                     float nearest_hitpoint_distance = float.MaxValue; // 最も近い交差点とカメラとの距離を記録する
                     Vector3? nearest_hitpoint_position = null; // 最も近い交差点の交差位置を記録する
 
+
+
                     // クリックしたオブジェクトが含む三角面の数だけ繰り返す
+
+                    float t, u, v;
                     foreach (var triangle in bmdTriangleData.TriangleDataList)
                     {
-                        float t, u, v;
+                        var objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
+                        var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
+                        var positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
 
-                        Vector3 v0 = triangle.V0.Xyz;
-                        Vector3 v1 = triangle.V1.Xyz;
-                        Vector3 v2 = triangle.V2.Xyz;
+                        Vector3 v0 = Vector3.Add(positionWithZoneRotation,triangle.V0.Xyz)*10000f;
+                        Vector3 v1 = Vector3.Add(positionWithZoneRotation, triangle.V1.Xyz) * 10000f;
+                        Vector3 v2 = Vector3.Add(positionWithZoneRotation, triangle.V2.Xyz) * 10000f;
                         Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
 
                         // 交差点の位置ベクトルは Ray.org + t * Ray.dir = v0 + u(v1-v0) + v(v2-v0)
@@ -1028,7 +1034,10 @@ namespace Takochu.ui
                         if(t < nearest_hitpoint_distance)
                         {
                             nearest_hitpoint_distance = t;
-                            nearest_hitpoint_position = rayTest1.Origin + t * rayTest1.Direction;
+
+                            //元のコード
+                            //nearest_hitpoint_position = rayTest1.Origin + t * rayTest1.Direction;
+                            nearest_hitpoint_position = new Vector3(Vector3.Add(rayTest1.Origin,Vector3.Multiply(rayTest1.Direction,t))) ;
                         }
                     }
 
@@ -1040,8 +1049,9 @@ namespace Takochu.ui
                         
 
                         MessageBox.Show("交点なし");
-                        return;
-                        //Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
+
+                        Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
+                        //return;
                     }
                     else 
                     {
@@ -1051,7 +1061,7 @@ namespace Takochu.ui
 
 
 
-                    if (AddObjectWindow.AddTargetObject != null)
+                    if (AddObjectWindow.AddTargetObject != null && nearest_hitpoint_position !=null)
                     {
                         glLevelView.SwapBuffers();
 
@@ -1060,7 +1070,7 @@ namespace Takochu.ui
 
                         var objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
                         var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
-                        var positionWithZoneRotation = calc.RotAfin.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotAfin.TargetVector.All);
+                        var positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
 
                         //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
                         //レイの方向の制御は行っていません
@@ -1186,7 +1196,7 @@ namespace Takochu.ui
                         PosObj = pathPointObj.mPoint0;
                     }
 
-                    var CorrectPos_Object = calc.RotAfin.GetPositionAfterRotation(PosObj, Rot_ZoneOffset, calc.RotAfin.TargetVector.All);
+                    var CorrectPos_Object = calc.RotateTransAffine.GetPositionAfterRotation(PosObj, Rot_ZoneOffset, calc.RotateTransAffine.TargetVector.All);
 
                     m_CamDistance = 0.200f;
                     m_CamTarget = Pos_ZoneOffset / 10000f + CorrectPos_Object / 10000;

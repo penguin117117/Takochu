@@ -78,7 +78,7 @@ namespace Takochu.smg.obj.ObjectSubData
 
                     objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
                     var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
-                    positionWithZoneRotation = calc.RotAfin.GetPositionAfterRotation(obj.mPosition, objTrueRot, calc.RotAfin.TargetVector.All);
+                    positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mPosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
 
                     //Batchファイル内のPacketsを取得
                     foreach (BMD.Batch batch in bmd.Batches)

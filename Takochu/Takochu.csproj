@@ -105,7 +105,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="calc\ObjectTypeChange.cs" />
-    <Compile Include="calc\RotAfin.cs" />
+    <Compile Include="calc\RotateTransAffine.cs" />
     <Compile Include="fmt\BCSV.cs" />
     <Compile Include="fmt\BMD.cs" />
     <Compile Include="fmt\BMG.cs" />
