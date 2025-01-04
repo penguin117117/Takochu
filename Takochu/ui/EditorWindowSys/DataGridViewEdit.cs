@@ -182,7 +182,16 @@ namespace Takochu.ui.EditorWindowSys
                 switch(BCSV.sFieldTypeTable[name])
                 {
                     case "float":
-                        value = Convert.ToSingle(value);
+                        try 
+                        {
+                            value = Convert.ToSingle(value);
+                        } 
+                        catch(FormatException) 
+                        { 
+                            //データが - になった際にエラーが発生するのを解決するための処理
+                            value = 0f;
+                        }
+                        
                         break;
                 }
             }

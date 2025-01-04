@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -51,7 +52,7 @@ namespace Takochu.rnd
                 {
                     if (Program.sGame.DoesFileExist($"/ObjectData/{name}.arc"))
                     {
-                        RARCFilesystem rarc = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile($"/ObjectData/{name}.arc"));
+                        RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{name}.arc"));
 
                         if (rarc.DoesFileExist($"/root/{name}.bdl"))
                         {

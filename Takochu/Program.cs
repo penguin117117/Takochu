@@ -13,27 +13,30 @@ namespace Takochu
 {
     static class Program
     {
+        public static string sLanguage;
+        public static Game sGame;
+        public static int sUniqueID;
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
+            
             BCSV.PopulateHashTable();
             BCSV.PopulateFieldTypeTable();
             CameraUtil.InitCameras();
             ObjectDB.Load();
+            
             RenderUtil.AssignColors();
             EditorActionHolder.Initialize();
-
             Application.EnableVisualStyles();
+
             Application.SetCompatibleTextRenderingDefault(false);
+
+            
             Application.Run(new MainWindow());
         }
-
-        //public static Translator sTranslator;
-        public static string sLanguage;
-        public static Game sGame;
-        public static int sUniqueID;
     }
 }

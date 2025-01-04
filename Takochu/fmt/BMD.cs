@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using OpenTK;
@@ -602,30 +604,73 @@ namespace Takochu.fmt
             m_File.Seek((int)(sectionstart + sectionsize));
         }
 
+        private enum MaterialInfoOffsets
+        {
+            MaterialEntryDataOffset      = 0,
+            MaterialRemapTableOffset     = 1,
+            StringTableOffset            = 2,
+            IndirectTexturingInfoOffset  = 3,
+            CullModeInfoOffset           = 4,
+            MaterialColorsOffset         = 5,
+            NumColorChannelsOffset       = 6,
+            ColorChannelInfoOffset       = 7,
+            AmbientColorsOffset          = 8,
+            LightInfoOffset              = 9,
+            NumTexGensOffset             = 10,
+            TexGenInfoOffset             = 11,
+            PostTexGenInfoOffset         = 12,
+            TexMatrixInfoOffset          = 13,
+            PostTexMatrixInfoOffset      = 14,
+            TextureRemapTableOffset      = 15,
+            TevOrderInfoOffset           = 16,
+            TevColorsOffset              = 17,
+            TevKonstColorsOffset         = 18,
+            NumTevStagesOffset           = 19,
+            TevStageInfoOffset           = 20,
+            TevSwapModeInfoOffset        = 21,
+            TevSwapModeTableInfoOffset   = 22,
+            FogInfoOffset                = 23,
+            AlphaCompareInfoOffset       = 24,
+            BlendModeInfoOffset          = 25,
+            ZModeInfoOffset              = 26,
+            ZCompareInfoOffset           = 27,
+            DitherInfoOffset             = 28,
+            NBTScaleInfoOffset           = 29
+        }
+
         private void ReadMAT3()
         {
+            
+
             long sectionstart = m_File.Position() - 4;
             uint sectionsize = m_File.ReadUInt32();
 
-            ushort nummaterials = m_File.ReadUInt16();
+            ushort numMaterials = m_File.ReadUInt16();
+            
+            //padding
             m_File.Skip(2);
 
             //マテリアルの個数分のマテリアル型配列を生成
-            Materials = new Material[nummaterials];
+            Materials = new Material[numMaterials];
 
-            // uh yeah let's create 30 separate variables
-            uint[] offsets = new uint[30];
-            for (int i = 0; i < 30; i++) offsets[i] = m_File.ReadUInt32();
+            //MaterialInfoOffsetsの要素数
+            const int NumOfHeaderEntry = 30;
+            uint[] offsets = new uint[NumOfHeaderEntry];
 
-            for (int i = 0; i < nummaterials; i++)
+            for (int i = 0; i < NumOfHeaderEntry; i++) 
+            {
+                offsets[i] = m_File.ReadUInt32();
+            }
+
+            for (int i = 0; i < numMaterials; i++)
             {
                 Material mat = new Material();
                 Materials[i] = mat;
 
                 // idk if that's right
-                m_File.Seek((int)(sectionstart + offsets[2] + 4 + (i * 4) + 2));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.StringTableOffset] + 4 + (i * 4) + 2));
                 ushort nameoffset = m_File.ReadUInt16();
-                m_File.Seek((int)(sectionstart + offsets[2] + nameoffset));
+                m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.StringTableOffset] + nameoffset));
                 mat.Name = m_File.ReadString();
 
                 m_File.Seek((int)(sectionstart + offsets[1] + (i * 2)));
@@ -728,8 +773,10 @@ namespace Takochu.fmt
                 {
                     if (constcolor_id[j] == 0xFFFF)
                     {
+                        //m_File.Seek((int)(sectionstart + offsets[18] + (constcolor_id[j] * 4)));
                         mat.ConstColors[j].R = 0; mat.ConstColors[j].G = 0;
                         mat.ConstColors[j].B = 0; mat.ConstColors[j].A = 0;
+                        //continue;
                     }
                     else
                     {
@@ -756,6 +803,7 @@ namespace Takochu.fmt
                 {
                     if (colors10_id[j] == 0xFFFF)
                     {
+                        //m_File.Seek((int)(sectionstart + offsets[17] + (colors10_id[j] * 8)));
                         mat.ColorS10[j].R = 255; mat.ColorS10[j].G = 0;
                         mat.ColorS10[j].B = 255; mat.ColorS10[j].A = 255;
                     }
@@ -772,7 +820,7 @@ namespace Takochu.fmt
                 mat.TevStage = new Material.TevStageInfo[mat.NumTevStages];
                 for (int j = 0; j < mat.NumTevStages; j++)
                 {
-                    m_File.Seek((int)(sectionstart + offsets[20] + (tevstage_id[j] * 20) + 1));
+                    m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevStageInfoOffset] + (tevstage_id[j] * 20) + 1));
 
                     mat.TevStage[j].ColorIn = new byte[4];
                     for (int k = 0; k < 4; k++) mat.TevStage[j].ColorIn[k] = m_File.ReadByte();
@@ -1156,17 +1204,20 @@ namespace Takochu.fmt
         {
             public class Packet
             {
+                /// <summary>
+                /// 基本図形(Primitive)の情報を保持します。
+                /// </summary>
                 public class Primitive
                 {
                     
                     /// <summary>
-                    /// 頂点(インデックス)数
+                    /// 基本図形の総頂点(インデックス)数
                     /// </summary>
                     public int NumIndices;
 
 
                     /// <summary>
-                    /// 描画タイプ
+                    /// 基本図形の描画タイプ
                     /// </summary>
                     public byte PrimitiveType;
 

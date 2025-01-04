@@ -80,7 +80,7 @@ namespace Takochu.smg.obj
             // initalize the renderer
             if (Program.sGame.DoesFileExist($"/ObjectData/{mName}.arc"))
             {
-                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.mFilesystem.OpenFile($"/ObjectData/{mName}.arc"));
+                RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{mName}.arc"));
 
                 if (rarc.DoesFileExist($"/root/{mName}.bdl"))
                 {

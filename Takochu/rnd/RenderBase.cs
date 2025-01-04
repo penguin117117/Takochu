@@ -5,11 +5,12 @@ using System.Text;
 
 namespace Takochu.rnd
 {
-    public enum RenderMode
+    public enum RenderMode : int
     {
-        Picking = 0,
-        Opaque,
-        Translucent
+        Opaque = 0,
+        Translucent,
+        Picking
+        
     }
 
     public class RenderInfo
