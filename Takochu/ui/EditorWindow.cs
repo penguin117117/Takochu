@@ -632,30 +632,38 @@ namespace Takochu.ui
 
         private bool m_AreChanges;
         private void RenderObjectLists(RenderMode mode)
-        {
+        {   // TODO この関数がレンダーの初期化を担っているためゾーンがないとレンダリングされません。
             int renderModeNo = (int)mode;
 
-            List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(_galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario());
+            
+            var zoneName = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
+            foreach (var name in zoneName)
+            {
+                Debug.WriteLine("Render Zone Name: " + name);
+            }
+            List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(zoneName);
+            
 
             foreach (StageObj stageObj in stageObjLayers)
             {
+                // Lambda
                 List<AbstractObj> objsInStage = mObjects.FindAll(o => o.mParentZone.ZoneName == stageObj.mName);
                 List<PathObj> pathsInStage = mPaths.FindAll(p => p.mParentZone.ZoneName == stageObj.mName);
 
-                foreach (AbstractObj o in objsInStage)
+                foreach (AbstractObj abstractObj in objsInStage)
                 {
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    if (mDispLists[renderModeNo].ContainsKey(o.mUnique))
+                    if (mDispLists[renderModeNo].ContainsKey(abstractObj.mUnique))
                         continue;
 
-                    keyValuePairs.Add(o.mUnique, GL.GenLists(1));
-                    mDispLists[renderModeNo].Add(o.mUnique, GL.GenLists(1));
+                    keyValuePairs.Add(abstractObj.mUnique, GL.GenLists(1));
+                    mDispLists[renderModeNo].Add(abstractObj.mUnique, GL.GenLists(1));
 
-                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
+                    if (abstractObj.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
                         continue;
 
-                    GL.NewList(mDispLists[renderModeNo][o.mUnique], ListMode.Compile);
+                    GL.NewList(mDispLists[renderModeNo][abstractObj.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
                     {
@@ -667,10 +675,10 @@ namespace Takochu.ui
 
                     if (mode == RenderMode.Picking)
                     {
-                        GL.Color4((byte)o.mPicking.R, (byte)o.mPicking.G, (byte)o.mPicking.B, (byte)0xFF);
+                        GL.Color4((byte)abstractObj.mPicking.R, (byte)abstractObj.mPicking.G, (byte)abstractObj.mPicking.B, (byte)0xFF);
                     }
 
-                    o.Render(mode);
+                    abstractObj.Render(mode);
                     GL.PopMatrix();
 
                     GL.EndList();
