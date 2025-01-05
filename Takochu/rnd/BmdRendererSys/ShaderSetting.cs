@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
 using Takochu.fmt;
 using System.Globalization;
+using System.Linq.Expressions;
 
 namespace Takochu.rnd.BmdRendererSys
 {
@@ -465,6 +466,9 @@ namespace Takochu.rnd.BmdRendererSys
                 c = c_inputregs[_material.TevStage[i].ColorIn[2]];
                 d = c_inputregsD[_material.TevStage[i].ColorIn[3]];
 
+                // おそらく
+                // dst = {0}, a = {1}, b = {2}, c = {3}, d = {4}, 10bit color = {5}?
+
                 switch (_material.TevStage[i].ColorOp)
                 {
                     // D + 通常の線形補間の結果
@@ -482,7 +486,8 @@ namespace Takochu.rnd.BmdRendererSys
                     //AとBのRedチャンネルの値を比較
                     //Aの方が値が大きい場合、Cを返す。Bの方が大きい場合は0を返す
                     case 8:
-                        operation = "    {0} = {4} + ((({1}).r > ({2}).r) ? {3} : vec(0.0,0.0,0.0));";
+                        // operation = "    {0} = {4} + ((({1}).r > ({2}).r) ? {3} : vec3(0.0,0.0,0.0));"; // old code.
+                        operation = "    {0} = ((({1}).r > ({2}).r) ? {3} : vec3(0.0,0.0,0.0));";
                         break;
 
                     //計算方が見つからない場合は紫色を返す
@@ -491,11 +496,22 @@ namespace Takochu.rnd.BmdRendererSys
                         throw new Exception("!colorop " + _material.TevStage[i].ColorOp.ToString());
                 }
                 //代入する値
-                operation = string.Format(operation,
-                    rout, a, b, c, d, tevbias[_material.TevStage[i].ColorBias],
-                    tevscale[_material.TevStage[i].ColorScale]);
-                _fragment.AppendLine(operation);
-
+                if (_material.TevStage[i].ColorBias < 3)
+                {
+                    operation = string.Format(operation,
+                        rout, a, b, c, d, tevbias[_material.TevStage[i].ColorBias],
+                        tevscale[_material.TevStage[i].ColorScale]);
+                    _fragment.AppendLine(operation);
+                }
+                else
+                {
+                    throw new ArgumentOutOfRangeException("TEVStage Shader/ ColorBias: Over Index Value!!");
+                    _material.TevStage[i].ColorBias = 0;
+                    operation = string.Format(operation,
+                       rout, a, b, c, d, tevbias[_material.TevStage[i].ColorBias],
+                       tevscale[_material.TevStage[i].ColorScale]);
+                    _fragment.AppendLine(operation);
+                }
 
 
 

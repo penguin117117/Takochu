@@ -1462,7 +1462,7 @@ namespace Takochu.ui
                 var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(mSelectedObject.mParentZone.ZoneName);
                 var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(mSelectedObject.mParentZone.ZoneName);
 
-                GL.DeleteLists(mDispLists[0][mSelectedObject.mUnique], 1);
+               GL.DeleteLists(mDispLists[0][mSelectedObject.mUnique], 1);
                 GL.NewList(mDispLists[0][mSelectedObject.mUnique], ListMode.Compile);
 
                 GL.PushMatrix();
