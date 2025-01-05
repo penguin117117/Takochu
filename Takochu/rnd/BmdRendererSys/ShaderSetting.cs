@@ -327,12 +327,10 @@ namespace Takochu.rnd.BmdRendererSys
         private void VertexStringJoint() 
         {
             _vertex.AppendLine("#version 120");
-            _vertex.AppendLine("varying vec3 pos;");
             _vertex.AppendLine("");
             _vertex.AppendLine("void main()");
             _vertex.AppendLine("{");
             _vertex.AppendLine("    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;");
-            _vertex.AppendLine("    pos = normalize(gl_Vertex.xyz);");
 
             _vertex.AppendLine("    gl_FrontColor = gl_Color;");
             _vertex.AppendLine("    gl_FrontSecondaryColor = gl_SecondaryColor;");
@@ -373,7 +371,6 @@ namespace Takochu.rnd.BmdRendererSys
                 _fragment.AppendLine("uniform sampler2D texture" + i.ToString() + ";");
             }
 
-            _fragment.AppendLine("varying vec3 pos;");
 
 
             _fragment.AppendLine("");
