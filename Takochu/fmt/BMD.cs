@@ -25,7 +25,11 @@ namespace Takochu.fmt
             m_File.Skip(0x10);
             for (uint i = 0; i < numsections; i++)
             {
+                //セクションヘッダーのMagicを読み取ります
                 uint sectiontag = m_File.ReadUInt32();
+
+                //セクションヘッダーのASCIIコードからどのセクションを読み込むか判別します
+                //この際に4byteシークが進みます
                 switch (sectiontag)
                 {
                     case 0x494E4631: ReadINF1(); break;
@@ -647,6 +651,8 @@ namespace Takochu.fmt
             long sectionstart = m_File.Position() - MagicValueSize;
             uint sectionsize = m_File.ReadUInt32();
 
+            Debug.WriteLine($"{nameof(this.ReadMAT3)}_{nameof(sectionstart)}:{sectionstart:X64}");
+
             ushort numMaterials = m_File.ReadUInt16();
 
             //padding
@@ -658,11 +664,14 @@ namespace Takochu.fmt
             //MaterialInfoOffsetsの要素数
             const int NumOfHeaderEntry = 30;
             uint[] offsets = new uint[NumOfHeaderEntry];
-
-            for (int i = 0; i < NumOfHeaderEntry; i++)
+            foreach (int a in Enum.GetValues(typeof(MaterialInfoOffsets))) 
             {
-                offsets[i] = m_File.ReadUInt32();
+                offsets[a] = m_File.ReadUInt32();
             }
+            //for (int i = 0; i < NumOfHeaderEntry; i++)
+            //{
+            //    offsets[i] = m_File.ReadUInt32();
+            //}
 
             for (int i = 0; i < numMaterials; i++)
             {
@@ -825,6 +834,8 @@ namespace Takochu.fmt
                     const int UnknownByteTypeSize = 1;
                     m_File.Seek((int)(sectionstart + offsets[(int)MaterialInfoOffsets.TevStageInfoOffset]
                         + ((tevstage_id[j] * 20) + UnknownByteTypeSize)));
+
+                    Debug.WriteLine(m_File.Position().ToString("X8"));
 
                     mat.TevStage[j].ColorIn = new byte[4];
                     for (int k = 0; k < 4; k++) mat.TevStage[j].ColorIn[k] = m_File.ReadByte();
