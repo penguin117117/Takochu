@@ -2,6 +2,7 @@
 using OpenTK;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -286,6 +287,7 @@ namespace Takochu.smg
             foreach (BCSV.Entry Entry in bcsv.mEntries)
             {
                 dir = dir.ToLower();
+                Debug.WriteLine($"Init Zone Info: {dir}");
 
                 switch (dir)
                 {
