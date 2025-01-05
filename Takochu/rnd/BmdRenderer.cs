@@ -7,6 +7,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Takochu.fmt;
 using Takochu.rnd.BmdRendererSys;
+using System.Diagnostics;
 
 // BMD renderer TODO list
 // * finish TEV/material emulation
@@ -38,7 +39,11 @@ namespace Takochu.rnd
             UploadTextures();
 
 
-            if (!m_HasShaders) return;
+            // ここはExceptionで例外処理をする方がよいかもしれません。
+            if (!m_HasShaders) {
+                Debug.WriteLine("BMD Renderer: Not found Shader.");
+                return;
+            };
 
             //シェーダーの情報を格納
             m_Shaders = new Shader[model.Materials.Length];
