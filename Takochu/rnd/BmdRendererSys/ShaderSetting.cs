@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
 using Takochu.fmt;
 using System.Globalization;
+using System.Diagnostics;
 
 namespace Takochu.rnd.BmdRendererSys
 {
@@ -482,7 +483,7 @@ namespace Takochu.rnd.BmdRendererSys
                     //AとBのRedチャンネルの値を比較
                     //Aの方が値が大きい場合、Cを返す。Bの方が大きい場合は0を返す
                     case 8:
-                        operation = "    {0} = {4} + ((({1}).r > ({2}).r) ? {3} : vec(0.0,0.0,0.0));";
+                        operation = "    {0} = {4} + ((({1}).r > ({2}).r) ? {3} : vec3(0.0,0.0,0.0));";
                         break;
 
                     //計算方が見つからない場合は紫色を返す
@@ -491,6 +492,8 @@ namespace Takochu.rnd.BmdRendererSys
                         throw new Exception("!colorop " + _material.TevStage[i].ColorOp.ToString());
                 }
                 //代入する値
+
+                if(_material.TevStage[i].ColorOp != 8)
                 operation = string.Format(operation,
                     rout, a, b, c, d, tevbias[_material.TevStage[i].ColorBias],
                     tevscale[_material.TevStage[i].ColorScale]);
@@ -592,11 +595,20 @@ namespace Takochu.rnd.BmdRendererSys
             int ID = GL.CreateShader(shaderType);
             materialShader = ID;
 
+            string vertexSource = _vertex.ToString();
+
+            string fragmentSource = _fragment.ToString();
+
+            Debug.WriteLine("---- Vertex ----");
+            Debug.WriteLine(vertexSource);
+            Debug.WriteLine("--- fragment ---");
+            Debug.WriteLine(fragmentSource);
+
             //Determine shader type and output an error if it is not supported.
             if (shaderType == ShaderType.VertexShader)
-                GL.ShaderSource(ID, _vertex.ToString());
+                GL.ShaderSource(ID, vertexSource);
             else if (shaderType == ShaderType.FragmentShader)
-                GL.ShaderSource(ID, _fragment.ToString());
+                GL.ShaderSource(ID, fragmentSource);
             else 
                 throw new Exception("Not support ShaderType");
 
