@@ -7,6 +7,7 @@ using OpenTK.Graphics.OpenGL;
 using Takochu.fmt;
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Diagnostics;
 
 namespace Takochu.rnd.BmdRendererSys
 {
@@ -608,11 +609,20 @@ namespace Takochu.rnd.BmdRendererSys
             int ID = GL.CreateShader(shaderType);
             materialShader = ID;
 
+            string vertexSource = _vertex.ToString();
+
+            string fragmentSource = _fragment.ToString();
+
+            Debug.WriteLine("---- Vertex ----");
+            Debug.WriteLine(vertexSource);
+            Debug.WriteLine("--- fragment ---");
+            Debug.WriteLine(fragmentSource);
+
             //Determine shader type and output an error if it is not supported.
             if (shaderType == ShaderType.VertexShader)
-                GL.ShaderSource(ID, _vertex.ToString());
+                GL.ShaderSource(ID, vertexSource);
             else if (shaderType == ShaderType.FragmentShader)
-                GL.ShaderSource(ID, _fragment.ToString());
+                GL.ShaderSource(ID, fragmentSource);
             else 
                 throw new Exception("Not support ShaderType");
 
