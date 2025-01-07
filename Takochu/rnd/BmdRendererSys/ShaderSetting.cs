@@ -493,31 +493,19 @@ namespace Takochu.rnd.BmdRendererSys
                         operation = "    {0} = vec3(1.0,0.0,1.0);";
                         throw new Exception("!colorop " + _material.TevStage[i].ColorOp.ToString());
                 }
+
                 //代入する値
                 // TODO: ColorBiasにはライブラリで第四の値が使用できる可能性がある。
-                if (_material.TevStage[i].ColorBias < 3)
-                {
-                    if (_material.TevStage[i].ColorOp != 8)
-                        operation = string.Format(operation,
-                            rout, a, b, c, d, tevbias[_material.TevStage[i].ColorBias],
-                            tevscale[_material.TevStage[i].ColorScale]);
-                    _fragment.AppendLine(operation);
-                }
-                else
-                {
-                    throw new ArgumentOutOfRangeException("TEVStage Shader/ ColorBias: Over Index Value!!");
-                    if (_material.TevStage[i].ColorOp != 8)
-                    {
-                        _material.TevStage[i].ColorBias = 0;
-                        operation = string.Format(operation,
-                            rout, a, b, c, d, tevbias[_material.TevStage[i].ColorBias],
-                            tevscale[_material.TevStage[i].ColorScale]);
-                    }
-                    _fragment.AppendLine(operation);
-                }
-
-
-
+                // if (_material.TevStage[i].ColorBias > 2)
+                // {
+                //     throw new ArgumentOutOfRangeException("TEVStage Shader/ ColorBias: Over Index Value!!");
+                //     _material.TevStage[i].ColorBias = 0;
+                // }
+                if (_material.TevStage[i].ColorOp != 8)
+                    operation = string.Format(operation,
+                        rout, a, b, c, d, tevbias[_material.TevStage[i].ColorBias],
+                        tevscale[_material.TevStage[i].ColorScale]);
+                _fragment.AppendLine(operation);
 
 
                 //アルファ計算
