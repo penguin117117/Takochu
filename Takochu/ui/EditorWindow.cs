@@ -631,19 +631,69 @@ namespace Takochu.ui
         private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Lights;
 
         private bool m_AreChanges;
-        private void RenderObjectLists(RenderMode mode)
-        {   // TODO この関数がレンダーの初期化を担っているためゾーンがないとレンダリングされません。
-            int renderModeNo = (int)mode;
 
-            
-            var zoneName = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
-            foreach (var name in zoneName)
+        // befor name is "reguler stage"
+        private void RenderGalaxyObjectLists(RenderMode renderMode) {
+            List<AbstractObj> regularObjs = mObjects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
+            List<PathObj> regularPaths = mPaths.FindAll(p => p.mParentZone.ZoneName == _galaxyScenario.mName);
+
+            foreach (AbstractObj abstractObj in regularObjs)
             {
-                Debug.WriteLine("Render Zone Name: " + name);
-            }
-            List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(zoneName);
-            
+                //LevelObj level = o as LevelObj;
+                //Console.WriteLine("test "+ o.mName);
+                Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
+                if (mDispLists[(int)renderMode].ContainsKey(abstractObj.mUnique))
+                    continue;
+
+                keyValuePairs.Add(abstractObj.mUnique, GL.GenLists(1));
+                mDispLists[(int)renderMode].Add(abstractObj.mUnique, GL.GenLists(1));
+
+                if (abstractObj.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && renderMode != RenderMode.Picking)
+                    continue;
+
+                GL.NewList(mDispLists[(int)renderMode][abstractObj.mUnique], ListMode.Compile);
+
+                GL.PushMatrix();
+
+                if (renderMode == RenderMode.Picking)
+                {
+                    GL.Color4((byte)abstractObj.mPicking.R, (byte)abstractObj.mPicking.G, (byte)abstractObj.mPicking.B, (byte)0xFF);
+                }
+
+                abstractObj.Render(renderMode);
+                GL.PopMatrix();
+
+                GL.EndList();
+            }
+
+            foreach (PathObj pathObj in regularPaths)
+            {
+                Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
+
+                if (mDispLists[(int)renderMode].ContainsKey(pathObj.mUnique))
+                    continue;
+
+                keyValuePairs.Add(pathObj.mUnique, GL.GenLists(1));
+                mDispLists[(int)renderMode].Add(pathObj.mUnique, GL.GenLists(1));
+
+                if (pathsToolStripMenuItem.Checked == false && renderMode != RenderMode.Picking)
+                    continue;
+
+                GL.NewList(mDispLists[(int)renderMode][pathObj.mUnique], ListMode.Compile);
+
+                GL.PushMatrix();
+
+                pathObj.Render(renderMode);
+
+                GL.PopMatrix();
+
+                GL.EndList();
+            }
+
+        }
+        private void RenderZoneObjectLists(RenderMode renderMode, List<StageObj> stageObjLayers)
+        {// Zone processing.
             foreach (StageObj stageObj in stageObjLayers)
             {
                 // Lambda
@@ -654,120 +704,90 @@ namespace Takochu.ui
                 {
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    if (mDispLists[renderModeNo].ContainsKey(abstractObj.mUnique))
+                    if (mDispLists[(int)renderMode].ContainsKey(abstractObj.mUnique))
                         continue;
 
                     keyValuePairs.Add(abstractObj.mUnique, GL.GenLists(1));
-                    mDispLists[renderModeNo].Add(abstractObj.mUnique, GL.GenLists(1));
+                    mDispLists[(int)renderMode].Add(abstractObj.mUnique, GL.GenLists(1));
 
-                    if (abstractObj.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
+                    if (abstractObj.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && renderMode != RenderMode.Picking)
                         continue;
 
-                    GL.NewList(mDispLists[renderModeNo][abstractObj.mUnique], ListMode.Compile);
+                    GL.NewList(mDispLists[(int)renderMode][abstractObj.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
+
                     {
+                        // Zone to Global
+                        // x: 0 0 1
+                        // y: 0 1 0
+                        // z: 1 0 0
                         GL.Translate(stageObj.mPosition);
                         GL.Rotate(stageObj.mRotation.Z, 0f, 0f, 1f);
                         GL.Rotate(stageObj.mRotation.Y, 0f, 1f, 0f);
                         GL.Rotate(stageObj.mRotation.X, 1f, 0f, 0f);
                     }
 
-                    if (mode == RenderMode.Picking)
+                    if (renderMode == RenderMode.Picking)
                     {
                         GL.Color4((byte)abstractObj.mPicking.R, (byte)abstractObj.mPicking.G, (byte)abstractObj.mPicking.B, (byte)0xFF);
                     }
 
-                    abstractObj.Render(mode);
+                    abstractObj.Render(renderMode);
                     GL.PopMatrix();
 
                     GL.EndList();
                 }
 
-                foreach (PathObj p in pathsInStage)
+                foreach (PathObj pathObj in pathsInStage)
                 {
                     Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                    if (mDispLists[renderModeNo].ContainsKey(p.mUnique))
+                    if (mDispLists[(int)renderMode].ContainsKey(pathObj.mUnique))
                         continue;
 
-                    keyValuePairs.Add(p.mUnique, GL.GenLists(1));
-                    mDispLists[renderModeNo].Add(p.mUnique, GL.GenLists(1));
+                    keyValuePairs.Add(pathObj.mUnique, GL.GenLists(1));
+                    mDispLists[(int)renderMode].Add(pathObj.mUnique, GL.GenLists(1));
 
-                    if (pathsToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
+                    if (pathsToolStripMenuItem.Checked == false && renderMode != RenderMode.Picking)
                         continue;
 
-                    GL.NewList(mDispLists[renderModeNo][p.mUnique], ListMode.Compile);
+                    GL.NewList(mDispLists[(int)renderMode][pathObj.mUnique], ListMode.Compile);
 
                     GL.PushMatrix();
-
-                    GL.Translate(stageObj.mPosition);
-                    GL.Rotate(stageObj.mRotation.Z, 0f, 0f, 1f);
-                    GL.Rotate(stageObj.mRotation.Y, 0f, 1f, 0f);
-                    GL.Rotate(stageObj.mRotation.X, 1f, 0f, 0f);
-                    p.Render(mode);
-                    GL.PopMatrix();
-
-                    GL.EndList();
-                }
-                // and now we just do the regular stage
-                List<AbstractObj> regularObjs = mObjects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
-                List<PathObj> regularPaths = mPaths.FindAll(p => p.mParentZone.ZoneName == _galaxyScenario.mName);
-
-                foreach (AbstractObj o in regularObjs)
-                {
-                    //LevelObj level = o as LevelObj;
-                    //Console.WriteLine("test "+ o.mName);
-                    Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
-
-                    if (mDispLists[renderModeNo].ContainsKey(o.mUnique))
-                        continue;
-
-                    keyValuePairs.Add(o.mUnique, GL.GenLists(1));
-                    mDispLists[renderModeNo].Add(o.mUnique, GL.GenLists(1));
-
-                    if (o.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
-                        continue;
-
-                    GL.NewList(mDispLists[renderModeNo][o.mUnique], ListMode.Compile);
-
-                    GL.PushMatrix();
-
-                    if (mode == RenderMode.Picking)
                     {
-                        GL.Color4((byte)o.mPicking.R, (byte)o.mPicking.G, (byte)o.mPicking.B, (byte)0xFF);
+                        // Zone to Global
+                        // x: 0 0 1
+                        // y: 0 1 0
+                        // z: 1 0 0
+                        GL.Translate(stageObj.mPosition);
+                        GL.Rotate(stageObj.mRotation.Z, 0f, 0f, 1f);
+                        GL.Rotate(stageObj.mRotation.Y, 0f, 1f, 0f);
+                        GL.Rotate(stageObj.mRotation.X, 1f, 0f, 0f);
                     }
-
-                    o.Render(mode);
-                    GL.PopMatrix();
-
-                    GL.EndList();
-                }
-
-                foreach (PathObj path in regularPaths)
-                {
-                    Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
-
-                    if (mDispLists[renderModeNo].ContainsKey(path.mUnique))
-                        continue;
-
-                    keyValuePairs.Add(path.mUnique, GL.GenLists(1));
-                    mDispLists[renderModeNo].Add(path.mUnique, GL.GenLists(1));
-
-                    if (pathsToolStripMenuItem.Checked == false && mode != RenderMode.Picking)
-                        continue;
-
-                    GL.NewList(mDispLists[renderModeNo][path.mUnique], ListMode.Compile);
-
-                    GL.PushMatrix();
-
-                    path.Render(mode);
-
+                    pathObj.Render(renderMode);
                     GL.PopMatrix();
 
                     GL.EndList();
                 }
             }
+        }
+        private void RenderObjectLists(RenderMode renderMode)
+        {
+            // Get layers that is used "galaxy".
+            var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
+            foreach (var name in ScenarioLayers)
+            {
+                Debug.WriteLine("HasLayerName: " + name);
+            }
+            // get zone that is used scenario.
+            List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
+
+            // TODO: If mistake rendering then try it to flip.
+            // before: Zone -> Galaxy(Regular stage). 
+            // refactored: Galaxy(Reguler stage) ->Zone.
+            RenderGalaxyObjectLists(renderMode);
+            RenderZoneObjectLists(renderMode, stageObjLayers);
         }
 
         private void UpdateViewport()
