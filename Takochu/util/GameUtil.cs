@@ -52,20 +52,22 @@ namespace Takochu.util
         public static List<string> GetGalaxyLayers(int mask)
         {
             List<string> layers = new List<string>();
-            if (GameUtil.IsSMG1())
-
+            // 1,2 で先頭が大文字小文字がちがう。
+            if (GameUtil.IsSMG1()) {
                 layers = new List<string>
                 {
                     "common",
                 };
-
-
-            if (GameUtil.IsSMG2())
+            }
+            else if (GameUtil.IsSMG2())
+            {
                 layers = new List<string>
                 {
                     "Common",
                 };
+            }
 
+            // 16 はゾーンフラグがu16型に保存されているから？
             for (int i = 0; i < 16; i++)
             {
                 if (((mask >> i) & 0x1) != 0x0)
@@ -73,11 +75,12 @@ namespace Takochu.util
                     if (GameUtil.IsSMG1())
                     {
                         layers.Add(GameUtil.GalaxyLayers[i].ToLower());
-                        continue;
                     }
-                    layers.Add(GameUtil.GalaxyLayers[i]);
+                    else
+                    {
+                        layers.Add(GameUtil.GalaxyLayers[i]);
+                    }
                 }
-
             }
 
             return layers;

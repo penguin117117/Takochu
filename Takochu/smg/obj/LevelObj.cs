@@ -16,6 +16,7 @@ using OpenTK.Graphics.OpenGL;
 using Takochu.rnd;
 using System.Drawing;
 using Takochu.calc;
+using System.Diagnostics;
 
 namespace Takochu.smg.obj
 {
@@ -193,6 +194,7 @@ namespace Takochu.smg.obj
             }
             else if (mRenderer == null && Program.sGame.DoesFileExist($"/ObjectData/{mName}.arc"))
             {
+                Debug.WriteLine("Read OBJName: " + mName);
                 RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{mName}.arc"));
 
                 if (rarc.DoesFileExist($"/root/{mName}.bdl"))

@@ -2,6 +2,7 @@
 using OpenTK;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -262,6 +263,8 @@ namespace Takochu.smg
 
         public void AssignsObjectsToList(string archive, string path)
         {
+            // array path.
+            // TODO: パスの長さが実質固定であるが、そうと決めつけるのはよくない。
             string[] data = path.Split('/');
             string layer = data[1];
             string dir = data[2];
@@ -418,7 +421,6 @@ namespace Takochu.smg
                 if (mHasStageObjList.ContainsKey(layer))
                 {
                     ret.AddRange(mHasStageObjList[layer]);
-
                 }
             }
 

@@ -41,7 +41,7 @@ namespace Takochu.rnd
             };
         public ColorWireRenderer(AreaType areaType ,short areaShapeNo ,bool showAxes = false)
         {
-            if (areaShapeNo < -1 || areaShapeNo > ShapeDictionary.Count) areaShapeNo = 0;
+            if (areaShapeNo < 0 || areaShapeNo > ShapeDictionary.Count) areaShapeNo = 0;
             _colorWireShape = ShapeDictionary[(ShapeID)areaShapeNo];
             _areaType = areaType;
             
