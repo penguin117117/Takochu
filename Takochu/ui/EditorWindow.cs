@@ -1056,7 +1056,7 @@ namespace Takochu.ui
                         var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
                         var positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
 
-                        Vector3 v0 = Vector3.Add(positionWithZoneRotation,triangle.V0.Xyz)*10000f;
+                        Vector3 v0 = Vector3.Add(positionWithZoneRotation, triangle.V0.Xyz) * 10000f;
                         Vector3 v1 = Vector3.Add(positionWithZoneRotation, triangle.V1.Xyz) * 10000f;
                         Vector3 v2 = Vector3.Add(positionWithZoneRotation, triangle.V2.Xyz) * 10000f;
                         Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
@@ -1094,8 +1094,6 @@ namespace Takochu.ui
                     // if条件: どの三角面とも交差していない場合にif内部に入る(何もしない)
                     if (nearest_hitpoint_distance == float.MaxValue)
                     {
-                        
-
                         MessageBox.Show("交点なし");
 
                         Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
@@ -1103,6 +1101,8 @@ namespace Takochu.ui
                     }
                     else 
                     {
+                        MessageBox.Show("交点あり");
+
                         textBox1.Text = "☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString();
                         Debug.WriteLine("☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString());
                     } 
@@ -1716,7 +1716,10 @@ namespace Takochu.ui
         }
 
         private Ray ScreenToRay(Point mousePos)//カメラZ軸非対応(Incompatible :: cam Z rotate.)
-        {
+        { 
+            // このプロジェクトのGL座標はSMG座標互換です。
+            // そのため、右手 上y、 手前xでレンダリングされる模様。
+
             //namespace System(cppLang & memo)
             //GL系の座標で計算してSMG系の座標に変換しています。（vector2のX座標がSMGのZ座標のため）
 
@@ -1747,6 +1750,7 @@ namespace Takochu.ui
 
             ray = Vector3.Normalize(ray);
 
+            ray = new Vector3(1f, 0f, 0f);
 
             return new Ray(_camTarget, ray);
         }
