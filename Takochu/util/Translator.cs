@@ -29,7 +29,8 @@ namespace Takochu.util
         UnimplementedFeatures,
         InitialPathSettings,
         ChangesNotSaved,
-        ShapeNoNotValid
+        ShapeNoNotValid,
+        ScenarioNotSelected
     }
 
     public enum MessageBoxCaption
@@ -187,7 +188,8 @@ namespace Takochu.util
                 "Some or all of these features have not been implemented.",
                 "Please select a path that contains the dump of your SMG1 / SMG2 copy.",
                 "Changes are not saved.\n\rDo you want to close the window?",
-                "Invalid AreaShapeNo value. AreaShapeNo cannot be less than 0."
+                "Invalid AreaShapeNo value. AreaShapeNo cannot be less than 0.",
+                "No scenario has been selected.\n\rPlease select a scenario and then add an object."
             };
         }
 
@@ -226,7 +228,8 @@ namespace Takochu.util
                 "この機能の一部、または全ての機能が実装されていません。",
                 "SMG1 / SMG2のディスクからコピーされたデータが\n\r入っているパスを選択してください",
                 "変更は保存されていません\n\rウィンドウを閉じますか？",
-                ""
+                "AreaShapeNoの値が無効です。AreaShapeNoに0より小さい値を指定することはできません。",
+                "シナリオが選択されていません。\n\rシナリオを選択してからオブジェクトを追加してください。"
             };
         }
 
