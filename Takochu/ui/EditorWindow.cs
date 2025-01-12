@@ -609,23 +609,39 @@ namespace Takochu.ui
         private Vector3 _camTarget;
         private float _camDistance;
         private bool _upsideDown;
+
+        //_skyboxMatrix は代入されているが使用されていない
+        //ToDo:不要な計算の場合は削除する必要がある。
         private Matrix4 _camMatrix, _skyboxMatrix, _projMatrix;
+
+        //下記の値は代入されているが使用されていない
+        //ToDo:不要な計算の場合は削除する必要がある。
         private RenderInfo _renderInfo;
 
         private MouseButtons _mouseDown;
         private Point _lastMouseMove, _lastMouseClick;
         private Point _mouseCoords;
+
+        //下記2つの値は代入されているが使用されていない
+        //ToDo:不要な計算の場合は削除する必要がある。
         private float _pixelFactorX, _pixelFactorY;
 
         private uint[] _pickingFrameBuffer;
         private float _pickingDepth;
 
-        private bool _orthView = false;
-        private float _orthZoom = 20f;
+        private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Objects;
 
-        private static EditorWindowSys.DataGridViewEdit dataGridViewEdit;
-        private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Cameras;
+        /// <summary>
+        /// XXXXGalaxyMap.arc/Stage/camera/CameraParam.bcamを編集するためのデータグリッドビュー
+        /// </summary>
+        private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_CameraParam;
+        /// <summary>
+        /// XXXXGalaxyScenario.arc/XXXXGalaxyScenario/ZoneList.bcsvを編集するためのデータグリッドビュー
+        /// </summary>
         private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Zones;
+        /// <summary>
+        /// XXXXGalaxyLight.arc/Stage/csv/XXXXGalaxyLight.bcsvを編集するためのデータグリッドビュー
+        /// </summary>
         private static EditorWindowSys.DataGridViewEdit dataGridViewEdit_Lights;
 
         /// <summary>
@@ -802,8 +818,7 @@ namespace Takochu.ui
             _projMatrix = Matrix4.CreatePerspectiveFieldOfView(FOV, _aspectRatio, Z_NEAR, Z_FAR);
             GL.LoadMatrix(ref _projMatrix);
 
-            //下記2つの値は代入されているが使用されていない
-            //ToDo:不要な計算の場合は削除する必要がある。
+            
             _pixelFactorX = ((2f * (float)Math.Tan(FOV / 2f) * _aspectRatio) / (float)(glLevelView.Width));
             _pixelFactorY = ((2f * (float)Math.Tan(FOV / 2f)) / (float)(glLevelView.Height));
         }
@@ -1196,8 +1211,8 @@ namespace Takochu.ui
             if (node.Parent == null && node.Text.EndsWith("Zone"))
             {
                 StageObj stageObj = abstractObj as StageObj;
-                dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, stageObj);
-                ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, stageObj);
+                ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                 _selectedObject = stageObj;
             }
             else
@@ -1243,7 +1258,7 @@ namespace Takochu.ui
                 //Note: These processes are not related to the camera's processing.
 
                 ObjectPropertyDataGridView.DataSource = null;
-                dataGridViewEdit = null;
+                dataGridViewEdit_Objects = null;
                 _selectedObject = abstractObj;
 
                 //選択されたAbstractObjの親ノードのテキストが
@@ -1256,8 +1271,8 @@ namespace Takochu.ui
                         if (!(abstractObj is LevelObj))
                             throw new Exception($"This 「{ typeof(AbstractObj) }」 is not a 「{ typeof(LevelObj) }」 .");
                         LevelObj obj = abstractObj as LevelObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, obj);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, obj);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Areas":
                         //AreaObj area = abstractObj as AreaObj;
@@ -1266,44 +1281,44 @@ namespace Takochu.ui
                         if (!(abstractObj is AreaObj))
                             throw new Exception($"This 「{ typeof(AbstractObj) }」 is not a 「{ typeof(AreaObj) }」 .");
                         AreaObj areaobj = abstractObj as AreaObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, areaobj);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, areaobj);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Gravity":
                         PlanetObj planetObj = abstractObj as PlanetObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, planetObj);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, planetObj);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Camera Areas":
                         CameraObj cameraObj = abstractObj as CameraObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, cameraObj);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, cameraObj);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Debug Movement":
                         DebugMoveObj debug = abstractObj as DebugMoveObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, debug);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, debug);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Map Parts":
                         MapPartsObj mapparts = abstractObj as MapPartsObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, mapparts);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, mapparts);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Demos":
                         DemoObj demo = abstractObj as DemoObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, demo);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, demo);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Starting Points":
                         StartObj start = abstractObj as StartObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, start);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, start);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     case "Paths":
                         PathObj path = abstractObj as PathObj;
-                        dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, path);
-                        ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                        dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, path);
+                        ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                         break;
                     default:
                         //dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(dataGridView1, abstractObj);
@@ -1315,8 +1330,8 @@ namespace Takochu.ui
                 if (node.Parent.Parent != null && node.Parent.Parent.Text == "Paths")
                 {
                     PathPointObj pathPoint = abstractObj as PathPointObj;
-                    dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, pathPoint);
-                    ObjectPropertyDataGridView = dataGridViewEdit.GetDataTable();
+                    dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, pathPoint);
+                    ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
                 }
 
                 if (pathsToolStripMenuItem.Checked == false)
@@ -1445,7 +1460,7 @@ namespace Takochu.ui
                 cell_value = tes.Items.IndexOf(cell_value) - 1;
             }
 
-            dataGridViewEdit.ChangeValue(e.RowIndex, cell_value);
+            dataGridViewEdit_Objects.ChangeValue(e.RowIndex, cell_value);
 
             if (_selectedObject.GetType() == typeof(PathPointObj))
             {
@@ -2157,8 +2172,8 @@ namespace Takochu.ui
             if (camera == null) return;
 
             camerasDataGridView.DataSource = null;
-            dataGridViewEdit_Cameras = new EditorWindowSys.DataGridViewEdit(camerasDataGridView, camera);
-            camerasDataGridView = dataGridViewEdit_Cameras.GetDataTable(camera);
+            dataGridViewEdit_CameraParam = new EditorWindowSys.DataGridViewEdit(camerasDataGridView, camera);
+            camerasDataGridView = dataGridViewEdit_CameraParam.GetDataTable(camera);
         }
 
         private void glLevelView_Resize(object sender, EventArgs e)
