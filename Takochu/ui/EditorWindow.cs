@@ -1056,7 +1056,7 @@ namespace Takochu.ui
                         var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
                         var positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
 
-                        Vector3 v0 = Vector3.Add(positionWithZoneRotation,triangle.V0.Xyz)*10000f;
+                        Vector3 v0 = Vector3.Add(positionWithZoneRotation, triangle.V0.Xyz) * 10000f;
                         Vector3 v1 = Vector3.Add(positionWithZoneRotation, triangle.V1.Xyz) * 10000f;
                         Vector3 v2 = Vector3.Add(positionWithZoneRotation, triangle.V2.Xyz) * 10000f;
                         Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
@@ -1094,8 +1094,6 @@ namespace Takochu.ui
                     // if条件: どの三角面とも交差していない場合にif内部に入る(何もしない)
                     if (nearest_hitpoint_distance == float.MaxValue)
                     {
-                        
-
                         MessageBox.Show("交点なし");
 
                         Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
@@ -1103,6 +1101,8 @@ namespace Takochu.ui
                     }
                     else 
                     {
+                        MessageBox.Show("交点あり");
+
                         textBox1.Text = "☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString();
                         Debug.WriteLine("☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString());
                     } 
@@ -1178,12 +1178,12 @@ namespace Takochu.ui
 
             //textBox1.Text = raytest2.Direction.ToString();
 
-            
+            // rayの終点がマウスの座標になるように修正。
             GL.PushMatrix();
             GL.LineWidth(3.0f);
             GL.Begin(BeginMode.Lines);
             GL.Color3(1f, 0f, 1f);
-            GL.Vertex3(raytest2.Origin * 10000.0f);
+            GL.Vertex3(_camTarget * 10000.0f);
             GL.Vertex3(raytest2.Origin * 10000.0f + (1000000f * raytest2.Direction));
             GL.End();
             GL.PopMatrix();
@@ -1193,9 +1193,6 @@ namespace Takochu.ui
 
             _mouseDown = e.Button;
             _lastMouseMove = _lastMouseClick = e.Location;
-
-            
-
         }
 
         private void ChangeToNode(TreeNode node, bool changeCamera = false)
@@ -1715,40 +1712,128 @@ namespace Takochu.ui
             Debug.WriteLine("camera ray direction: " + ray.Direction);
         }
 
-        private Ray ScreenToRay(Point mousePos)//カメラZ軸非対応(Incompatible :: cam Z rotate.)
+        /// <summary>
+        /// SMG座標系での回転行列の取得。
+        /// </summary>
+        /// <param name="rad">軸回転</param>
+        /// <returns>回転行列(3次元)</returns>
+        private Matrix3 GetRotMatrix3SmgCoordX(Vector3 rad)
         {
-            //namespace System(cppLang & memo)
-            //GL系の座標で計算してSMG系の座標に変換しています。（vector2のX座標がSMGのZ座標のため）
+            return new Matrix3(
+                new Vector3(1.0f, 0.0f, 0.0f),
+                new Vector3(0.0f, (float)Math.Cos(rad.X), -(float)Math.Sin(rad.X)),
+                new Vector3(0.0f, (float)Math.Sin(rad.X), (float)Math.Cos(rad.X)));
+        }
+        /// <summary>
+        /// SMG座標系での回転行列の取得。
+        /// </summary>
+        /// <param name="rad">軸回転</param>
+        /// <returns>回転行列(3次元)</returns>
+        private Matrix3 GetRotMatrix3SmgCoordY(Vector3 rad)
+        {
+            return new Matrix3(
+                new Vector3((float)Math.Cos(rad.Y), 0.0f, (float)Math.Sin(rad.Y)),
+                new Vector3(0f, 1f, 0f),
+                new Vector3(-(float)Math.Sin(rad.Y), 0.0f, (float)Math.Cos(rad.Y)));
+        }
+        /// <summary>
+        /// SMG座標系での回転行列の取得。
+        /// </summary>
+        /// <param name="rad">軸回転</param>
+        /// <returns>回転行列(3次元)</returns>
+        private Matrix3 GetRotMatrix3SmgCoordZ(Vector3 rad)
+        {
+            return new Matrix3(
+                new Vector3((float)Math.Cos(rad.Z), -(float)Math.Sin(rad.Z), 0.0f),
+                new Vector3((float)Math.Sin(rad.Z), (float)Math.Cos(rad.Z), 0.0f),
+                new Vector3(0.0f, 0.0f, 1.0f));
+        }
+        /// <summary>
+        /// SMG座標系かつ、カメラ回転軸を主とした回転行列。
+        /// </summary>
+        /// <param name="rad"></param>
+        /// <returns>回転行列(3次元)</returns>
+        private Matrix3 GetRotMatrix3SmgCoordZY(Vector3 rad)
+        {
+            // Vector2でのカメラ回転の優先度をSMG座標系で計算するため、このようになる。
+            return GetRotMatrix3SmgCoordZ(rad) * GetRotMatrix3SmgCoordY(rad);
+        }
+        /// <summary>
+        /// SMG座標系回転行列。
+        /// </summary>
+        /// <param name="rad"></param>
+        /// <returns></returns>
+        private Matrix3 GetRotMatrix3SmgCoordXYZ(Vector3 rad)
+        {
+            return GetRotMatrix3SmgCoordX(rad) * GetRotMatrix3SmgCoordY(rad) * GetRotMatrix3SmgCoordZ(rad);
+        }
 
-            Vector2 mousePosRayRad = new Vector2();
-            float k_FOV_RadPerDot = FOV / glLevelView.Height;
-            float k_FOV_harf = FOV / 2;
-            //(mouse move)y rad
-            mousePosRayRad.Y = k_FOV_harf - (k_FOV_RadPerDot * mousePos.Y);
-            //x rad
-            mousePosRayRad.X = ((k_FOV_harf * _aspectRatio) - ((k_FOV_RadPerDot) * mousePos.X));
+        /// <summary>
+        /// SMG座標軸でのカメラのグローバル回転行列の取得。
+        /// </summary>
+        /// <returns></returns>
+        private Matrix3 GetCamRotMatrix3SMGCoord() {
+            // SMG座標での回転。
+            Vector3 rotateRad = new Vector3(0f, _camRotation.X, -_camRotation.Y);
+            return GetRotMatrix3SmgCoordZY(rotateRad);
+        }
 
-            //convert.
-            Vector3 rotateRad = new Vector3(-_camRotation.Y, -_camRotation.X, 0f);
+        /// <summary>
+        /// カメラのローカル座標でのレイの方向を計算します。
+        /// </summary>
+        /// <param name="mousePos"></param>
+        /// <returns></returns>
+        private Vector3 CalculateVectorFromCursorPos(Point mousePos) {
+            // このプロジェクトのGL.Vertex3()座標はSMG座標互換です。
+            // そのため、右手 上y、 手前xでレンダリングされます。
+            // また、マウス座標は左上が原点であり、FOVはrad(70度)VFovです。
+            // 軸は、下記のようになっているようです。
+            //  X Y Z :エディタ座標
+            //  _ X-Y :内部カメラ回転
 
-            //x rotate only.(view y rotate)
-            rotateRad += new Vector3(mousePosRayRad.Y,
-                                     0f,
-                                     0f
-                                     );
+            // SMG座標に変換後計算をします。
+            // 画面中央を基準値にとした座標の割合を計算し、回転軸に関連付ける。
+            // dotOffsetはフォームのサイズでは縁のピクセル数が含まれるため。
+            // テスト段階では0で問題なし。
+            int dotOffset = 0;
+            var editorHeight = glLevelView.Size.Height - dotOffset;
+            var editorWidth = glLevelView.Size.Width - dotOffset;
+            double aspectRatio = (double)editorWidth / (double)editorHeight;
+            double hWidth = editorWidth / 2d;
+            double hHeight = editorHeight / 2d;
+            Vector3d mouseToRotateD = new Vector3d(
+                0d, 
+                -((hWidth - (double)mousePos.X) / hWidth),
+                (hHeight - (double)mousePos.Y) / hHeight);
+            // ドット値をラジアンに変換 + 画面座標の補正をします。
+            double vHarfFov = (double)FOV / 2d;
+            double vHarfFovTan = Math.Tan(vHarfFov);
+            double hHarfFovTan = Math.Tan(vHarfFov) * aspectRatio;
+            double hHarfFov = Math.Atan(hHarfFovTan);
 
-            //yz rotate add.(view x rotate)
-            Vector3 ray = new Vector3((float)((Math.Sin(rotateRad.Y) * Math.Cos(rotateRad.X)) + (Math.Cos(rotateRad.Y) * Math.Sin(mousePosRayRad.X))),
-                                      (float)((Math.Sin(rotateRad.X) * (Math.Cos(mousePosRayRad.X)))),
-                                      (float)((Math.Cos(rotateRad.Y) * Math.Cos(rotateRad.X)) + (Math.Sin(-rotateRad.Y) * Math.Sin(mousePosRayRad.X)))
-                                      );
+            mouseToRotateD.Y = Math.Atan(mouseToRotateD.Y * hHarfFovTan);
+            // Y軸の回転分倍率補正を掛ける。
+            mouseToRotateD.Z = Math.Atan(mouseToRotateD.Z * vHarfFovTan * Math.Abs(Math.Cos(mouseToRotateD.Y)));
 
-            ray = new Vector3(-ray.Z, ray.Y, ray.X);
+            // 基準となる正面方向のベクトル。
+            Vector3 ray = new Vector3(-1f, 0f, 0f);
 
-            ray = Vector3.Normalize(ray);
+            ray *= GetRotMatrix3SmgCoordZY((Vector3)mouseToRotateD);
 
+            return Vector3.Normalize(ray); 
+        }
 
-            return new Ray(_camTarget, ray);
+        /// <summary>
+        /// フォーム上のマウス座標より、収束点とそこからの方角を計算します。
+        /// </summary>
+        /// <param name="mousePos"></param>
+        /// <returns></returns>
+        private Ray ScreenToRay(Point mousePos)
+        {
+            var toGlobal = GetCamRotMatrix3SMGCoord();
+            // SMGグローバル座標でのカメラの収束点の計算
+            Vector3 camConvergence = new Vector3(_camDistance, 0.0f, 0.0f) * toGlobal;
+            return new Ray(_camTarget + camConvergence, CalculateVectorFromCursorPos(mousePos) * toGlobal);
         }
 
         private void lightsTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
