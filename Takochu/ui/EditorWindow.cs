@@ -1178,12 +1178,12 @@ namespace Takochu.ui
 
             //textBox1.Text = raytest2.Direction.ToString();
 
-            
+            // rayの終点がマウスの座標になるように修正。
             GL.PushMatrix();
             GL.LineWidth(3.0f);
             GL.Begin(BeginMode.Lines);
             GL.Color3(1f, 0f, 1f);
-            GL.Vertex3(raytest2.Origin * 10000.0f);
+            GL.Vertex3(_camTarget * 10000.0f);
             GL.Vertex3(raytest2.Origin * 10000.0f + (1000000f * raytest2.Direction));
             GL.End();
             GL.PopMatrix();
@@ -1193,9 +1193,6 @@ namespace Takochu.ui
 
             _mouseDown = e.Button;
             _lastMouseMove = _lastMouseClick = e.Location;
-
-            
-
         }
 
         private void ChangeToNode(TreeNode node, bool changeCamera = false)
@@ -1720,7 +1717,7 @@ namespace Takochu.ui
         /// </summary>
         /// <param name="rad">軸回転</param>
         /// <returns>回転行列(3次元)</returns>
-        private Matrix3 getRotMatrix3SmgCoordX(Vector3 rad)
+        private Matrix3 GetRotMatrix3SmgCoordX(Vector3 rad)
         {
             return new Matrix3(
                 new Vector3(1.0f, 0.0f, 0.0f),
@@ -1751,6 +1748,25 @@ namespace Takochu.ui
                 new Vector3((float)Math.Sin(rad.Z), (float)Math.Cos(rad.Z), 0.0f),
                 new Vector3(0.0f, 0.0f, 1.0f));
         }
+        /// <summary>
+        /// SMG座標系かつ、カメラ回転軸を主とした回転行列。
+        /// </summary>
+        /// <param name="rad"></param>
+        /// <returns>回転行列(3次元)</returns>
+        private Matrix3 GetRotMatrix3SmgCoordZY(Vector3 rad)
+        {
+            // Vector2でのカメラ回転の優先度をSMG座標系で計算するため、このようになる。
+            return GetRotMatrix3SmgCoordZ(rad) * GetRotMatrix3SmgCoordY(rad);
+        }
+        /// <summary>
+        /// SMG座標系回転行列。
+        /// </summary>
+        /// <param name="rad"></param>
+        /// <returns></returns>
+        private Matrix3 GetRotMatrix3SmgCoordXYZ(Vector3 rad)
+        {
+            return GetRotMatrix3SmgCoordX(rad) * GetRotMatrix3SmgCoordY(rad) * GetRotMatrix3SmgCoordZ(rad);
+        }
 
         /// <summary>
         /// SMG座標軸でのカメラのグローバル回転行列の取得。
@@ -1759,7 +1775,7 @@ namespace Takochu.ui
         private Matrix3 GetCamRotMatrix3SMGCoord() {
             // SMG座標での回転。
             Vector3 rotateRad = new Vector3(0f, _camRotation.X, -_camRotation.Y);
-            return GetRotMatrix3SmgCoordZ(rotateRad) * GetRotMatrix3SmgCoordY(rotateRad);
+            return GetRotMatrix3SmgCoordZY(rotateRad);
         }
 
         /// <summary>
@@ -1777,7 +1793,8 @@ namespace Takochu.ui
 
             // SMG座標に変換後計算をします。
             // 画面中央を基準値にとした座標の割合を計算し、回転軸に関連付ける。
-            // -2は2pxの縁が存在するため。
+            // dotOffsetはフォームのサイズでは縁のピクセル数が含まれるため。
+            // テスト段階では0で問題なし。
             int dotOffset = 0;
             var editorHeight = glLevelView.Size.Height - dotOffset;
             var editorWidth = glLevelView.Size.Width - dotOffset;
@@ -1801,12 +1818,17 @@ namespace Takochu.ui
             // 基準となる正面方向のベクトル。
             Vector3 ray = new Vector3(-1f, 0f, 0f);
 
-            ray *= GetRotMatrix3SmgCoordZ((Vector3)mouseToRotateD) * GetRotMatrix3SmgCoordY((Vector3)mouseToRotateD);
+            ray *= GetRotMatrix3SmgCoordZY((Vector3)mouseToRotateD);
 
             return Vector3.Normalize(ray); 
         }
 
-        private Ray ScreenToRay(Point mousePos)//カメラZ軸非対応(Incompatible :: cam Z rotate.)
+        /// <summary>
+        /// フォーム上のマウス座標より、収束点とそこからの方角を計算します。
+        /// </summary>
+        /// <param name="mousePos"></param>
+        /// <returns></returns>
+        private Ray ScreenToRay(Point mousePos)
         {
             var toGlobal = GetCamRotMatrix3SMGCoord();
             // SMGグローバル座標でのカメラの収束点の計算
