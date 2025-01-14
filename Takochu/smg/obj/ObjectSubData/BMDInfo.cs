@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Takochu.fmt;
 using Takochu.io;
+using Takochu.rnd;
 
 namespace Takochu.smg.obj.ObjectSubData
 {
@@ -57,80 +58,149 @@ namespace Takochu.smg.obj.ObjectSubData
         private static Vector3 positionWithZoneRotation { get; set; }
         private static Vector3 objTruePos { get; set; }
 
+        //public static BMDTriangleData GetTriangles(AbstractObj obj)
+        //{
+        //    TargetObject = obj;
+
+        //    BMDTriangleData bmdTriangleData = new BMDTriangleData();
+        //    string objName = obj.mName;
+        //    if (LevelObj.SP_ObjectName.ContainsKey(objName))
+        //    {
+        //        objName = LevelObj.SP_ObjectName[objName].Item1;
+        //    }
+        //    using (RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{objName}.arc")))
+        //    {
+        //        if (rarc.DoesFileExist($"/root/{objName}.bdl"))
+        //        {
+        //            BMD bmd = new BMD(rarc.OpenFile($"/root/{objName}.bdl"));
+
+        //            objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
+        //            var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
+        //            positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mPosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
+
+        //            //Batchファイル内のPacketsを取得
+        //            foreach (BMD.Batch batch in bmd.Batches)
+        //            {
+        //                Matrix4[] lastmatrixtable = null;
+
+        //                foreach (BMD.Batch.Packet packet in batch.Packets)
+        //                {
+        //                    Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
+        //                    int[] mtx_debug = new int[packet.MatrixTable.Length];
+
+        //                    for (int i = 0; i < packet.MatrixTable.Length; i++)
+        //                    {
+        //                        if (packet.MatrixTable[i] == 0xFFFF)
+        //                        {
+        //                            mtxtable[i] = lastmatrixtable[i];
+        //                            mtx_debug[i] = 2;
+        //                        }
+        //                        else
+        //                        {
+        //                            BMD.MatrixType mtxtype = bmd.MatrixTypes[packet.MatrixTable[i]];
+
+        //                            if (mtxtype.IsWeighted)
+        //                            {
+        //                                mtxtable[i] = Matrix4.Identity;
+
+        //                                mtx_debug[i] = 1;
+        //                            }
+        //                            else
+        //                            {
+        //                                mtxtable[i] = bmd.Joints[mtxtype.Index].FinalMatrix;
+        //                                mtx_debug[i] = 0;
+        //                            }
+        //                        }
+        //                    }
+
+        //                    lastmatrixtable = mtxtable;
+
+
+
+
+        //                    //ジオメトリ情報にアクセスしていると思われる。
+        //                    foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
+        //                    {
+        //                        bmdTriangleData.TriangleDataList.AddRange(GetTriangleFaces(prim, bmd, mtxtable));
+
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        // DebugTriangleRendering(bmdTriangleData);
+        //        return bmdTriangleData;
+        //    };
+
+
+        //}
         public static BMDTriangleData GetTriangles(AbstractObj obj)
         {
-            TargetObject = obj;
-
             BMDTriangleData bmdTriangleData = new BMDTriangleData();
-            string objName = obj.mName;
-            if (LevelObj.SP_ObjectName.ContainsKey(objName))
+
+            // モデル(BMD)でなければcontinue
+            if (obj.mRenderer is BmdRenderer)
             {
-                objName = LevelObj.SP_ObjectName[objName].Item1;
-            }
-            using (RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{objName}.arc")))
-            {
-                if (rarc.DoesFileExist($"/root/{objName}.bdl"))
+                BmdRenderer bmdRenderer = (BmdRenderer)obj.mRenderer;
+                BMD bmd = bmdRenderer.getModel();
+
+                objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
+                var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
+                positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mPosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
+
+                //Batchファイル内のPacketsを取得
+                foreach (BMD.Batch batch in bmd.Batches)
                 {
-                    BMD bmd = new BMD(rarc.OpenFile($"/root/{objName}.bdl"));
+                    Matrix4[] lastmatrixtable = null;
 
-                    objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
-                    var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
-                    positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mPosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
-
-                    //Batchファイル内のPacketsを取得
-                    foreach (BMD.Batch batch in bmd.Batches)
+                    foreach (BMD.Batch.Packet packet in batch.Packets)
                     {
-                        Matrix4[] lastmatrixtable = null;
+                        Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
+                        int[] mtx_debug = new int[packet.MatrixTable.Length];
 
-                        foreach (BMD.Batch.Packet packet in batch.Packets)
+                        for (int i = 0; i < packet.MatrixTable.Length; i++)
                         {
-                            Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
-                            int[] mtx_debug = new int[packet.MatrixTable.Length];
-
-                            for (int i = 0; i < packet.MatrixTable.Length; i++)
+                            if (packet.MatrixTable[i] == 0xFFFF)
                             {
-                                if (packet.MatrixTable[i] == 0xFFFF)
+                                mtxtable[i] = lastmatrixtable[i];
+                                mtx_debug[i] = 2;
+                            }
+                            else
+                            {
+                                BMD.MatrixType mtxtype = bmd.MatrixTypes[packet.MatrixTable[i]];
+
+                                if (mtxtype.IsWeighted)
                                 {
-                                    mtxtable[i] = lastmatrixtable[i];
-                                    mtx_debug[i] = 2;
+                                    mtxtable[i] = Matrix4.Identity;
+
+                                    mtx_debug[i] = 1;
                                 }
                                 else
                                 {
-                                    BMD.MatrixType mtxtype = bmd.MatrixTypes[packet.MatrixTable[i]];
-
-                                    if (mtxtype.IsWeighted)
-                                    {
-                                        mtxtable[i] = Matrix4.Identity;
-
-                                        mtx_debug[i] = 1;
-                                    }
-                                    else
-                                    {
-                                        mtxtable[i] = bmd.Joints[mtxtype.Index].FinalMatrix;
-                                        mtx_debug[i] = 0;
-                                    }
+                                    mtxtable[i] = bmd.Joints[mtxtype.Index].FinalMatrix;
+                                    mtx_debug[i] = 0;
                                 }
                             }
+                        }
 
-                            lastmatrixtable = mtxtable;
+                        lastmatrixtable = mtxtable;
 
 
 
 
-                            //ジオメトリ情報にアクセスしていると思われる。
-                            foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
-                            {
-                                bmdTriangleData.TriangleDataList.AddRange(GetTriangleFaces(prim, bmd, mtxtable));
+                        //ジオメトリ情報にアクセスしていると思われる。
+                        foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
+                        {
+                            bmdTriangleData.TriangleDataList.AddRange(GetTriangleFaces(obj ,prim, bmd, mtxtable));
 
-                            }
                         }
                     }
                 }
-                // DebugTriangleRendering(bmdTriangleData);
-                return bmdTriangleData;
-            };
-
-
+            }
+            else
+            {
+                // TODO: dummy boxのポリゴンを返す。
+            }
+            return bmdTriangleData;
         }
 
         private static void DebugTriangleRendering(BMDTriangleData bmdTriangleData)
@@ -158,12 +228,12 @@ namespace Takochu.smg.obj.ObjectSubData
             Debug.WriteLine($"TargetObjectPosition : {TargetObject.mTruePosition}");
         }
 
-        private static List<BMDTriangleData.TrianglesPosition> GetTriangleFaces(BMD.Batch.Packet.Primitive prim, BMD bmd, Matrix4[] mtxtable)
+        private static List<BMDTriangleData.TrianglesPosition> GetTriangleFaces(AbstractObj abstructObj,BMD.Batch.Packet.Primitive prim, BMD bmd, Matrix4[] mtxtable)
         {
             //Debug.WriteLine(beginMode[(prim.PrimitiveType - 0x80) / 8]);
 
             List<BMDTriangleData.TrianglesPosition> trianglesPositionList = new List<BMDTriangleData.TrianglesPosition>();
-            var openglVec = new Vector3(TargetObject.mPosition.X, TargetObject.mPosition.Y, TargetObject.mPosition.Z);
+            var openglVec = new Vector3(abstructObj.mPosition.X, abstructObj.mPosition.Y, abstructObj.mPosition.Z);
             switch (beginMode[(prim.PrimitiveType - 0x80) / 8])
             {
                 case BeginMode.Triangles:

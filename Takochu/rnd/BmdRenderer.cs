@@ -488,6 +488,7 @@ namespace Takochu.rnd
         }
 
         private BMD m_Model;
+        public BMD getModel() { return m_Model; }
 
         /// <summary>
         /// テクスチャの数
