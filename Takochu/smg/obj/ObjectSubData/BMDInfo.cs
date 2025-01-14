@@ -3,12 +3,8 @@ using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Takochu.fmt;
 using Takochu.io;
-using Takochu.ui;
 
 namespace Takochu.smg.obj.ObjectSubData
 {
@@ -37,12 +33,9 @@ namespace Takochu.smg.obj.ObjectSubData
 
                 public TrianglesPosition(Vector4[] trianglePositionArray)
                 {
-                    V0 = new Vector4(-trianglePositionArray[0].Z, trianglePositionArray[0].Y, trianglePositionArray[0].X, trianglePositionArray[0].W) * 1000f;
-                    V1 = new Vector4(-trianglePositionArray[1].Z, trianglePositionArray[1].Y, trianglePositionArray[1].X, trianglePositionArray[1].W) * 1000f;
-                    V2 = new Vector4(-trianglePositionArray[2].Z, trianglePositionArray[2].Y, trianglePositionArray[2].X, trianglePositionArray[2].W) * 1000f;
-                    //V0 = trianglePositionArray[0];
-                    //V1 = trianglePositionArray[1];
-                    //V2 = trianglePositionArray[2];
+                    V0 = trianglePositionArray[0];
+                    V1 = trianglePositionArray[1];
+                    V2 = trianglePositionArray[2];
                 }
             }
 
@@ -69,12 +62,16 @@ namespace Takochu.smg.obj.ObjectSubData
             TargetObject = obj;
 
             BMDTriangleData bmdTriangleData = new BMDTriangleData();
-
-            using (RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{obj.mName}.arc")))
+            string objName = obj.mName;
+            if (LevelObj.SP_ObjectName.ContainsKey(objName))
             {
-                if (rarc.DoesFileExist($"/root/{obj.mName}.bdl"))
+                objName = LevelObj.SP_ObjectName[objName].Item1;
+            }
+            using (RARCFilesystem rarc = new RARCFilesystem(Program.sGame.Filesystem.OpenFile($"/ObjectData/{objName}.arc")))
+            {
+                if (rarc.DoesFileExist($"/root/{objName}.bdl"))
                 {
-                    BMD bmd = new BMD(rarc.OpenFile($"/root/{obj.mName}.bdl"));
+                    BMD bmd = new BMD(rarc.OpenFile($"/root/{objName}.bdl"));
 
                     objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
                     var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
@@ -129,7 +126,7 @@ namespace Takochu.smg.obj.ObjectSubData
                         }
                     }
                 }
-                DebugTriangleRendering(bmdTriangleData);
+                // DebugTriangleRendering(bmdTriangleData);
                 return bmdTriangleData;
             };
 
@@ -166,7 +163,7 @@ namespace Takochu.smg.obj.ObjectSubData
             //Debug.WriteLine(beginMode[(prim.PrimitiveType - 0x80) / 8]);
 
             List<BMDTriangleData.TrianglesPosition> trianglesPositionList = new List<BMDTriangleData.TrianglesPosition>();
-            var openglVec = new Vector3(TargetObject.mPosition.X,TargetObject.mPosition.Y, TargetObject.mPosition.Z);
+            var openglVec = new Vector3(TargetObject.mPosition.X, TargetObject.mPosition.Y, TargetObject.mPosition.Z);
             switch (beginMode[(prim.PrimitiveType - 0x80) / 8])
             {
                 case BeginMode.Triangles:
