@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Takochu.fmt;
 using Takochu.io;
+using Takochu.smg.obj.ObjectSubData;
 
 namespace Takochu.rnd
 {
@@ -78,6 +79,15 @@ namespace Takochu.rnd
         public override bool GottaRender(RenderInfo info)
         {
             return true;
+        }
+
+        public override BMDInfo.BMDTriangleData GetTriangles()
+        {
+            BMDInfo.BMDTriangleData triangleData = new BMDInfo.BMDTriangleData();
+            foreach (var renderer in mRenderers) {
+                triangleData.AddRangeTriangleDataList(renderer.Value.GetTriangles());
+            }
+            return triangleData;
         }
 
         Dictionary<string, BmdRenderer> mRenderers;

@@ -8,6 +8,7 @@ using OpenTK.Graphics.OpenGL;
 using Takochu.fmt;
 using Takochu.rnd.BmdRendererSys;
 using System.Diagnostics;
+using Takochu.smg.obj.ObjectSubData;
 
 // BMD renderer TODO list
 // * finish TEV/material emulation
@@ -488,7 +489,12 @@ namespace Takochu.rnd
         }
 
         private BMD m_Model;
+        [Obsolete]
         public BMD getModel() { return m_Model; }
+        public override BMDInfo.BMDTriangleData GetTriangles()
+        {
+            return BMDInfo.GetTriangles(m_Model);
+        }
 
         /// <summary>
         /// テクスチャの数

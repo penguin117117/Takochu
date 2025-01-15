@@ -1049,12 +1049,17 @@ namespace Takochu.ui
                 // 特殊処理。
                 Dictionary<int, int> keyValuePairs = new Dictionary<int, int>();
 
-                // 要素がなければ処理をスキップ。
-                BMDInfo.BMDTriangleData bmdTriangleData = BMDInfo.GetTriangles(obj);
-                if (!(obj.mRenderer is BmdRenderer))
+                // モデルがなければスキップ
+                if (obj.mRenderer == null)
                 {
                     continue;
                 }
+                BMDInfo.BMDTriangleData bmdTriangleData = obj.mRenderer.GetTriangles();
+                //// 要素がなければ処理をスキップ。
+                //if (!(obj.mRenderer is BmdRenderer))
+                //{
+                //    continue;
+                //}
 
                 var globalPos = obj.mPosition * 100.0f;
                 var globalRotMat = new Matrix3();
@@ -1176,38 +1181,38 @@ namespace Takochu.ui
 
                 // シナリオが選択されているかどうか。
                 if (_currentScenario != 0) {
-                    
-//                    // シングルスレッド処理
-//                    {
-//#if DEBUG
-//                        var sw = new System.Diagnostics.Stopwatch(); // 時間測定
-//                        sw.Start(); // 時間測定
-//#endif
-//                        // Galaxy
-//                        List<AbstractObj> galaxyObjs = _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
-//                        collisionInfo = objectCollision(collisionInfo, rayTest1, galaxyObjs, null, null);
-//                        // Zone
-//                        // ギャラクシーで使用されているゾーンの取得。
-//                        var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
-//                        // シナリオで使用されているゾーンの取得。
-//                        List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
-//                        foreach (StageObj stageObj in stageObjLayers)
-//                        {
-//                            var zonePos = stageObj.mPosition;
-//                            var zoneRotMat = GetRotMatrix3SmgCoordZone((stageObj.mRotation * (float)Math.PI) / 180.0f);
 
-//                            List<AbstractObj> zoneObjs = _objects.FindAll(o => o.mParentZone.ZoneName == stageObj.mName);
-//                            collisionInfo = objectCollision(collisionInfo, rayTest1, zoneObjs, zonePos, zoneRotMat);
-//                        }
-//#if DEBUG
-//                        sw.Stop(); // 時間測定
-//                        TimeSpan ts = sw.Elapsed; // 時間測定
-//                        Debug.WriteLine("SelectObjectByRaySingle"); // 時間測定
-//                        Debug.WriteLine($"　{ts}"); // 時間測定
-//                        Debug.WriteLine($"　{ts.Hours}時間 {ts.Minutes}分 {ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
-//                        Debug.WriteLine($"　{sw.ElapsedMilliseconds}ミリ秒"); // 時間測定
-//#endif
-//                    }
+                    //                    // シングルスレッド処理
+                    //                    {
+                    //#if DEBUG
+                    //                        var sw = new System.Diagnostics.Stopwatch(); // 時間測定
+                    //                        sw.Start(); // 時間測定
+                    //#endif
+                    //                        // Galaxy
+                    //                        List<AbstractObj> galaxyObjs = _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
+                    //                        collisionInfo = objectCollision(collisionInfo, rayTest1, galaxyObjs, null, null);
+                    //                        // Zone
+                    //                        // ギャラクシーで使用されているゾーンの取得。
+                    //                        var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
+                    //                        // シナリオで使用されているゾーンの取得。
+                    //                        List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
+                    //                        foreach (StageObj stageObj in stageObjLayers)
+                    //                        {
+                    //                            var zonePos = stageObj.mPosition;
+                    //                            var zoneRotMat = GetRotMatrix3SmgCoordZone((stageObj.mRotation * (float)Math.PI) / 180.0f);
+
+                    //                            List<AbstractObj> zoneObjs = _objects.FindAll(o => o.mParentZone.ZoneName == stageObj.mName);
+                    //                            collisionInfo = objectCollision(collisionInfo, rayTest1, zoneObjs, zonePos, zoneRotMat);
+                    //                        }
+                    //#if DEBUG
+                    //                        sw.Stop(); // 時間測定
+                    //                        TimeSpan ts = sw.Elapsed; // 時間測定
+                    //                        Debug.WriteLine("SelectObjectByRaySingle"); // 時間測定
+                    //                        Debug.WriteLine($"　{ts}"); // 時間測定
+                    //                        Debug.WriteLine($"　{ts.Hours}時間 {ts.Minutes}分 {ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
+                    //                        Debug.WriteLine($"　{sw.ElapsedMilliseconds}ミリ秒"); // 時間測定
+                    //#endif
+                    //                    }
 
                     // マルチスレッド処理
                     {
@@ -1234,7 +1239,8 @@ namespace Takochu.ui
                         // シナリオで使用されているゾーンの取得。
                         List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
                         // スレッド数分の引数バッファを確保
-                        foreach (var i in Enumerable.Range(0, stageObjLayers.Count % Environment.ProcessorCount)) {
+                        foreach (var i in Enumerable.Range(0, stageObjLayers.Count % Environment.ProcessorCount))
+                        {
                             objCollPackList.Add(new List<ObjectCollisionArgPackage>());
                         }
                         // バッファに値を書き込む。
@@ -1272,16 +1278,8 @@ namespace Takochu.ui
 
                     if (collisionInfo.nearestHitpointPosition != null)
                     {
-                        MessageBox.Show($"選択処理: 交点あり。\nOBJName: {collisionInfo.abstructObj.mName}");
-                        //if (collisionInfo.abstructObj is PathPointObj)
-                        //{
-                        //    SelectTreeNodeWithUnique(id);
-                        //    break;
-                        //}
-                        //else
-                        {
-                            SelectTreeNodeWithUnique(collisionInfo.abstructObj.mUnique);
-                        }
+                        // MessageBox.Show($"選択処理: 交点あり。\nOBJName: {collisionInfo.abstructObj.mName}");
+                        SelectTreeNodeWithUnique(collisionInfo.abstructObj.mUnique);
                     }
                 }
 
