@@ -996,6 +996,9 @@ namespace Takochu.ui
             glLevelView.Refresh();
         }
 
+        /// <summary>
+        /// レイの交点情報とオブジェクトを保存したクラス。
+        /// </summary>
         class CollisionInfo {
             public Vector3? nearestHitpointPosition;
             public float nearestHitpointDistance;
@@ -1030,7 +1033,7 @@ namespace Takochu.ui
         /// <param name="zonePos"></param>
         /// <param name="zoneRotMatrix"></param>
         /// <returns></returns>
-        private CollisionInfo objectCollision(CollisionInfo collisionInfo, Ray ray, IReadOnlyCollection<AbstractObj> objList, Vector3? zonePos, Matrix3? zoneRotMatrix)
+        private CollisionInfo ObjectCollision(CollisionInfo collisionInfo, Ray ray, IReadOnlyCollection<AbstractObj> objList, Vector3? zonePos, Matrix3? zoneRotMatrix)
         {
             // 三角面の取得の際、順番または三角面化していない箇所があるため現状では選択できないことがあります。
             // テストの際はちゃんとテストで出力している三角面で、描画されている面を選択して下さい。
@@ -1073,10 +1076,8 @@ namespace Takochu.ui
                 }
                 else
                 {
-                    var _zonePos = (Vector3)zonePos;
-                    var _zoneRotMatrix = (Matrix3)zoneRotMatrix;
-                    globalPos = (globalPos * _zoneRotMatrix) + _zonePos;
-                    globalRotMat = GetRotMatrix3SmgZoneCoordObject((obj.mRotation * (float)Math.PI) / 180.0f) * _zoneRotMatrix;
+                    globalPos = (globalPos * (Matrix3)zoneRotMatrix) + (Vector3)zonePos;
+                    globalRotMat = GetRotMatrix3SmgZoneCoordObject((obj.mRotation * (float)Math.PI) / 180.0f) * (Matrix3)zoneRotMatrix;
                 }
 
                 foreach (var triangle in bmdTriangleData.TriangleDataList)
@@ -1134,6 +1135,9 @@ namespace Takochu.ui
             return collisionInfo;
         }
 
+        /// <summary>
+        /// レイ交点判定用の引数クラス
+        /// </summary>
         private class ObjectCollisionArgPackage
         {
             public Vector3? zonePos = new Vector3?();
@@ -1152,14 +1156,54 @@ namespace Takochu.ui
         /// <param name="ray"></param>
         /// <param name="objCollArgPack"></param>
         /// <returns></returns>
-        private CollisionInfo objectCollisionMin(Ray ray, List<ObjectCollisionArgPackage> objCollArgPack)
+        private CollisionInfo ObjectCollisionMin(Ray ray, List<ObjectCollisionArgPackage> objCollArgPack)
         {
             CollisionInfo collisionInfo = new CollisionInfo();
             foreach (var objColl in objCollArgPack)
             {
-                collisionInfo= objectCollision(collisionInfo, ray, objColl.zoneObjs, objColl.zonePos,objColl.zoneRotMat);
+                collisionInfo= ObjectCollision(collisionInfo, ray, objColl.zoneObjs, objColl.zonePos,objColl.zoneRotMat);
             }
             return collisionInfo;
+        }
+
+        /// <summary>
+        /// この関数はray交点が存在するときのみ実行する。
+        /// </summary>
+        /// <param name="collisionInfo"></param>
+        private void ObjectCollisionSuccess_process(CollisionInfo collisionInfo)
+        {
+            if (AddObjectWindow.AddTargetObject != null)
+            {
+                // mPositionでゾーンかギャラクシーかを判別
+                if (AddObjectWindow.AddTargetObject.mPosition.X == 0.0f &&
+                    AddObjectWindow.AddTargetObject.mPosition.Y == 0.0f &&
+                    AddObjectWindow.AddTargetObject.mPosition.Z == 0.0f)
+                {
+                    AddObjectWindow.AddTargetObject.SetPosition((Vector3)collisionInfo.nearestHitpointPosition);
+                }
+                else
+                {
+                    // XXX: Zoen軸のXY反転。回転では[X,Y,Z]*-1。
+                    AddObjectWindow.AddTargetObject.SetPosition(
+                        Vector3.Cross((Vector3)collisionInfo.nearestHitpointPosition, new Vector3(-1.0f,-1.0f,1.0f)) -
+                        AddObjectWindow.AddTargetObject.mPosition);
+                }
+                if (AddObjectWindow.IsChanged)
+                {
+                    var objCount = AddObjectWindow.Objects.Count();
+                    _objects.Add(AddObjectWindow.Objects[objCount - 1]);
+
+                    Scenario_ReLoad();
+                    SelectTreeNodeWithUnique(AddObjectWindow.AddTargetObject.mUnique);
+                    ChangeToNode(objectsListTreeView.SelectedNode, false);
+
+                    AddObjectWindow.AddTargetObject = null;
+                }
+            }
+            else
+            {
+                SelectTreeNodeWithUnique(collisionInfo.abstructObj.mUnique);
+            }
         }
 
         private void glLevelView_MouseUp(object sender, MouseEventArgs e)
@@ -1181,37 +1225,37 @@ namespace Takochu.ui
                 // シナリオが選択されているかどうか。
                 if (_currentScenario != 0) {
 
-                    //                    // シングルスレッド処理
-                    //                    {
-                    //#if DEBUG
-                    //                        var sw = new System.Diagnostics.Stopwatch(); // 時間測定
-                    //                        sw.Start(); // 時間測定
-                    //#endif
-                    //                        // Galaxy
-                    //                        List<AbstractObj> galaxyObjs = _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
-                    //                        collisionInfo = objectCollision(collisionInfo, rayTest1, galaxyObjs, null, null);
-                    //                        // Zone
-                    //                        // ギャラクシーで使用されているゾーンの取得。
-                    //                        var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
-                    //                        // シナリオで使用されているゾーンの取得。
-                    //                        List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
-                    //                        foreach (StageObj stageObj in stageObjLayers)
-                    //                        {
-                    //                            var zonePos = stageObj.mPosition;
-                    //                            var zoneRotMat = GetRotMatrix3SmgCoordZone((stageObj.mRotation * (float)Math.PI) / 180.0f);
+//                    // シングルスレッド処理
+//                    {
+//#if DEBUG
+//                        var sw = new System.Diagnostics.Stopwatch(); // 時間測定
+//                        sw.Start(); // 時間測定
+//#endif
+//                        // Galaxy
+//                        List<AbstractObj> galaxyObjs = _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
+//                        collisionInfo = objectCollision(collisionInfo, rayTest1, galaxyObjs, null, null);
+//                        // Zone
+//                        // ギャラクシーで使用されているゾーンの取得。
+//                        var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
+//                        // シナリオで使用されているゾーンの取得。
+//                        List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
+//                        foreach (StageObj stageObj in stageObjLayers)
+//                        {
+//                            var zonePos = stageObj.mPosition;
+//                            var zoneRotMat = GetRotMatrix3SmgCoordZone((stageObj.mRotation * (float)Math.PI) / 180.0f);
 
-                    //                            List<AbstractObj> zoneObjs = _objects.FindAll(o => o.mParentZone.ZoneName == stageObj.mName);
-                    //                            collisionInfo = objectCollision(collisionInfo, rayTest1, zoneObjs, zonePos, zoneRotMat);
-                    //                        }
-                    //#if DEBUG
-                    //                        sw.Stop(); // 時間測定
-                    //                        TimeSpan ts = sw.Elapsed; // 時間測定
-                    //                        Debug.WriteLine("SelectObjectByRaySingle"); // 時間測定
-                    //                        Debug.WriteLine($"　{ts}"); // 時間測定
-                    //                        Debug.WriteLine($"　{ts.Hours}時間 {ts.Minutes}分 {ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
-                    //                        Debug.WriteLine($"　{sw.ElapsedMilliseconds}ミリ秒"); // 時間測定
-                    //#endif
-                    //                    }
+//                            List<AbstractObj> zoneObjs = _objects.FindAll(o => o.mParentZone.ZoneName == stageObj.mName);
+//                            collisionInfo = objectCollision(collisionInfo, rayTest1, zoneObjs, zonePos, zoneRotMat);
+//                        }
+//#if DEBUG
+//                        sw.Stop(); // 時間測定
+//                        TimeSpan ts = sw.Elapsed; // 時間測定
+//                        Debug.WriteLine("SelectObjectByRaySingle"); // 時間測定
+//                        Debug.WriteLine($"　{ts}"); // 時間測定
+//                        Debug.WriteLine($"　{ts.Hours}時間 {ts.Minutes}分 {ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
+//                        Debug.WriteLine($"　{sw.ElapsedMilliseconds}ミリ秒"); // 時間測定
+//#endif
+//                    }
 
                     // マルチスレッド処理
                     {
@@ -1253,7 +1297,7 @@ namespace Takochu.ui
                         // バッファの数のスレッドを作成。
                         foreach (var objCollPack in objCollPackList)
                         {
-                            taskList.Add(System.Threading.Tasks.Task.Run(() => objectCollisionMin(rayTest1, objCollPack)));
+                            taskList.Add(System.Threading.Tasks.Task.Run(() => ObjectCollisionMin(rayTest1, objCollPack)));
                         }
                         // スレッドごとの最短オブジェクトの比較。
                         foreach (var task in taskList)
@@ -1277,8 +1321,7 @@ namespace Takochu.ui
 
                     if (collisionInfo.nearestHitpointPosition != null)
                     {
-                        // MessageBox.Show($"選択処理: 交点あり。\nOBJName: {collisionInfo.abstructObj.mName}");
-                        SelectTreeNodeWithUnique(collisionInfo.abstructObj.mUnique);
+                        ObjectCollisionSuccess_process(collisionInfo);
                     }
                 }
 

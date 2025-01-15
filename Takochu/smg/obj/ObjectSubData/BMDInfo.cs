@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Takochu.fmt;
-using Takochu.io;
 using Takochu.rnd;
 
 namespace Takochu.smg.obj.ObjectSubData
@@ -195,7 +194,7 @@ namespace Takochu.smg.obj.ObjectSubData
                         //ジオメトリ情報にアクセスしていると思われる。
                         foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
                         {
-                            bmdTriangleData.TriangleDataList.AddRange(GetTriangleFaces(obj ,prim, bmd, mtxtable));
+                            bmdTriangleData.TriangleDataList.AddRange(GetTriangleFaces(obj, prim, bmd, mtxtable));
 
                         }
                     }
@@ -207,59 +206,65 @@ namespace Takochu.smg.obj.ObjectSubData
             }
             return bmdTriangleData;
         }
+
+        /// <summary>
+        /// BMD情報から三角面の取得
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         public static BMDTriangleData GetTriangles(BMD model)
         {
             BMDTriangleData bmdTriangleData = new BMDTriangleData();
 
-                //Batchファイル内のPacketsを取得
-                foreach (BMD.Batch batch in model.Batches)
+            //Batchファイル内のPacketsを取得
+            foreach (BMD.Batch batch in model.Batches)
+            {
+                Matrix4[] lastmatrixtable = null;
+
+                foreach (BMD.Batch.Packet packet in batch.Packets)
                 {
-                    Matrix4[] lastmatrixtable = null;
+                    Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
+                    int[] mtx_debug = new int[packet.MatrixTable.Length];
 
-                    foreach (BMD.Batch.Packet packet in batch.Packets)
+                    for (int i = 0; i < packet.MatrixTable.Length; i++)
                     {
-                        Matrix4[] mtxtable = new Matrix4[packet.MatrixTable.Length];
-                        int[] mtx_debug = new int[packet.MatrixTable.Length];
-
-                        for (int i = 0; i < packet.MatrixTable.Length; i++)
+                        if (packet.MatrixTable[i] == 0xFFFF)
                         {
-                            if (packet.MatrixTable[i] == 0xFFFF)
+                            mtxtable[i] = lastmatrixtable[i];
+                            mtx_debug[i] = 2;
+                        }
+                        else
+                        {
+                            BMD.MatrixType mtxtype = model.MatrixTypes[packet.MatrixTable[i]];
+
+                            if (mtxtype.IsWeighted)
                             {
-                                mtxtable[i] = lastmatrixtable[i];
-                                mtx_debug[i] = 2;
+                                mtxtable[i] = Matrix4.Identity;
+
+                                mtx_debug[i] = 1;
                             }
                             else
                             {
-                                BMD.MatrixType mtxtype = model.MatrixTypes[packet.MatrixTable[i]];
-
-                                if (mtxtype.IsWeighted)
-                                {
-                                    mtxtable[i] = Matrix4.Identity;
-
-                                    mtx_debug[i] = 1;
-                                }
-                                else
-                                {
-                                    mtxtable[i] = model.Joints[mtxtype.Index].FinalMatrix;
-                                    mtx_debug[i] = 0;
-                                }
+                                mtxtable[i] = model.Joints[mtxtype.Index].FinalMatrix;
+                                mtx_debug[i] = 0;
                             }
                         }
+                    }
 
-                        lastmatrixtable = mtxtable;
+                    lastmatrixtable = mtxtable;
 
 
 
 
-                        //ジオメトリ情報にアクセスしていると思われる。
-                        foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
-                        {
-                            bmdTriangleData.TriangleDataList.AddRange(GetTriangleFaces(prim, model, mtxtable));
+                    //ジオメトリ情報にアクセスしていると思われる。
+                    foreach (BMD.Batch.Packet.Primitive prim in packet.Primitives)
+                    {
+                        bmdTriangleData.TriangleDataList.AddRange(GetTriangleFaces(model, prim, mtxtable));
 
-                        }
                     }
                 }
-            
+            }
+
             return bmdTriangleData;
         }
 
@@ -317,6 +322,7 @@ namespace Takochu.smg.obj.ObjectSubData
                 case BeginMode.TriangleStrip:
                     for (int vertexIndex = 0; vertexIndex < prim.NumIndices; vertexIndex++)
                     {
+                        // TODO: TriangleStripから三角面への変換処理は修正が必要。
                         Vector4[] trianglePositionArray = new Vector4[3];
 
                         //頂点情報
@@ -406,7 +412,15 @@ namespace Takochu.smg.obj.ObjectSubData
             return trianglesPositionList;
         }
 
-    private static List<BMDTriangleData.TrianglesPosition> GetTriangleFaces(BMD.Batch.Packet.Primitive prim, BMD bmd, Matrix4[] mtxtable)
+        /// <summary>
+        /// BMDから面情報ごとに三角面を生成。
+        /// </summary>
+        /// <param name="prim"></param>
+        /// <param name="bmd"></param>
+        /// <param name="mtxtable"></param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        private static List<BMDTriangleData.TrianglesPosition> GetTriangleFaces(BMD bmd, BMD.Batch.Packet.Primitive prim, Matrix4[] mtxtable)
         {
             int triangleVertCount = 3;
             //Debug.WriteLine(beginMode[(prim.PrimitiveType - 0x80) / 8]);
@@ -448,7 +462,7 @@ namespace Takochu.smg.obj.ObjectSubData
                         // この処理を線ごとにするため、index初期値は線の頂点数となる。
                         vertexIndex -= 2;
                         Vector4[] trianglePositionArray = new Vector4[3];
-                        if ((vertexIndex % 2) != 0) 
+                        if ((vertexIndex % 2) != 0)
                         {
                             // 順方向
                             foreach (var triangleVertIndex in Enumerable.Range(0, triangleVertCount))

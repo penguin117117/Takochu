@@ -45,15 +45,9 @@ namespace Takochu.rnd
         public virtual void Render(RenderInfo info)
         {
         }
-        /// <summary>
-        /// 頂点情報の取得。
-        /// オブジェクトでない場合はnullを返す。
-        /// </summary>
-        /// <returns></returns>
-        //public virtual List<OpenTK.Vector3> GetVertex()
-        //{ 
-        //    return null;
-        //}
+
+        // Obsolateフラグを立てておくが、三角面情報のみを保存する構造体がないなら解除するべき。
+        [Obsolete]
         public struct TriangleFace
         {
             public int v1;
@@ -66,15 +60,11 @@ namespace Takochu.rnd
                 v3 = _v3;
             }
         };
-        ///// <summary>
-        ///// 頂点に対応する三角面情報を取得します。
-        ///// オブジェクトでない場合はnullを返す。
-        ///// </summary>
-        ///// <returns></returns>
-        //public virtual List<TriangleFace> GetTriangleFaces()
-        //{
-        //    return null;
-        //}
+
+        /// <summary>
+        /// 三角面情報の計算による取得
+        /// </summary>
+        /// <returns></returns>
         public virtual BMDInfo.BMDTriangleData GetTriangles()
         {
             return new BMDInfo.BMDTriangleData();
