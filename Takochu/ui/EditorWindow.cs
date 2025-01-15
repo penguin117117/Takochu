@@ -1042,8 +1042,6 @@ namespace Takochu.ui
             //カメラのRayと三角面の位置情報から交差判定を行う。
             // クリックしたオブジェクトが含む三角面の数だけ繰り返す
             float t, u, v;
-            // ray.Originはあくまでネイティブな座標なため、スケールを合わせる必要があります。
-            Vector3 origin = ray.Origin * 10000.0f;
             foreach (AbstractObj obj in objList)
             {
                 // 特殊処理。
@@ -1061,7 +1059,8 @@ namespace Takochu.ui
                 //    continue;
                 //}
 
-                var globalPos = obj.mPosition * 100.0f;
+                // obj.mTruePositionは100倍された値となっている模様。
+                var globalPos = obj.mTruePosition;
                 var globalRotMat = new Matrix3();
                 var scaleMat = new Matrix3(
                     new Vector3(obj.mScale.X, 0.0f, 0.0f),
@@ -1103,7 +1102,7 @@ namespace Takochu.ui
 //                    }
 //#endif
                     // 交差点の位置ベクトルは Ray.org + t * Ray.dir = v0 + u(v1-v0) + v(v2-v0)
-                    var camOriginToBasePos = origin - v0;
+                    var camOriginToBasePos = ray.Origin - v0;
                     var common = 1.0f / Vector3.Dot(Vector3.Cross(ray.Direction, v0Tov2), v0Tov1);
                     t = common * Vector3.Dot(Vector3.Cross(camOriginToBasePos, v0Tov1), v0Tov2);
                     u = common * Vector3.Dot(Vector3.Cross(ray.Direction, v0Tov2), camOriginToBasePos);
@@ -1127,7 +1126,7 @@ namespace Takochu.ui
                         collisionInfo.nearestHitpointDistance = t;
                         //元のコード
                         //nearest_hitpoint_position = rayTest1.Origin + t * rayTest1.Direction;
-                        collisionInfo.nearestHitpointPosition = new Vector3(Vector3.Add(ray.Origin, Vector3.Multiply(ray.Direction, t)));
+                        collisionInfo.nearestHitpointPosition = Vector3.Add(ray.Origin, Vector3.Multiply(ray.Direction, t));
                         collisionInfo.abstructObj = obj;
                     }
                 }
@@ -1462,7 +1461,7 @@ namespace Takochu.ui
             GL.Begin(BeginMode.Lines);
             GL.Color3(1f, 0f, 1f);
             GL.Vertex3(_camTarget * 10000.0f);
-            GL.Vertex3(raytest2.Origin * 10000.0f + (1000000f * raytest2.Direction));
+            GL.Vertex3(raytest2.Origin + (1000000f * raytest2.Direction));
             GL.End();
             GL.PopMatrix();
             glLevelView.SwapBuffers();
@@ -2127,7 +2126,7 @@ namespace Takochu.ui
             var toGlobal = GetCamRotMatrix3SMGCoord();
             // SMGグローバル座標でのカメラの収束点の計算
             Vector3 camConvergence = new Vector3(_camDistance, 0.0f, 0.0f) * toGlobal;
-            return new Ray(_camTarget + camConvergence, CalculateVectorFromCursorPos(mousePos) * toGlobal);
+            return new Ray((_camTarget + camConvergence) * 10000.0f, CalculateVectorFromCursorPos(mousePos) * toGlobal);
         }
 
         private void lightsTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
