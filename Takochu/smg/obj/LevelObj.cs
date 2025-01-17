@@ -39,7 +39,9 @@ namespace Takochu.smg.obj
         //private ISMG2_SwitchID _smg2_SwitchID;
         //This dictionary type will be used temporarily until
         //the implementation of the object database is completed.
-        private static readonly Dictionary<string, (string,string)> SP_ObjectName = new Dictionary<string, (string,string)>() 
+        // TODO: オブジェクト(BMDInfo)でarcロードが失敗する問題を解決するために公開します。
+        // 極力このファイル以外での参照はするべきではありません。
+        public static readonly Dictionary<string, (string,string)> SP_ObjectName = new Dictionary<string, (string,string)>() 
         {
             { "BenefitItemOneUp" , ("KinokoOneUp","None") },
             { "PlantA" , ("PlantA00","None") },
