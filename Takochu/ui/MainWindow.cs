@@ -117,6 +117,18 @@ namespace Takochu
             Environment.Exit(0);
         }
 
+        private void GalaxyTreeView_EneterSelectGalaxy() 
+        {
+            if (galaxyTreeView.SelectedNode != null)
+            {
+                EditorWindow win = new EditorWindow(Convert.ToString(galaxyTreeView.SelectedNode.Tag));
+                GameVersion = GameUtil.IsSMG1() ? new SMG2() : new SMG2();
+                NewObjectDB.Load(GameVersion);
+                win.Show();
+
+            }
+        }
+
         private void selectGameFolderBtn_Click(object sender, EventArgs e)
         {
             bool successfulSet = GameDirectory.BrowseSetGameDirectory();
@@ -131,14 +143,7 @@ namespace Takochu
 
         private void galaxyTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            if (galaxyTreeView.SelectedNode != null)
-            {
-                EditorWindow win = new EditorWindow(Convert.ToString(galaxyTreeView.SelectedNode.Tag));
-                GameVersion = GameUtil.IsSMG1() ? new SMG2() : new SMG2();
-                NewObjectDB.Load(GameVersion);
-                win.Show();
-
-            }
+            GalaxyTreeView_EneterSelectGalaxy();
         }
 
         private void rarcExplorer_Btn_Click(object sender, EventArgs e)
@@ -184,6 +189,12 @@ namespace Takochu
         {
             HashGenForm hash = new HashGenForm();
             hash.Show();
+        }
+
+        private void galaxyTreeView_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyValue == (int)Keys.Enter)
+            GalaxyTreeView_EneterSelectGalaxy();
         }
     }
 }
