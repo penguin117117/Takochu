@@ -1161,7 +1161,11 @@ namespace Takochu.ui
             CollisionInfo collisionInfo = new CollisionInfo();
             foreach (var objColl in objCollArgPack)
             {
-                collisionInfo= ObjectCollision(collisionInfo, ray, objColl.zoneObjs, objColl.zonePos,objColl.zoneRotMat);
+                CollisionInfo result = ObjectCollision(collisionInfo, ray, objColl.zoneObjs, objColl.zonePos, objColl.zoneRotMat);
+                if (result < collisionInfo) 
+                {
+                    collisionInfo = result;
+                }
             }
             return collisionInfo;
         }
@@ -1268,37 +1272,55 @@ namespace Takochu.ui
                         // 計算時間 = 最も遅いゾーン + (最単オブジェクトの判別 * ゾーン数)
                         // ただし、論理コア数以上のスレッドは作成しません。
                         List<Task<CollisionInfo>> taskList = new List<Task<CollisionInfo>>();
-                        List<List<ObjectCollisionArgPackage>> objCollPackList = new List<List<ObjectCollisionArgPackage>> {
-                        new List<ObjectCollisionArgPackage>()};
-                        // Galaxy
-                        objCollPackList[0].Add(new ObjectCollisionArgPackage(
-                            null,
-                            null,
-                            _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName)));
                         //List<PathObj> galaxyPaths = _paths.FindAll(p => p.mParentZone.ZoneName == _galaxyScenario.mName);
                         //Zone
                         // ギャラクシーで使用されているゾーンの取得。
                         var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
                         // シナリオで使用されているゾーンの取得。
                         List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
-                        // スレッド数分の引数バッファを確保
-                        foreach (var i in Enumerable.Range(0, stageObjLayers.Count % Environment.ProcessorCount))
+                        // スレッド引数用のバッファ変数。最初の値はこのスレッドで実行する。
+                        const int staticThreadCount = 1;
+                        List<List<ObjectCollisionArgPackage>> objCollPackList =
+                            new List<List<ObjectCollisionArgPackage>> {new List<ObjectCollisionArgPackage>()};
+                        // Garaxy
+                        // ギャラクシーはこのスレッドで実行する。
+                        objCollPackList[0].Add(new ObjectCollisionArgPackage(
+                            null,
+                            null,
+                            _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName)));
+                        int maxThreadCount = Environment.ProcessorCount;
+                        //int maxThreadCount = 3; // デバッグ用スレッド制限。
+                        // スレッド数分の引数バッファの確保と初期化。すでに一つ確保されているので-1する。
+                        foreach (var i in Enumerable.Range(0, ((stageObjLayers.Count > maxThreadCount) ? maxThreadCount : stageObjLayers.Count) - staticThreadCount))
                         {
                             objCollPackList.Add(new List<ObjectCollisionArgPackage>());
                         }
+                        // この時点で、objCollPackList.Countと論理スレッド数は同じかそれ以下になる。
+#if DEBUG
+                        Debug.WriteLine($"RayMultiThread: [LogicalThread: {maxThreadCount}, objCollPackList.Count: {objCollPackList.Count}]");
+#endif
                         // バッファに値を書き込む。
                         foreach (var i in Enumerable.Range(0, stageObjLayers.Count))
                         {
-                            objCollPackList[i % Environment.ProcessorCount].Add(new ObjectCollisionArgPackage(
+                            // Zone
+                            objCollPackList[(i + staticThreadCount) % objCollPackList.Count].Add(new ObjectCollisionArgPackage(
                                 stageObjLayers[i].mPosition,
                                 GetRotMatrix3SmgCoordZone((stageObjLayers[i].mRotation * (float)Math.PI) / 180.0f),
                                 _objects.FindAll(o => o.mParentZone.ZoneName == stageObjLayers[i].mName)));
                         }
-                        // バッファの数のスレッドを作成。
-                        foreach (var objCollPack in objCollPackList)
+#if DEBUG
+                        Debug.WriteLine("RayMultiArgCount: " + objCollPackList.Count);
+#endif
+                        // 最初の引数バッファを除いたスレッドを作成。
+                        foreach (var i in Enumerable.Range(staticThreadCount, objCollPackList.Count - staticThreadCount))
                         {
-                            taskList.Add(System.Threading.Tasks.Task.Run(() => ObjectCollisionMin(rayTest1, objCollPack)));
+                            taskList.Add(System.Threading.Tasks.Task.Run(() => ObjectCollisionMin(rayTest1, objCollPackList[i])));
                         }
+#if DEBUG
+                        Debug.WriteLine("RayMultiThreadCount: " + taskList.Count);
+#endif
+                        // 最初の引数バッファをここで実行。
+                        collisionInfo = ObjectCollisionMin(rayTest1, objCollPackList[0]);
                         // スレッドごとの最短オブジェクトの比較。
                         foreach (var task in taskList)
                         {
@@ -1309,6 +1331,7 @@ namespace Takochu.ui
                                 collisionInfo = buf;
                             }
                         }
+                        
 #if DEBUG
                         sw.Stop(); // 時間測定
                         TimeSpan ts = sw.Elapsed; // 時間測定
