@@ -138,6 +138,7 @@ namespace Takochu.ui
             _zonesUsed.Clear();
             _ZoneMasks.Clear();
             layerViewerDropDown.DropDownItems.Clear();
+            ViewLayerToolStripMenuItem.DropDownItems.Clear();
             objectsListTreeView.Nodes.Clear();
             zonesListTreeView.Nodes.Clear();
             lightsTreeView.Nodes.Clear();
@@ -162,6 +163,7 @@ namespace Takochu.ui
             List<string> layers = GameUtil.GetGalaxyLayers(layerMaskBitPatternNo);
 
             layers.ForEach(layerName => layerViewerDropDown.DropDownItems.Add(layerName));
+            layers.ForEach(layerName => ViewLayerToolStripMenuItem.DropDownItems.Add(layerName));
 
             Zone mainGalaxyZone = _galaxyScenario.GetZone(mainGalaxyName);
 
@@ -384,9 +386,16 @@ namespace Takochu.ui
                 LoadScenario(_currentScenario);
 
                 if (_galaxyScenario.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{_currentScenario}.canm"))
+                {
                     introCameraEditorBtn.Enabled = true;
+                    IntroEditorToolStripMenuItem.Enabled = true;
+                }
                 else
+                {
                     introCameraEditorBtn.Enabled = false;
+                    IntroEditorToolStripMenuItem.Enabled = false;
+                }
+                    
             }
 
             _galaxyScenario.GetMainGalaxyZone().LoadCameras();
@@ -474,9 +483,16 @@ namespace Takochu.ui
                 LoadScenario(_currentScenario);
 
                 if (_galaxyScenario.GetMainGalaxyZone().mIntroCameras.ContainsKey($"StartScenario{_currentScenario}.canm"))
+                {
                     introCameraEditorBtn.Enabled = true;
+                    IntroEditorToolStripMenuItem.Enabled = true;
+                }
                 else
+                {
                     introCameraEditorBtn.Enabled = false;
+                    IntroEditorToolStripMenuItem.Enabled = false;
+                }
+                    
             }
             _galaxyScenario.GetMainGalaxyZone().LoadCameras();
             UpdateCamera();
@@ -1596,8 +1612,10 @@ namespace Takochu.ui
                 //objects PropertyGrideSetting
                 //Display the property grid for setting the currently selected object.
                 //Note: These processes are not related to the camera's processing.
+                
 
                 ObjectPropertyDataGridView.DataSource = null;
+                
                 dataGridViewEdit_Objects = null;
                 _selectedObject = abstractObj;
 
@@ -1976,6 +1994,7 @@ namespace Takochu.ui
             _zonesUsed.Clear();
             _ZoneMasks.Clear();
             layerViewerDropDown.DropDownItems.Clear();
+            ViewLayerToolStripMenuItem.DropDownItems.Clear();
             objectsListTreeView.Nodes.Clear();
             _paths.Clear();
             _objects.Clear();
@@ -2214,33 +2233,33 @@ namespace Takochu.ui
                 return;
             }
 
-            var tabpage = (TabPage)sender;
-            foreach (Control con in tabpage.Controls)
-            {
-                if (con is DataGridView)
-                {
-                    var dgv = con as DataGridView;
-                    if (dgv.Columns.Count < 1) return;
-                    //dgv.Anchor = AnchorStyles.Top & AnchorStyles.Left;
-                    var dgvHeight = tabpage.ClientRectangle.Height - dgv.Location.Y;
+            //var tabpage = (TabPage)sender;
+            //foreach (Control con in tabpage.Controls)
+            //{
+            //    if (con is DataGridView)
+            //    {
+            //        var dgv = con as DataGridView;
+            //        if (dgv.Columns.Count < 1) return;
+            //        //dgv.Anchor = AnchorStyles.Top & AnchorStyles.Left;
+            //        var dgvHeight = tabpage.ClientRectangle.Height - dgv.Location.Y;
 
-                    //Console.WriteLine($"{tabpage.Height} : {dgv.Location.Y}");
+            //        //Console.WriteLine($"{tabpage.Height} : {dgv.Location.Y}");
 
-                    dgv.MaximumSize = new Size(dgv.MaximumSize.Width, dgvHeight);
+            //        dgv.MaximumSize = new Size(dgv.MaximumSize.Width, dgvHeight);
 
-                    var rowTotalHeght = ((dgv.Rows.Count + 1) * dgv.RowTemplate.Height);
-                    if (rowTotalHeght < dgv.MaximumSize.Height)
-                    {
-                        dgv.Height = rowTotalHeght;
-                    }
-                    else
-                    {
-                        dgv.Height = dgvHeight;
-                    }
+            //        var rowTotalHeght = ((dgv.Rows.Count + 1) * dgv.RowTemplate.Height);
+            //        if (rowTotalHeght < dgv.MaximumSize.Height)
+            //        {
+            //            dgv.Height = rowTotalHeght;
+            //        }
+            //        else
+            //        {
+            //            dgv.Height = dgvHeight;
+            //        }
 
-                    //Console.WriteLine($"{dgv.Name} : {dgvHeight}");
-                }
-            }
+            //        //Console.WriteLine($"{dgv.Name} : {dgvHeight}");
+            //    }
+            //}
         }
 
         private void objectsListTreeView_KeyDown(object sender, KeyEventArgs e)
@@ -2608,6 +2627,90 @@ namespace Takochu.ui
             finder.Show();
         }
 
+        private void StageInformationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            StageInfoEditor stageInfo = new StageInfoEditor(ref _galaxyScenario, _currentScenario);
+            stageInfo.ShowDialog();
+        }
+
+        private void IntroEditorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            IntroEditor intro = new IntroEditor(ref _galaxyScenario);
+            intro.Show();
+        }
+
+        private void ViewLayerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void MessageEditorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageEditor editor = new MessageEditor(ref _galaxyScenario);
+            editor.Show();
+        }
+
+        private void ViewLayerToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            if (ViewLayerToolStripMenuItem.DropDownItems == null) return;
+
+            if (!(sender is ToolStripMenuItem)) return;
+
+            var viewLayerMenuItem = sender as ToolStripMenuItem;
+
+            foreach (ToolStripMenuItem layerItem in viewLayerMenuItem.DropDownItems)
+            {
+                layerItem.Checked = (layerItem.Text == e.ClickedItem.Text)
+                    ? !layerItem.Checked
+                    : layerItem.Checked;
+            }
+
+        }
+
+        private void ViewLayerToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
+        {
+            //if (ViewLayerToolStripMenuItem.DropDownItems == null)
+            //{
+            //    MessageBox.Show("レイヤーがないまたはシナリオが選択されていません");
+            //    return;
+            //}
+
+            //if (sender is ToolStripMenuItem)
+            //{
+            //    ToolStripMenuItem a = sender as ToolStripMenuItem;
+            //    if (a.Checked == default)
+            //    {
+            //        a.CheckState = CheckState.Checked;
+            //        return;
+            //    }
+            //    a.Checked = !a.Checked;
+            //    MessageBox.Show("");
+            //}
+        }
+
+        private void ObjectPropertyDataGridView_Resize(object sender, EventArgs e)
+        {
+            //var a = sender as DataGridView;
+            //a.Width = ObjecsSplitContainer.Width;
+        }
+
+        private void ObjectPropertyDataGridView_DockChanged(object sender, EventArgs e)
+        {
+            //var a = sender as DataGridView;
+            //a.Width = ObjecsSplitContainer.Width;
+        }
+
+        private void ObjectPropertyDataGridView_DataSourceChanged(object sender, EventArgs e)
+        {
+            //var a = sender as DataGridView;
+            //a.Width = ObjecsSplitContainer.Width;
+        }
+
+        private void splitContainer2_Panel2_Resize(object sender, EventArgs e)
+        {
+            //var a = sender as Panel;
+            //ObjectPropertyDataGridView.Width = a.Width;
+        }
 
         private void cameraListTreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {

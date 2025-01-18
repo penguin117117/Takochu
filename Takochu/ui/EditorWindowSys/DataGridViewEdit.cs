@@ -74,7 +74,7 @@ namespace Takochu.ui.EditorWindowSys
             
             _dataGridView.RowHeadersVisible = false;
             _dataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            
+            //_dataGridView.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom;
         }
 
         /// <summary>
@@ -89,14 +89,14 @@ namespace Takochu.ui.EditorWindowSys
             SetRow();
 
             
-
+            
             
             var change = (_dataGridView.Rows.Count+1) * _dataGridView.RowTemplate.Height;
 
-            if (change < _maxHeight && change > _minHeight)
+            if ((change < _maxHeight) && (change > _minHeight))
             {
                 _dataGridView.Height = change;
-                _dataGridView.ScrollBars = ScrollBars.None;
+                _dataGridView.ScrollBars = ScrollBars.Both;
             }
             else if (change > _maxHeight)
             {
@@ -107,7 +107,7 @@ namespace Takochu.ui.EditorWindowSys
             {
                 _dataGridView.Height = _minHeight;
             }
-
+            _dataGridView.Width = _dataGridView.Parent.DisplayRectangle.Width;
             Console.WriteLine($"{_defHeight} : {_maxHeight} : {_minHeight}");
             return _dataGridView;
         }
