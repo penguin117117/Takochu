@@ -55,7 +55,7 @@ namespace Takochu.ui
             _galaxyName = galaxyName;
 
             //And演算でレイヤーを処理しているのでその初期値
-            _currentLayerMaskBitPatternNo = 0xFFFF;
+            _currentLayerMaskBitPatternNo = 0x1FFFF;
             GameVersion = GameUtil.IsSMG1() ? throw new Exception("現バージョンではSMG1をサポートしていません") : new SMG2();
 
             //SMG1 data cannot be saved in the current version.
@@ -180,7 +180,7 @@ namespace Takochu.ui
             List<string> checkedLayers = GameUtil.GetGalaxyLayers(layerMaskBitPatternNo);
 
             //シナリオで使用されている全てのレイヤーをドロップダウンに追加
-            layers.ForEach(layerName => layerViewerDropDown.DropDownItems.Add(layerName));
+            //layers.ForEach(layerName => layerViewerDropDown.DropDownItems.Add(layerName));
 
             foreach (var layerName in layers) 
             {
@@ -420,7 +420,7 @@ namespace Takochu.ui
             {
                 _currentScenario = Convert.ToInt32(scenarioTreeView.SelectedNode.Tag);
                 //シナリオが変更された場合のみ初期値に戻します
-                _currentLayerMaskBitPatternNo = 0xFFFF;
+                _currentLayerMaskBitPatternNo = 0x1FFFF;
                 applyGalaxyNameBtn.Enabled = true;
                 LoadScenario(_currentScenario);
 
