@@ -167,10 +167,12 @@ namespace Takochu.ui
 
             /*
              * ViewLayerでチェックされているレイヤーを取得
-             * 参照しているリストが初期状態でComonnレイヤーを含んでいるので
+             * 参照しているリストが初期状態でCommonレイヤーを含んでいるので
              * 右に1シフトしています。
-             * 
-             * よって設計上Commonレイヤーを非表示にすることはできません。
+             * 下の画像の最下位のビットがCommonレイヤーに該当します。
+             * 最上位のビットはレイヤーPです
+             * // <image url="$(SolutionDir)ImageComment\EditorWindow\1FFFFの意味.png" scale="1.0"/>
+             * 現在の設計上Commonレイヤーを非表示にすることはできません。
              * そもそも非表示にする必要がないと判断したためこの設計にしています。
              * 　
              * by penguin117117
