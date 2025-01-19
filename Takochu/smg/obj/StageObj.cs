@@ -54,8 +54,8 @@ namespace Takochu.smg.obj
                     ObjectTypeChange.ToFloat(mEntry.Get("dir_z"))
                     );
 
-            mPosition = new Vector3(mTruePosition) / 100;
-            mRotation = new Vector3(mTrueRotation) / 100;
+            mPosition = new Vector3(mTruePosition);
+            mRotation = new Vector3(mTrueRotation);
         }
 
         public Vector3 Position

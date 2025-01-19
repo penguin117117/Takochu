@@ -317,8 +317,8 @@ namespace Takochu.smg.obj
                 mTrueRotation = GetVector3_FromEntry("dir_x", "dir_y", "dir_z");
                 mScale        = GetVector3_FromEntry("scale_x", "scale_y", "scale_z");
                 
-                mPosition = new Vector3(mTruePosition) / 100;
-                mRotation = new Vector3(mTrueRotation) / 100;
+                mPosition = new Vector3(mTruePosition);
+                mRotation = new Vector3(mTrueRotation);
             }
             
             //Console.WriteLine(dytest);

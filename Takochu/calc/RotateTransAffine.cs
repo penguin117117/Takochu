@@ -67,23 +67,23 @@ namespace Takochu.calc
         private static Vector3 AfinX(Vector3 globalTruePosition, Vector3 objRot)
         {
             float x = globalTruePosition.X;
-            float y = (float)(globalTruePosition.Y * Math.Cos(objRot.X / 180 * (Math.PI))) - (float)(globalTruePosition.Z * Math.Sin(objRot.X / 180 * (Math.PI)));
-            float z = (float)(globalTruePosition.Y * Math.Sin(objRot.X / 180 * (Math.PI))) + (float)(globalTruePosition.Z * Math.Cos(objRot.X / 180 * (Math.PI)));
+            float y = (float)(globalTruePosition.Y * Math.Cos((objRot.X * Math.PI) / 180)) - (float)(globalTruePosition.Z * Math.Sin((objRot.X * Math.PI) / 180));
+            float z = (float)(globalTruePosition.Y * Math.Sin((objRot.X * Math.PI) / 180)) + (float)(globalTruePosition.Z * Math.Cos((objRot.X * Math.PI) / 180));
             return new Vector3(x, y, z);
         }
 
         private static Vector3 AfinY(Vector3 globalTruePosition, Vector3 objRot)
         {
-            float x = (float)(globalTruePosition.Z * Math.Sin(objRot.Y / 180 * (Math.PI))) + (float)(globalTruePosition.X * Math.Cos(objRot.Y / 180 * (Math.PI)));
+            float x = (float)(globalTruePosition.Z * Math.Sin((objRot.Y * Math.PI) / 180)) + (float)(globalTruePosition.X * Math.Cos((objRot.Y * Math.PI) / 180));
             float y = globalTruePosition.Y;
-            float z = (float)(globalTruePosition.Z * Math.Cos(objRot.Y / 180 * (Math.PI))) - (float)(globalTruePosition.X * Math.Sin(objRot.Y / 180 * (Math.PI)));
+            float z = (float)(globalTruePosition.Z * Math.Cos((objRot.Y * Math.PI) / 180)) - (float)(globalTruePosition.X * Math.Sin((objRot.Y * Math.PI) / 180));
             return new Vector3(x, y, z);
         }
 
         private static Vector3 AfinZ(Vector3 globalTruePosition, Vector3 objRot)
         {
-            float x = (float)(globalTruePosition.X * Math.Cos(objRot.Z / 180 * (Math.PI))) - (float)(globalTruePosition.Y * (Math.Sin(objRot.Z / 180 * (Math.PI))));
-            float y = (float)(globalTruePosition.X * Math.Sin(objRot.Z / 180 * (Math.PI))) + (float)(globalTruePosition.Y * Math.Cos(objRot.Z / 180 * (Math.PI)));
+            float x = (float)(globalTruePosition.X * Math.Cos((objRot.Z * Math.PI) / 180)) - (float)(globalTruePosition.Y * Math.Sin((objRot.Z * Math.PI) / 180));
+            float y = (float)(globalTruePosition.X * Math.Sin((objRot.Z * Math.PI) / 180)) + (float)(globalTruePosition.Y * Math.Cos((objRot.X * Math.PI) / 180));
             float z = globalTruePosition.Z;
             return new Vector3(x, y, z);
         }
