@@ -33,6 +33,7 @@ namespace Takochu.ui
     {
         private readonly string _galaxyName;
         private int _currentScenario;
+        private int _currentLayerMaskBitPatternNo;
         private GalaxyScenario _galaxyScenario;
         private List<AbstractObj> _objects = new List<AbstractObj>();
         private List<PathObj> _paths = new List<PathObj>();
@@ -53,6 +54,8 @@ namespace Takochu.ui
             InitializeComponent();
             _galaxyName = galaxyName;
 
+            //And演算でレイヤーを処理しているのでその初期値
+            _currentLayerMaskBitPatternNo = 0xFFFF;
             GameVersion = GameUtil.IsSMG1() ? throw new Exception("現バージョンではSMG1をサポートしていません") : new SMG2();
 
             //SMG1 data cannot be saved in the current version.
@@ -104,13 +107,10 @@ namespace Takochu.ui
 
         protected override void OnLoad(EventArgs e)
         {
-            //base.OnLoad(e);
-
-
-
             _galaxyScenario = Program.sGame.OpenGalaxy(_galaxyName);
-
-            GalaxyNameTxtBox.Text = _galaxyScenario.mHolderName;
+            
+            GalaxyNameLabelToolStripMenuItem.Text = $"GalaxyName_{_galaxyScenario.mName}";
+            
             AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
             pathsToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayPath;
             _pickingFrameBuffer = new uint[9];
@@ -153,17 +153,55 @@ namespace Takochu.ui
             InitializeDispList();
 
             _galaxyScenario.SetScenario(scenarioNo);
-            scenarioNameTxtBox.Text = _galaxyScenario.mCurScenarioName;
+            MissionNameLabelToolStripMenuItem.Text = _galaxyScenario.mCurScenarioName;
 
             string mainGalaxyName = _galaxyScenario.mName;
 
-            // first we need to get the proper layers that the galaxy itself uses
-            // ギャラクシーの対象のシナリオで使用される全てのレイヤーを取得する。
+            /* 
+             * first we need to get the proper layers that the galaxy itself uses
+             * ギャラクシーの対象のシナリオで使用される全てのレイヤーを取得する。
+             */
             int layerMaskBitPatternNo = _galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(mainGalaxyName);
             List<string> layers = GameUtil.GetGalaxyLayers(layerMaskBitPatternNo);
 
+
+            /*
+             * ViewLayerでチェックされているレイヤーを取得
+             * 参照しているリストが初期状態でComonnレイヤーを含んでいるので
+             * 右に1シフトしています。
+             * 
+             * よって設計上Commonレイヤーを非表示にすることはできません。
+             * そもそも非表示にする必要がないと判断したためこの設計にしています。
+             * 　
+             * by penguin117117
+            */
+            const int Common_LayerMask_BitShift = 1;
+            layerMaskBitPatternNo &= _currentLayerMaskBitPatternNo >> Common_LayerMask_BitShift;
+            List<string> checkedLayers = GameUtil.GetGalaxyLayers(layerMaskBitPatternNo);
+
+            //シナリオで使用されている全てのレイヤーをドロップダウンに追加
             layers.ForEach(layerName => layerViewerDropDown.DropDownItems.Add(layerName));
-            layers.ForEach(layerName => ViewLayerToolStripMenuItem.DropDownItems.Add(layerName));
+
+            foreach (var layerName in layers) 
+            {
+                var itemM = new ToolStripMenuItem(layerName) 
+                {
+                    //ViewLayerでチェックされていた場合にtrue
+                    Checked = checkedLayers.Contains(layerName) 
+                };
+                
+                ViewLayerToolStripMenuItem.DropDownItems.Add(itemM);
+
+                /*
+                 * デバッグ用の表示の為以下コメントアウト
+                 * レイヤー描画機能に不具合が発生した場合は使用してください。
+                 */
+                //var findIndexNo = ViewLayerToolStripMenuItem.DropDownItems.IndexOf(itemM);
+                //Debug.WriteLine($"{ViewLayerToolStripMenuItem.DropDownItems[findIndexNo].Text} : {itemM.Checked}");
+            }
+
+            //チェックされたレイヤーを描画するためにレイヤーを初期化
+            layers = new List<string>(checkedLayers);
 
             Zone mainGalaxyZone = _galaxyScenario.GetZone(mainGalaxyName);
 
@@ -381,7 +419,8 @@ namespace Takochu.ui
             if (scenarioTreeView.SelectedNode != null)
             {
                 _currentScenario = Convert.ToInt32(scenarioTreeView.SelectedNode.Tag);
-
+                //シナリオが変更された場合のみ初期値に戻します
+                _currentLayerMaskBitPatternNo = 0xFFFF;
                 applyGalaxyNameBtn.Enabled = true;
                 LoadScenario(_currentScenario);
 
@@ -459,11 +498,18 @@ namespace Takochu.ui
 
         private void applyGalaxyNameBtn_Click(object sender, EventArgs e)
         {
-            string galaxy_lbl = $"GalaxyName_{_galaxyScenario.mName}";
-            string scenario_lbl = $"ScenarioName_{_galaxyScenario.mName}{_currentScenario}";
+            /*
+             * ギャラクシー名とシナリオのMSBTを書き換える機能でしたが
+             * ルビを編集する機能に対応していないのでコメントアウトしています。
+             * MSBTエディタを内蔵させて編集したほうが安全性が高いと考えています。
+             * By penguin117117
+             */
 
-            NameHolder.AssignToGalaxy(galaxy_lbl, GalaxyNameTxtBox.Text);
-            NameHolder.AssignToScenario(scenario_lbl, scenarioNameTxtBox.Text);
+            //string galaxy_lbl = $"GalaxyName_{_galaxyScenario.mName}";
+            //string scenario_lbl = $"ScenarioName_{_galaxyScenario.mName}{_currentScenario}";
+
+            //NameHolder.AssignToGalaxy(galaxy_lbl, GalaxyNameTxtBox.Text);
+            //NameHolder.AssignToScenario(scenario_lbl, scenarioNameTxtBox.Text);
         }
 
         private void introCameraEditorBtn_Click(object sender, EventArgs e)
@@ -2653,22 +2699,33 @@ namespace Takochu.ui
         private void ViewLayerToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
             if (ViewLayerToolStripMenuItem.DropDownItems == null) return;
-
             if (!(sender is ToolStripMenuItem)) return;
 
             var viewLayerMenuItem = sender as ToolStripMenuItem;
 
+            int layerIndex = 0;
+            _currentLayerMaskBitPatternNo = 0;
             foreach (ToolStripMenuItem layerItem in viewLayerMenuItem.DropDownItems)
             {
                 layerItem.Checked = (layerItem.Text == e.ClickedItem.Text)
                     ? !layerItem.Checked
                     : layerItem.Checked;
+
+
+                //int b = true & layerItem.Checked;
+                if(layerItem.Checked)
+                _currentLayerMaskBitPatternNo += 1 << layerIndex;
+                Debug.WriteLine(_currentLayerMaskBitPatternNo);
+                layerIndex++;
             }
+
+            Scenario_ReLoad();
 
         }
 
         private void ViewLayerToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
+            //Scenario_ReLoad();
             //if (ViewLayerToolStripMenuItem.DropDownItems == null)
             //{
             //    MessageBox.Show("レイヤーがないまたはシナリオが選択されていません");

@@ -86,6 +86,12 @@
             this.OpenSaveStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.importNewObjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.GalaxyNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.GalaxyNameLabelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.MissionNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.MissionNameLabelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl1.SuspendLayout();
             this.tabPage4.SuspendLayout();
             this.tabPage5.SuspendLayout();
@@ -117,7 +123,7 @@
             this.scenarioTreeView.Location = new System.Drawing.Point(0, 0);
             this.scenarioTreeView.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             this.scenarioTreeView.Name = "scenarioTreeView";
-            this.scenarioTreeView.Size = new System.Drawing.Size(471, 968);
+            this.scenarioTreeView.Size = new System.Drawing.Size(471, 1051);
             this.scenarioTreeView.TabIndex = 2;
             this.scenarioTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.scenarioTreeView_AfterSelect);
             this.scenarioTreeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.scenarioTreeView_NodeMouseClick);
@@ -145,7 +151,7 @@
             this.tabPage4.Location = new System.Drawing.Point(4, 28);
             this.tabPage4.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Size = new System.Drawing.Size(471, 968);
+            this.tabPage4.Size = new System.Drawing.Size(471, 1051);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Scenario";
             this.tabPage4.UseVisualStyleBackColor = true;
@@ -157,7 +163,7 @@
             this.tabPage5.Location = new System.Drawing.Point(4, 28);
             this.tabPage5.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Size = new System.Drawing.Size(469, 1048);
+            this.tabPage5.Size = new System.Drawing.Size(471, 1051);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Zone Attributes";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -175,7 +181,7 @@
             this.zonesDataGridView.Name = "zonesDataGridView";
             this.zonesDataGridView.RowHeadersVisible = false;
             this.zonesDataGridView.RowHeadersWidth = 62;
-            this.zonesDataGridView.Size = new System.Drawing.Size(449, 398);
+            this.zonesDataGridView.Size = new System.Drawing.Size(451, 401);
             this.zonesDataGridView.TabIndex = 1;
             // 
             // zonesListTreeView
@@ -293,14 +299,14 @@
             this.deleteObjButton.Image = ((System.Drawing.Image)(resources.GetObject("deleteObjButton.Image")));
             this.deleteObjButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.deleteObjButton.Name = "deleteObjButton";
-            this.deleteObjButton.Size = new System.Drawing.Size(123, 33);
+            this.deleteObjButton.Size = new System.Drawing.Size(123, 29);
             this.deleteObjButton.Text = "Delete Object";
             this.deleteObjButton.Click += new System.EventHandler(this.deleteObjButton_Click);
             // 
             // toolStripLabel3
             // 
             this.toolStripLabel3.Name = "toolStripLabel3";
-            this.toolStripLabel3.Size = new System.Drawing.Size(66, 33);
+            this.toolStripLabel3.Size = new System.Drawing.Size(66, 29);
             this.toolStripLabel3.Text = "Debug";
             this.toolStripLabel3.Click += new System.EventHandler(this.toolStripLabel3_Click);
             // 
@@ -386,7 +392,7 @@
             this.DebugPage6.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             this.DebugPage6.Name = "DebugPage6";
             this.DebugPage6.Padding = new System.Windows.Forms.Padding(5, 4, 5, 4);
-            this.DebugPage6.Size = new System.Drawing.Size(471, 968);
+            this.DebugPage6.Size = new System.Drawing.Size(471, 1051);
             this.DebugPage6.TabIndex = 5;
             this.DebugPage6.Text = "Debug";
             this.DebugPage6.UseVisualStyleBackColor = true;
@@ -409,12 +415,13 @@
             this.toolStripLabel2,
             this.scenarioNameTxtBox,
             this.applyGalaxyNameBtn});
-            this.toolStrip1.Location = new System.Drawing.Point(775, 1084);
+            this.toolStrip1.Location = new System.Drawing.Point(729, 1084);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
-            this.toolStrip1.Size = new System.Drawing.Size(1812, 34);
+            this.toolStrip1.Size = new System.Drawing.Size(1858, 34);
             this.toolStrip1.TabIndex = 7;
             this.toolStrip1.Text = "toolStrip1";
+            this.toolStrip1.Visible = false;
             // 
             // stageInformationBtn
             // 
@@ -646,7 +653,13 @@
             this.StageInformationToolStripMenuItem,
             this.IntroEditorToolStripMenuItem,
             this.ViewLayerToolStripMenuItem,
-            this.messageEditorToolStripMenuItem});
+            this.messageEditorToolStripMenuItem,
+            this.importNewObjectToolStripMenuItem,
+            this.toolStripMenuItem1,
+            this.GalaxyNameToolStripMenuItem,
+            this.GalaxyNameLabelToolStripMenuItem,
+            this.MissionNameToolStripMenuItem,
+            this.MissionNameLabelToolStripMenuItem});
             this.GalaxyMenuStrip.Location = new System.Drawing.Point(0, 0);
             this.GalaxyMenuStrip.Name = "GalaxyMenuStrip";
             this.GalaxyMenuStrip.Size = new System.Drawing.Size(2587, 33);
@@ -735,6 +748,42 @@
             this.splitContainer1.Size = new System.Drawing.Size(3070, 1118);
             this.splitContainer1.SplitterDistance = 479;
             this.splitContainer1.TabIndex = 13;
+            // 
+            // importNewObjectToolStripMenuItem
+            // 
+            this.importNewObjectToolStripMenuItem.Name = "importNewObjectToolStripMenuItem";
+            this.importNewObjectToolStripMenuItem.Size = new System.Drawing.Size(180, 29);
+            this.importNewObjectToolStripMenuItem.Text = "Import New Object";
+            // 
+            // toolStripMenuItem1
+            // 
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(46, 29);
+            this.toolStripMenuItem1.Text = "｜";
+            // 
+            // GalaxyNameToolStripMenuItem
+            // 
+            this.GalaxyNameToolStripMenuItem.Name = "GalaxyNameToolStripMenuItem";
+            this.GalaxyNameToolStripMenuItem.Size = new System.Drawing.Size(149, 29);
+            this.GalaxyNameToolStripMenuItem.Text = "Galaxy Name：";
+            // 
+            // GalaxyNameLabelToolStripMenuItem
+            // 
+            this.GalaxyNameLabelToolStripMenuItem.Name = "GalaxyNameLabelToolStripMenuItem";
+            this.GalaxyNameLabelToolStripMenuItem.Size = new System.Drawing.Size(167, 29);
+            this.GalaxyNameLabelToolStripMenuItem.Text = "GalaxyNameLabel";
+            // 
+            // MissionNameToolStripMenuItem
+            // 
+            this.MissionNameToolStripMenuItem.Name = "MissionNameToolStripMenuItem";
+            this.MissionNameToolStripMenuItem.Size = new System.Drawing.Size(159, 29);
+            this.MissionNameToolStripMenuItem.Text = "Mission Name：";
+            // 
+            // MissionNameLabelToolStripMenuItem
+            // 
+            this.MissionNameLabelToolStripMenuItem.Name = "MissionNameLabelToolStripMenuItem";
+            this.MissionNameLabelToolStripMenuItem.Size = new System.Drawing.Size(187, 29);
+            this.MissionNameLabelToolStripMenuItem.Text = "Mission Name Label";
             // 
             // EditorWindow
             // 
@@ -844,5 +893,11 @@
         private System.Windows.Forms.ToolStripMenuItem ViewLayerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem messageEditorToolStripMenuItem;
         private System.Windows.Forms.SplitContainer ObjecsSplitContainer;
+        private System.Windows.Forms.ToolStripMenuItem importNewObjectToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem GalaxyNameToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem GalaxyNameLabelToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem MissionNameToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem MissionNameLabelToolStripMenuItem;
     }
 }
