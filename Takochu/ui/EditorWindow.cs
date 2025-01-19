@@ -1612,6 +1612,10 @@ namespace Takochu.ui
 
             if (node.Parent == null && node.Text.EndsWith("Zone"))
             {
+                ObjectPropertyDataGridView.DataSource = null;
+
+                dataGridViewEdit_Objects = null;
+
                 StageObj stageObj = abstractObj as StageObj;
                 dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, stageObj);
                 ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
@@ -1895,8 +1899,8 @@ namespace Takochu.ui
                 Zone z = _galaxyScenario.GetZone(stageObj.mName);
                 List<int> ids = z.GetAllUniqueIDsFromZoneOnCurrentScenario();
 
-                var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(_selectedObject.mParentZone.ZoneName);
-                var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(_selectedObject.mParentZone.ZoneName);
+                var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(z.ZoneName);
+                var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(z.ZoneName);
 
                 foreach (int id in ids)
                 {
