@@ -1895,6 +1895,9 @@ namespace Takochu.ui
                 Zone z = _galaxyScenario.GetZone(stageObj.mName);
                 List<int> ids = z.GetAllUniqueIDsFromZoneOnCurrentScenario();
 
+                var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(_selectedObject.mParentZone.ZoneName);
+                var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(_selectedObject.mParentZone.ZoneName);
+
                 foreach (int id in ids)
                 {
                     GL.DeleteLists(_dispLists[0][id], 1);
@@ -1902,10 +1905,10 @@ namespace Takochu.ui
 
                     GL.PushMatrix();
                     {
-                        GL.Translate(stageObj.mTruePosition);
-                        GL.Rotate(stageObj.mTrueRotation.Z, 0f, 0f, 1f);
-                        GL.Rotate(stageObj.mTrueRotation.Y, 0f, 1f, 0f);
-                        GL.Rotate(stageObj.mTrueRotation.X, 1f, 0f, 0f);
+                        GL.Translate(Pos_ZoneOffset);
+                        GL.Rotate(Rot_ZoneOffset.Z, 0f, 0f, 1f);
+                        GL.Rotate(Rot_ZoneOffset.Y, 0f, 1f, 0f);
+                        GL.Rotate(Rot_ZoneOffset.X, 1f, 0f, 0f);
                     }
 
                     z.RenderObjFromUnique(id, RenderMode.Opaque, true);
