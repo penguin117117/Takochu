@@ -56,7 +56,7 @@ namespace Takochu.calc
                     v3Afin = AfinZ(objectTruePosition, zoneRot_Degree);
                     break;
                 case TargetVector.All:
-                    v3Afin = AfinAll(objectTruePosition,zoneRot_Degree);
+                    v3Afin = AfinAll(objectTruePosition, zoneRot_Degree);
                     break;
             }
             //Console.WriteLine("//////////afin//////////");
@@ -67,35 +67,90 @@ namespace Takochu.calc
         private static Vector3 AfinX(Vector3 globalTruePosition, Vector3 objRot)
         {
             float x = globalTruePosition.X;
-            float y = (float)(globalTruePosition.Y * Math.Cos((objRot.X * Math.PI) / 180)) - (float)(globalTruePosition.Z * Math.Sin((objRot.X * Math.PI) / 180));
-            float z = (float)(globalTruePosition.Y * Math.Sin((objRot.X * Math.PI) / 180)) + (float)(globalTruePosition.Z * Math.Cos((objRot.X * Math.PI) / 180));
+            float y = (float)((globalTruePosition.Y * Math.Cos((objRot.X * Math.PI) / 180)) - (globalTruePosition.Z * Math.Sin((objRot.X * Math.PI) / 180)));
+            float z = (float)((globalTruePosition.Y * Math.Sin((objRot.X * Math.PI) / 180)) + (globalTruePosition.Z * Math.Cos((objRot.X * Math.PI) / 180)));
             return new Vector3(x, y, z);
         }
 
         private static Vector3 AfinY(Vector3 globalTruePosition, Vector3 objRot)
         {
-            float x = (float)(globalTruePosition.Z * Math.Sin((objRot.Y * Math.PI) / 180)) + (float)(globalTruePosition.X * Math.Cos((objRot.Y * Math.PI) / 180));
+            float x = (float)((globalTruePosition.Z * Math.Sin((objRot.Y * Math.PI) / 180)) + (globalTruePosition.X * Math.Cos((objRot.Y * Math.PI) / 180)));
             float y = globalTruePosition.Y;
-            float z = (float)(globalTruePosition.Z * Math.Cos((objRot.Y * Math.PI) / 180)) - (float)(globalTruePosition.X * Math.Sin((objRot.Y * Math.PI) / 180));
+            float z = (float)((globalTruePosition.Z * Math.Cos((objRot.Y * Math.PI) / 180)) - (globalTruePosition.X * Math.Sin((objRot.Y * Math.PI) / 180)));
             return new Vector3(x, y, z);
         }
 
         private static Vector3 AfinZ(Vector3 globalTruePosition, Vector3 objRot)
         {
-            float x = (float)(globalTruePosition.X * Math.Cos((objRot.Z * Math.PI) / 180)) - (float)(globalTruePosition.Y * Math.Sin((objRot.Z * Math.PI) / 180));
-            float y = (float)(globalTruePosition.X * Math.Sin((objRot.Z * Math.PI) / 180)) + (float)(globalTruePosition.Y * Math.Cos((objRot.X * Math.PI) / 180));
+            float x = (float)((globalTruePosition.X * Math.Cos((objRot.Z * Math.PI) / 180)) - (globalTruePosition.Y * Math.Sin((objRot.Z * Math.PI) / 180)));
+            float y = (float)((globalTruePosition.X * Math.Sin((objRot.Z * Math.PI) / 180)) + (globalTruePosition.Y * Math.Cos((objRot.X * Math.PI) / 180)));
             float z = globalTruePosition.Z;
             return new Vector3(x, y, z);
         }
 
         private static Vector3 AfinAll(Vector3 globalTruePosition, Vector3 objRot)
         {
-            var AX = GetPositionAfterRotation(globalTruePosition ,objRot ,TargetVector.X);
-            var AY = GetPositionAfterRotation(AX ,objRot , TargetVector.Y);
-            var AZ = GetPositionAfterRotation(AY ,objRot , TargetVector.Z);
+            var AX = GetPositionAfterRotation(globalTruePosition, objRot, TargetVector.X);
+            var AY = GetPositionAfterRotation(AX, objRot, TargetVector.Y);
+            var AZ = GetPositionAfterRotation(AY, objRot, TargetVector.Z);
             return AZ;
         }
 
-        
+        private static double ToRad(double a)
+        {
+            return ((a * Math.PI) / 180.0d);
+        }
+
+        public static Matrix4 GetGlobalTranslation(Vector3 globalPosition, Vector3 globalRotation)
+        {
+            float xCos = (float)Math.Cos(ToRad(globalRotation.X));
+            float xSin = (float)Math.Sin(ToRad(globalRotation.X));
+            float yCos = (float)Math.Cos(ToRad(globalRotation.Y));
+            float ySin = (float)Math.Sin(ToRad(globalRotation.Y));
+            float zCos = (float)Math.Cos(ToRad(globalRotation.Z));
+            float zSin = (float)Math.Sin(ToRad(globalRotation.Z));
+            // グローバル→回転方向→XYZ
+            Matrix4 translateMat4 = new Matrix4(
+                new Vector4(1.0f, 0.0f, 0.0f, globalPosition.X),
+                new Vector4(0.0f, 1.0f, 0.0f, globalPosition.Y),
+                new Vector4(0.0f, 0.0f, 1.0f, globalPosition.Z),
+                new Vector4(0.0f, 0.0f, 0.0f, 1.0f)) // Pos
+                * new Matrix4(
+                new Vector4(1.0f, 0.0f, 0.0f, 0.0f),
+                new Vector4(0.0f, xCos, -xSin, 0.0f),
+                new Vector4(0.0f, xSin, xCos, 0.0f),
+                new Vector4(0.0f, 0.0f, 0.0f, 1.0f)) // X
+                * new Matrix4(
+                new Vector4(yCos, 0.0f, ySin, 0.0f),
+                new Vector4(0.0f, 1.0f, 0.0f, 0.0f),
+                new Vector4(-ySin, 0.0f, yCos, 0.0f),
+                new Vector4(0.0f, 0.0f, 0.0f, 1.0f)) // Y
+                * new Matrix4(
+                new Vector4(zCos, -zSin, 0.0f, 0.0f),
+                new Vector4(zSin, zCos, 0.0f, 0.0f),
+                new Vector4(0.0f, 0.0f, 1.0f, 0.0f),
+                new Vector4(0.0f, 0.0f, 0.0f, 1.0f)); // Z
+            return translateMat4;
+        }
+
+        // TODO: 計算の最適化。
+        public static Quaternion GetQuaternionZYX(Vector3 rotateDec)
+        {
+            double hX = ToRad(rotateDec.X) / 2;
+            double hY = ToRad(rotateDec.Y) / 2;
+            double hZ = ToRad(rotateDec.Z) / 2;
+            double hXSin = Math.Sin(hX);
+            double hYSin = Math.Sin(hY);
+            double hZSin = Math.Sin(hZ);
+            double hXCos = Math.Cos(hX);
+            double hYCos = Math.Cos(hY);
+            double hZCos = Math.Cos(hZ);
+            return new Quaternion(
+                (float)(( hXSin * hYCos * hZCos) - (hXCos * hYSin * hZSin)),
+                (float)(( hXSin * hYCos * hZSin) + (hXCos * hYSin * hZCos)),
+                (float)((-hXSin * hYSin * hZCos) + (hXCos * hYCos * hZSin)),
+                (float)(( hXSin * hYSin * hZSin) + (hXCos * hYCos * hZCos)));
+        }
+
     }
 }
