@@ -32,9 +32,17 @@ namespace Takochu.ui
 {
     public partial class EditorWindow : Form
     {
+        /// <summary>
+        /// <see cref="_currentLayerMask"/>の初期値
+        /// </summary>
+        private const int DefaultLayerMask = 0x1FFFF;
         private readonly string _galaxyName;
         private int _currentScenario;
-        private int _currentLayerMaskBitPatternNo;
+        /// <summary>
+        /// ユーザーが選択したレイヤーをビットフラグで保持します<br/>
+        /// 初期値0x1FFFF
+        /// </summary>
+        private int _currentLayerMask;
         private GalaxyScenario _galaxyScenario;
         private List<AbstractObj> _objects = new List<AbstractObj>();
         private List<PathObj> _paths = new List<PathObj>();
@@ -56,7 +64,7 @@ namespace Takochu.ui
             _galaxyName = galaxyName;
 
             //And演算でレイヤーを処理しているのでその初期値
-            _currentLayerMaskBitPatternNo = 0x1FFFF;
+            _currentLayerMask = DefaultLayerMask;
             GameVersion = GameUtil.IsSMG1() ? throw new Exception("現バージョンではSMG1をサポートしていません") : new SMG2();
 
             //SMG1 data cannot be saved in the current version.
@@ -132,6 +140,61 @@ namespace Takochu.ui
             //    stageInformationBtn.Enabled = false;
         }
 
+        /// <summary>
+        /// ユーザーがコンボボックスで選択したレイヤーを取得します
+        /// </summary>
+        /// <param name="galaxyScenario"></param>
+        /// <returns></returns>
+        private List<string> GetUserSelectedLayers(GalaxyScenario galaxyScenario) 
+        {
+            /* 
+             * first we need to get the proper layers that the galaxy itself uses
+             * ギャラクシーの対象のシナリオで使用される全てのレイヤーを取得する。
+             */
+            int layerMask = _galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(galaxyScenario.mName);
+            List<string> layers = GameUtil.GetGalaxyLayers(layerMask);
+
+            /*
+             * ViewLayerでチェックされているレイヤーを取得
+             * 参照しているリストが初期状態でCommonレイヤーを含んでいるので
+             * 右に1シフトしています。
+             * 下の画像の最下位のビットがCommonレイヤーに該当します。
+             * 最上位のビットはレイヤーPです
+             * // <image url="$(SolutionDir)ImageComment\EditorWindow\1FFFFの意味.png" scale="1.0"/>
+             * 現在の設計上Commonレイヤーを非表示にすることはできません。
+             * そもそも非表示にする必要がないと判断したためこの設計にしています。
+             * 　
+             * by penguin117117
+            */
+            const int Common_LayerMask_BitShift = 1;
+            layerMask &= _currentLayerMask >> Common_LayerMask_BitShift;
+            List<string> checkedLayers = GameUtil.GetGalaxyLayers(layerMask);
+
+            //シナリオで使用されている全てのレイヤーをドロップダウンに追加
+            //layers.ForEach(layerName => layerViewerDropDown.DropDownItems.Add(layerName));
+
+            foreach (var layerName in layers)
+            {
+                var itemM = new ToolStripMenuItem(layerName)
+                {
+                    //ViewLayerでチェックされていた場合にtrue
+                    Checked = checkedLayers.Contains(layerName)
+                };
+
+                ViewLayerToolStripMenuItem.DropDownItems.Add(itemM);
+
+                /*
+                 * デバッグ用の表示の為以下コメントアウト
+                 * レイヤー描画機能に不具合が発生した場合は使用してください。
+                 */
+                //var findIndexNo = ViewLayerToolStripMenuItem.DropDownItems.IndexOf(itemM);
+                //Debug.WriteLine($"{ViewLayerToolStripMenuItem.DropDownItems[findIndexNo].Text} : {itemM.Checked}");
+            }
+
+            //チェックされたレイヤーを描画するためにレイヤーを初期化
+            return new List<string>(checkedLayers);
+        }
+
         public void LoadScenario(int scenarioNo)
         {
             _areChanges = false;
@@ -158,51 +221,8 @@ namespace Takochu.ui
 
             string mainGalaxyName = _galaxyScenario.mName;
 
-            /* 
-             * first we need to get the proper layers that the galaxy itself uses
-             * ギャラクシーの対象のシナリオで使用される全てのレイヤーを取得する。
-             */
-            int layerMaskBitPatternNo = _galaxyScenario.GetMaskUsedInZoneOnCurrentScenario(mainGalaxyName);
-            List<string> layers = GameUtil.GetGalaxyLayers(layerMaskBitPatternNo);
-
-
-            /*
-             * ViewLayerでチェックされているレイヤーを取得
-             * 参照しているリストが初期状態でComonnレイヤーを含んでいるので
-             * 右に1シフトしています。
-             * 
-             * よって設計上Commonレイヤーを非表示にすることはできません。
-             * そもそも非表示にする必要がないと判断したためこの設計にしています。
-             * 　
-             * by penguin117117
-            */
-            const int Common_LayerMask_BitShift = 1;
-            layerMaskBitPatternNo &= _currentLayerMaskBitPatternNo >> Common_LayerMask_BitShift;
-            List<string> checkedLayers = GameUtil.GetGalaxyLayers(layerMaskBitPatternNo);
-
-            //シナリオで使用されている全てのレイヤーをドロップダウンに追加
-            //layers.ForEach(layerName => layerViewerDropDown.DropDownItems.Add(layerName));
-
-            foreach (var layerName in layers) 
-            {
-                var itemM = new ToolStripMenuItem(layerName) 
-                {
-                    //ViewLayerでチェックされていた場合にtrue
-                    Checked = checkedLayers.Contains(layerName) 
-                };
-                
-                ViewLayerToolStripMenuItem.DropDownItems.Add(itemM);
-
-                /*
-                 * デバッグ用の表示の為以下コメントアウト
-                 * レイヤー描画機能に不具合が発生した場合は使用してください。
-                 */
-                //var findIndexNo = ViewLayerToolStripMenuItem.DropDownItems.IndexOf(itemM);
-                //Debug.WriteLine($"{ViewLayerToolStripMenuItem.DropDownItems[findIndexNo].Text} : {itemM.Checked}");
-            }
-
-            //チェックされたレイヤーを描画するためにレイヤーを初期化
-            layers = new List<string>(checkedLayers);
+            //ユーザーが選択したレイヤーを取得します。
+            List<string> layers = GetUserSelectedLayers(_galaxyScenario);
 
             Zone mainGalaxyZone = _galaxyScenario.GetZone(mainGalaxyName);
 
@@ -421,7 +441,7 @@ namespace Takochu.ui
             {
                 _currentScenario = Convert.ToInt32(scenarioTreeView.SelectedNode.Tag);
                 //シナリオが変更された場合のみ初期値に戻します
-                _currentLayerMaskBitPatternNo = 0x1FFFF;
+                _currentLayerMask = DefaultLayerMask;
                 applyGalaxyNameBtn.Enabled = true;
                 LoadScenario(_currentScenario);
 
@@ -2552,7 +2572,7 @@ namespace Takochu.ui
             var viewLayerMenuItem = sender as ToolStripMenuItem;
 
             int layerIndex = 0;
-            _currentLayerMaskBitPatternNo = 0;
+            _currentLayerMask = 0;
             foreach (ToolStripMenuItem layerItem in viewLayerMenuItem.DropDownItems)
             {
                 layerItem.Checked = (layerItem.Text == e.ClickedItem.Text)
@@ -2562,8 +2582,8 @@ namespace Takochu.ui
 
                 //int b = true & layerItem.Checked;
                 if(layerItem.Checked)
-                _currentLayerMaskBitPatternNo += 1 << layerIndex;
-                Debug.WriteLine(_currentLayerMaskBitPatternNo);
+                _currentLayerMask += 1 << layerIndex;
+                Debug.WriteLine(_currentLayerMask);
                 layerIndex++;
             }
 
