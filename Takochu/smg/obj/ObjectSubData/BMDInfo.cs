@@ -46,6 +46,10 @@ namespace Takochu.smg.obj.ObjectSubData
             {
                 TriangleDataList = new List<TrianglesPosition>();
             }
+            public BMDTriangleData(List<TrianglesPosition> triangleData)
+            {
+                TriangleDataList = triangleData;
+            }
 
             public void AddTriangleDataList(TrianglesPosition trianglesPosition)
             {

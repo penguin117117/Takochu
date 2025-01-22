@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using OpenTK;
+﻿using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using System.Collections.Generic;
 using Takochu.rnd;
 using Takochu.smg.obj.ObjectSubData;
 
@@ -128,52 +125,52 @@ namespace Takochu
                 }
             }
         }
+
+        // 調整用のスケール値
+        private const float m_RenderScale = 100.0f;
+
         // 整の値から右回転。
-        private static readonly List<Vector3> m_RenderVertexs = new List<Vector3> {
-            new Vector3(1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, -1.0f, 1.0f),
-            new Vector3(1.0f, -1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, 1.0f)
+        private static readonly List<Vector4> m_RenderVertexs = new List<Vector4> {
+            new Vector4(1.0f *m_RenderScale, 1.0f*m_RenderScale, 1.0f*m_RenderScale,1.0f),
+            new Vector4(1.0f * m_RenderScale, 1.0f*m_RenderScale, -1.0f*m_RenderScale,1.0f),
+            new Vector4(-1.0f*m_RenderScale, 1.0f*m_RenderScale, -1.0f*m_RenderScale,1.0f),
+            new Vector4(-1.0f*m_RenderScale, 1.0f*m_RenderScale, 1.0f*m_RenderScale, 1.0f),
+            new Vector4(1.0f*m_RenderScale, -1.0f*m_RenderScale, 1.0f*m_RenderScale, 1.0f),
+            new Vector4(1.0f*m_RenderScale, -1.0f*m_RenderScale, -1.0f*m_RenderScale,1.0f),
+            new Vector4(-1.0f*m_RenderScale, -1.0f*m_RenderScale, -1.0f*m_RenderScale, 1.0f),
+            new Vector4(-1.0f*m_RenderScale, -1.0f*m_RenderScale, 1.0f*m_RenderScale, 1.0f)
         };
         // 上下左右前後
-        private static readonly List<TriangleFace> m_RenderTriangleFace = new List<TriangleFace> {
+        private static readonly BMDInfo.BMDTriangleData m_RenderTriangleFace = new BMDInfo.BMDTriangleData(
+            new List<BMDInfo.BMDTriangleData.TrianglesPosition> { 
             // 0123
-            new TriangleFace(0, 1, 2),
-            new TriangleFace(2, 3, 0),
-            // 7654
-            new TriangleFace(7, 6, 5),
-            new TriangleFace(5, 4, 7),
-            // 0374
-            new TriangleFace(0, 3, 7),
-            new TriangleFace(7, 4, 0),
-            // 1562
-            new TriangleFace(1, 5, 6),
-            new TriangleFace(6, 2, 1),
-            // 0415
-            new TriangleFace(0, 4, 1),
-            new TriangleFace(1, 5, 0),
-            // 2673
-            new TriangleFace(2, 6, 7),
-            new TriangleFace(7, 3, 2)
-        };
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[0], m_RenderVertexs[1], m_RenderVertexs[2] }),
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[2], m_RenderVertexs[3], m_RenderVertexs[0] }),
+            // 7654                                                                                                                    
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[7], m_RenderVertexs[6], m_RenderVertexs[5] }),
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[5], m_RenderVertexs[4], m_RenderVertexs[7] }),
+            // 0374                                                                                                                    
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[0], m_RenderVertexs[3], m_RenderVertexs[7] }),
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[7], m_RenderVertexs[4], m_RenderVertexs[0] }),
+            // 1562                                                                                                                    
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[1], m_RenderVertexs[5], m_RenderVertexs[6] }),
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[6], m_RenderVertexs[2], m_RenderVertexs[1] }),
+            // 0415                                                                                                                    
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[0], m_RenderVertexs[4], m_RenderVertexs[1] }),
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[1], m_RenderVertexs[5], m_RenderVertexs[0] }),
+            // 2673                                                                                                                    
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[2], m_RenderVertexs[6], m_RenderVertexs[7] }),
+            new BMDInfo.BMDTriangleData.TrianglesPosition(new Vector4[3] { m_RenderVertexs[7], m_RenderVertexs[3], m_RenderVertexs[2] })
+            }
+        );
 
         public override BMDInfo.BMDTriangleData GetTriangles()
         {
-            BMDInfo.BMDTriangleData triangleData = new BMDInfo.BMDTriangleData();
-            foreach (var triangleFace in m_RenderTriangleFace)
+            if (m_ShowAxes)
             {
-                var trianglePosition = new BMDInfo.BMDTriangleData.TrianglesPosition(
-                    new Vector4[3] { 
-                        new Vector4(m_RenderVertexs[triangleFace.v1]),
-                        new Vector4(m_RenderVertexs[triangleFace.v1]),
-                        new Vector4(m_RenderVertexs[triangleFace.v1])});
-                triangleData.TriangleDataList.Add(trianglePosition);
+                return m_RenderTriangleFace;
             }
-            return triangleData;
+            return new BMDInfo.BMDTriangleData();
         }
 
         private float m_Size;
