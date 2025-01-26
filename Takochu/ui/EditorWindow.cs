@@ -1,31 +1,20 @@
-﻿using System;
+﻿using OpenTK;
+using OpenTK.Graphics.OpenGL;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Takochu.fmt;
-using Takochu.io;
+using Takochu.rnd;
 using Takochu.smg;
 using Takochu.smg.obj;
-using Takochu.util;
-using OpenTK;
-using Takochu.smg.msg;
-using Takochu.rnd;
-using OpenTK.Graphics.OpenGL;
-using static Takochu.util.RenderUtil;
-using System.Runtime.InteropServices;
-using Takochu.util.GameVer;
-using System.Diagnostics;
 using Takochu.smg.obj.ObjectSubData;
-using System.CodeDom;
-using Fasterflect;
-using Octokit;
-using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
+using Takochu.util;
+using Takochu.util.GameVer;
+using static Takochu.util.RenderUtil;
 
 namespace Takochu.ui
 {
@@ -116,9 +105,9 @@ namespace Takochu.ui
         protected override void OnLoad(EventArgs e)
         {
             _galaxyScenario = Program.sGame.OpenGalaxy(_galaxyName);
-            
+
             GalaxyNameLabelToolStripMenuItem.Text = $"GalaxyName_{_galaxyScenario.mName}";
-            
+
             AreaToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayArea;
             pathsToolStripMenuItem.Checked = Properties.Settings.Default.EditorWindowDisplayPath;
             _pickingFrameBuffer = new uint[9];
@@ -144,7 +133,7 @@ namespace Takochu.ui
         /// </summary>
         /// <param name="galaxyScenario"></param>
         /// <returns></returns>
-        private List<string> GetUserSelectedLayers(GalaxyScenario galaxyScenario) 
+        private List<string> GetUserSelectedLayers(GalaxyScenario galaxyScenario)
         {
             /* 
              * first we need to get the proper layers that the galaxy itself uses
@@ -453,7 +442,7 @@ namespace Takochu.ui
                     introCameraEditorBtn.Enabled = false;
                     IntroEditorToolStripMenuItem.Enabled = false;
                 }
-                    
+
             }
 
             _galaxyScenario.GetMainGalaxyZone().LoadCameras();
@@ -557,7 +546,7 @@ namespace Takochu.ui
                     introCameraEditorBtn.Enabled = false;
                     IntroEditorToolStripMenuItem.Enabled = false;
                 }
-                    
+
             }
             _galaxyScenario.GetMainGalaxyZone().LoadCameras();
             UpdateCamera();
@@ -1080,12 +1069,14 @@ namespace Takochu.ui
         /// <summary>
         /// レイの交点情報とオブジェクトを保存したクラス。
         /// </summary>
-        class CollisionInfo {
+        class CollisionInfo
+        {
             public Vector3? nearestHitpointPosition;
             public float nearestHitpointDistance;
             public AbstractObj abstructObj;
 
-            public CollisionInfo() {
+            public CollisionInfo()
+            {
                 nearestHitpointPosition = null;
                 // 最大値から小なり比較による計算のためMaxValue。
                 nearestHitpointDistance = float.MaxValue;
@@ -1107,6 +1098,7 @@ namespace Takochu.ui
 
         /// <summary>
         /// オブジェクトとレイの交点とそのオブジェクトを計算します。
+        /// マルチスレッドでの動作のため、メンバ変数へのアクセスや引数による処理の管理が必要です。
         /// </summary>
         /// <param name="collisionInfo"></param>
         /// <param name="ray"></param>
@@ -1114,14 +1106,14 @@ namespace Takochu.ui
         /// <param name="zonePos"></param>
         /// <param name="zoneRotMatrix"></param>
         /// <returns></returns>
-        private CollisionInfo ObjectCollision(CollisionInfo collisionInfo, Ray ray, IReadOnlyCollection<AbstractObj> objList, Vector3? zonePos, Matrix3? zoneRotMatrix)
+        private CollisionInfo ObjectCollision(CollisionInfo collisionInfo, Ray ray, IReadOnlyCollection<AbstractObj> objList, Vector3? zonePos, Quaternion? zoneRotQuat)
         {
             // 三角面の取得の際、順番または三角面化していない箇所があるため現状では選択できないことがあります。
             // テストの際はちゃんとテストで出力している三角面で、描画されている面を選択して下さい。
             // TODO: ゾーン回転軸の情報が不完全であるため、ゾーンオブジェクトは選択できません。
 
             // ポリゴン描画によるテストをする際はこの関数のコメントを外して下さい。
-            // glLevelView.SwapBuffers();
+            //glLevelView.SwapBuffers();
 
             //カメラのRayと三角面の位置情報から交差判定を行う。
             // クリックしたオブジェクトが含む三角面の数だけ繰り返す
@@ -1136,53 +1128,40 @@ namespace Takochu.ui
                 {
                     continue;
                 }
-                BMDInfo.BMDTriangleData bmdTriangleData = obj.mRenderer.GetTriangles();
-                //// 要素がなければ処理をスキップ。
-                //if (!(obj.mRenderer is BmdRenderer))
-                //{
+
+                // Aria/Pathなどのオブジェクトの表示切替が存在するなら比較して処理する?
+                // ただし、現在はパスやエリア選択機能がないためコメントアウトしています。
+                //if (obj.mType == "AreaObj" && AreaToolStripMenuItem.Checked == false)
                 //    continue;
-                //}
+                //if (obj.mType == "PathObj" && pathsToolStripMenuItem.Checked == false)
+                //    continue;
 
-                // obj.mTruePositionは100倍された値となっている模様。
-                var globalPos = obj.mTruePosition;
-                var globalRotMat = new Matrix3();
-                var scaleMat = new Matrix3(
-                    new Vector3(obj.mScale.X, 0.0f, 0.0f),
-                    new Vector3(0.0f, obj.mScale.Y, 0.0f),
-                    new Vector3(0.0f, 0.0f, obj.mScale.Z));
+                BMDInfo.BMDTriangleData bmdTriangleData = obj.mRenderer.GetTriangles();
 
-                if (zonePos == null)
-                {
-                    globalRotMat = GetRotMatrix3SmgCoordObject((obj.mRotation * (float)Math.PI) / 180.0f);
-                }
-                else
-                {
-                    globalPos = (globalPos * (Matrix3)zoneRotMatrix) + (Vector3)zonePos;
-                    globalRotMat = GetRotMatrix3SmgZoneCoordObject((obj.mRotation * (float)Math.PI) / 180.0f) * (Matrix3)zoneRotMatrix;
-                }
+                var globalObjState = CovertGlobalCoordSmg(obj, zonePos, zoneRotQuat);
 
                 foreach (var triangle in bmdTriangleData.TriangleDataList)
                 {
                     // 三角面は座標軸回転、位置ともに計算されていないため、ここで計算します。
-                    Vector3 v0 = Vector3.Add(globalPos, triangle.V0.Xyz * scaleMat * globalRotMat);
-                    Vector3 v1 = Vector3.Add(globalPos, triangle.V1.Xyz * scaleMat * globalRotMat);
-                    Vector3 v2 = Vector3.Add(globalPos, triangle.V2.Xyz * scaleMat * globalRotMat);
+                    Vector3 v0 = Vector3.Add(globalObjState.pos, Vector3.Transform(triangle.V0.Xyz * obj.mScale.X, globalObjState.rot));
+                    Vector3 v1 = Vector3.Add(globalObjState.pos, Vector3.Transform(triangle.V1.Xyz * obj.mScale.Y, globalObjState.rot));
+                    Vector3 v2 = Vector3.Add(globalObjState.pos, Vector3.Transform(triangle.V2.Xyz * obj.mScale.Z, globalObjState.rot));
                     var v0Tov1 = v1 - v0;
                     var v0Tov2 = v2 - v0;
                     Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v0Tov1, v0Tov2));
                     // マルチスレッド処理ではレンダリングできません。
-//#if DEBUG
-//                    {
-//                        // drow test polygon.
-//                        GL.PushMatrix();
-//                        GL.Begin(BeginMode.Polygon);
-//                        GL.Vertex3(v0);
-//                        GL.Vertex3(v1);
-//                        GL.Vertex3(v2);
-//                        GL.End();
-//                        GL.PopMatrix();
-//                    }
-//#endif
+                    //#if DEBUG
+                    //                    {
+                    //                        // drow test polygon.
+                    //                        GL.PushMatrix();
+                    //                        GL.Begin(BeginMode.Polygon);
+                    //                        GL.Vertex3(v0);
+                    //                        GL.Vertex3(v1);
+                    //                        GL.Vertex3(v2);
+                    //                        GL.End();
+                    //                        GL.PopMatrix();
+                    //                    }
+                    //#endif
                     // 交差点の位置ベクトルは Ray.org + t * Ray.dir = v0 + u(v1-v0) + v(v2-v0)
                     var camOriginToBasePos = ray.Origin - v0;
                     var common = 1.0f / Vector3.Dot(Vector3.Cross(ray.Direction, v0Tov2), v0Tov1);
@@ -1222,28 +1201,30 @@ namespace Takochu.ui
         private class ObjectCollisionArgPackage
         {
             public Vector3? zonePos = new Vector3?();
-            public Matrix3? zoneRotMat = new Matrix3?();
+            public Quaternion? zoneRotQuat = new Quaternion?();
             public List<AbstractObj> zoneObjs = new List<AbstractObj>();
 
-            public ObjectCollisionArgPackage(Vector3? a, Matrix3? b, List<AbstractObj> c) {
+            public ObjectCollisionArgPackage(Vector3? a, Quaternion? b, List<AbstractObj> c)
+            {
                 zonePos = a;
-                zoneRotMat = b;
+                zoneRotQuat = b;
                 zoneObjs = c;
             }
         };
         /// <summary>
         /// 割り当てられたリソースで最短の交点とオブジェクトを計算します。
+        /// マルチスレッドでの動作のため、メンバ変数へのアクセスや引数による処理の管理が必要です。
         /// </summary>
         /// <param name="ray"></param>
         /// <param name="objCollArgPack"></param>
         /// <returns></returns>
-        private CollisionInfo ObjectCollisionMin(Ray ray, List<ObjectCollisionArgPackage> objCollArgPack)
+        private CollisionInfo ObjectCollisionMin(Ray ray, IReadOnlyCollection<ObjectCollisionArgPackage> objCollArgPack)
         {
             CollisionInfo collisionInfo = new CollisionInfo();
             foreach (var objColl in objCollArgPack)
             {
-                CollisionInfo result = ObjectCollision(collisionInfo, ray, objColl.zoneObjs, objColl.zonePos, objColl.zoneRotMat);
-                if (result < collisionInfo) 
+                CollisionInfo result = ObjectCollision(collisionInfo, ray, objColl.zoneObjs, objColl.zonePos, objColl.zoneRotQuat);
+                if (result < collisionInfo)
                 {
                     collisionInfo = result;
                 }
@@ -1270,7 +1251,7 @@ namespace Takochu.ui
                 {
                     // XXX: Zoen軸のXY反転。回転では[X,Y,Z]*-1。
                     AddObjectWindow.AddTargetObject.SetPosition(
-                        Vector3.Cross((Vector3)collisionInfo.nearestHitpointPosition, new Vector3(-1.0f,-1.0f,1.0f)) -
+                        Vector3.Cross((Vector3)collisionInfo.nearestHitpointPosition, new Vector3(-1.0f, -1.0f, 1.0f)) -
                         AddObjectWindow.AddTargetObject.mPosition);
                 }
                 if (AddObjectWindow.IsChanged)
@@ -1308,39 +1289,40 @@ namespace Takochu.ui
                 CollisionInfo collisionInfo = new CollisionInfo();
 
                 // シナリオが選択されているかどうか。
-                if (_currentScenario != 0) {
+                if (_currentScenario != 0)
+                {
 
-//                    // シングルスレッド処理
-//                    {
-//#if DEBUG
-//                        var sw = new System.Diagnostics.Stopwatch(); // 時間測定
-//                        sw.Start(); // 時間測定
-//#endif
-//                        // Galaxy
-//                        List<AbstractObj> galaxyObjs = _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
-//                        collisionInfo = objectCollision(collisionInfo, rayTest1, galaxyObjs, null, null);
-//                        // Zone
-//                        // ギャラクシーで使用されているゾーンの取得。
-//                        var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
-//                        // シナリオで使用されているゾーンの取得。
-//                        List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
-//                        foreach (StageObj stageObj in stageObjLayers)
-//                        {
-//                            var zonePos = stageObj.mPosition;
-//                            var zoneRotMat = GetRotMatrix3SmgCoordZone((stageObj.mRotation * (float)Math.PI) / 180.0f);
+                    //                    // シングルスレッド処理
+                    //                    {
+                    //#if DEBUG
+                    //                        var sw = new System.Diagnostics.Stopwatch(); // 時間測定
+                    //                        sw.Start(); // 時間測定
+                    //#endif
+                    //                        // Galaxy
+                    //                        List<AbstractObj> galaxyObjs = _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName);
+                    //                        collisionInfo = ObjectCollision(collisionInfo, rayTest1, galaxyObjs, null, null);
+                    //                        // Zone
+                    //                        // ギャラクシーで使用されているゾーンの取得。
+                    //                        var ScenarioLayers = _galaxyScenario.GetMainGalaxyZone().GetLayersUsedOnZoneForCurrentScenario();
+                    //                        // シナリオで使用されているゾーンの取得。
+                    //                        List<StageObj> stageObjLayers = _galaxyScenario.GetMainGalaxyZone().GetAllStageDataFromLayers(ScenarioLayers);
+                    //                        foreach (StageObj stageObj in stageObjLayers)
+                    //                        {
+                    //                            var zonePos = stageObj.mPosition;
+                    //                            var zoneRotQuat = calc.RotateTransAffine.GetQuaternionZYX(stageObj.mRotation);
 
-//                            List<AbstractObj> zoneObjs = _objects.FindAll(o => o.mParentZone.ZoneName == stageObj.mName);
-//                            collisionInfo = objectCollision(collisionInfo, rayTest1, zoneObjs, zonePos, zoneRotMat);
-//                        }
-//#if DEBUG
-//                        sw.Stop(); // 時間測定
-//                        TimeSpan ts = sw.Elapsed; // 時間測定
-//                        Debug.WriteLine("SelectObjectByRaySingle"); // 時間測定
-//                        Debug.WriteLine($"　{ts}"); // 時間測定
-//                        Debug.WriteLine($"　{ts.Hours}時間 {ts.Minutes}分 {ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
-//                        Debug.WriteLine($"　{sw.ElapsedMilliseconds}ミリ秒"); // 時間測定
-//#endif
-//                    }
+                    //                            List<AbstractObj> zoneObjs = _objects.FindAll(o => o.mParentZone.ZoneName == stageObj.mName);
+                    //                            collisionInfo = ObjectCollision(collisionInfo, rayTest1, zoneObjs, zonePos, zoneRotQuat);
+                    //                        }
+                    //#if DEBUG
+                    //                        sw.Stop(); // 時間測定
+                    //                        TimeSpan ts = sw.Elapsed; // 時間測定
+                    //                        Debug.WriteLine("SelectObjectByRaySingle"); // 時間測定
+                    //                        Debug.WriteLine($"　{ts}"); // 時間測定
+                    //                        Debug.WriteLine($"　{ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
+                    //                        Debug.WriteLine($"　{sw.ElapsedMilliseconds}ミリ秒"); // 時間測定
+                    //#endif
+                    //                    }
 
                     // マルチスレッド処理
                     {
@@ -1362,17 +1344,21 @@ namespace Takochu.ui
                         // スレッド引数用のバッファ変数。最初の値はこのスレッドで実行する。
                         const int staticThreadCount = 1;
                         List<List<ObjectCollisionArgPackage>> objCollPackList =
-                            new List<List<ObjectCollisionArgPackage>> {new List<ObjectCollisionArgPackage>()};
+                            new List<List<ObjectCollisionArgPackage>> { new List<ObjectCollisionArgPackage>() };
                         // Garaxy
                         // ギャラクシーはこのスレッドで実行する。
                         objCollPackList[0].Add(new ObjectCollisionArgPackage(
                             null,
                             null,
                             _objects.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName)));
+                        objCollPackList[0].Add(new ObjectCollisionArgPackage(
+                            null,
+                            null,
+                            _paths.FindAll(o => o.mParentZone.ZoneName == _galaxyScenario.mName).ConvertAll<AbstractObj>(p => { return p; })));
                         int maxThreadCount = Environment.ProcessorCount;
                         //int maxThreadCount = 3; // デバッグ用スレッド制限。
-                        // スレッド数分の引数バッファの確保と初期化。すでに一つ確保されているので-1する。
-                        foreach (var i in Enumerable.Range(0, ((stageObjLayers.Count > maxThreadCount) ? maxThreadCount : stageObjLayers.Count) - staticThreadCount))
+                        // スレッド数分の引数バッファの確保と初期化。スレッド数と同じかそれ以上ならmaxThreadCount-1。
+                        foreach (var i in Enumerable.Range(0, ((stageObjLayers.Count < maxThreadCount) ? stageObjLayers.Count : maxThreadCount - staticThreadCount)))
                         {
                             objCollPackList.Add(new List<ObjectCollisionArgPackage>());
                         }
@@ -1383,11 +1369,16 @@ namespace Takochu.ui
                         // バッファに値を書き込む。
                         foreach (var i in Enumerable.Range(0, stageObjLayers.Count))
                         {
+                            var rotation = calc.RotateTransAffine.GetQuaternionZYX(stageObjLayers[i].mRotation);
                             // Zone
                             objCollPackList[(i + staticThreadCount) % objCollPackList.Count].Add(new ObjectCollisionArgPackage(
                                 stageObjLayers[i].mPosition,
-                                GetRotMatrix3SmgCoordZone((stageObjLayers[i].mRotation * (float)Math.PI) / 180.0f),
+                                rotation,
                                 _objects.FindAll(o => o.mParentZone.ZoneName == stageObjLayers[i].mName)));
+                            objCollPackList[(i + staticThreadCount) % objCollPackList.Count].Add(new ObjectCollisionArgPackage(
+                                stageObjLayers[i].mPosition,
+                                rotation,
+                                _paths.FindAll(p => p.mParentZone.ZoneName == _galaxyScenario.mName).ConvertAll<AbstractObj>(p => { return p; })));
                         }
 #if DEBUG
                         Debug.WriteLine("RayMultiArgCount: " + objCollPackList.Count);
@@ -1412,13 +1403,13 @@ namespace Takochu.ui
                                 collisionInfo = buf;
                             }
                         }
-                        
+
 #if DEBUG
                         sw.Stop(); // 時間測定
                         TimeSpan ts = sw.Elapsed; // 時間測定
                         Debug.WriteLine("SelectObjectByRayMulti"); // 時間測定
                         Debug.WriteLine($"　{ts}"); // 時間測定
-                        Debug.WriteLine($"　{ts.Hours}時間 {ts.Minutes}分 {ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
+                        Debug.WriteLine($"　{ts.Seconds}秒 {ts.Milliseconds}ミリ秒"); // 時間測定
                         Debug.WriteLine($"　{sw.ElapsedMilliseconds}ミリ秒"); // 時間測定
 #endif
                     }
@@ -1428,167 +1419,6 @@ namespace Takochu.ui
                         ObjectCollisionSuccess_process(collisionInfo);
                     }
                 }
-
-                /// このコメントアウトの中にreturnが含まれているため、マウス動作に影響が出ます。
-                //uint color = _pickingFrameBuffer[4];
-                //Color clr = EditorUtil.UIntToColor(color);
-
-                //int id = EditorUtil.ColorHolder.IDFromColor(clr);
-
-                //foreach (string z in _zonesUsed)
-                //{
-                //    Zone zone = _galaxyScenario.GetZone(z);
-                //    AbstractObj obj = zone.GetObjFromUniqueID(id);
-
-                //    if (obj == null)
-                //    {
-                //        continue;
-                //    }
-
-                //    // if the current seleted object is the same, we deselect
-                //    if (obj == _selectedObject)
-                //    {
-                //        _selectedObject = null;
-                //        return;
-                //    }
-
-                //    _selectedObject = obj;
-
-                //    if (!(obj is LevelObj))
-                //    {
-                //        return;
-                //    }
-
-                //    //選択したオブジェクトのBMDファイル内の三角面情報の一覧を取得する。
-                //    BMDInfo.BMDTriangleData bmdTriangleData = BMDInfo.GetTriangles(obj);
-                //    glLevelView.SwapBuffers();
-
-                //    //カメラのRayと三角面の位置情報から交差判定を行う。
-
-                //    float nearest_hitpoint_distance = float.MaxValue; // 最も近い交差点とカメラとの距離を記録する
-                //    Vector3? nearest_hitpoint_position = null; // 最も近い交差点の交差位置を記録する
-
-
-
-                //    // クリックしたオブジェクトが含む三角面の数だけ繰り返す
-
-                //    float t, u, v;
-                //    foreach (var triangle in bmdTriangleData.TriangleDataList)
-                //    {
-                //        var objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
-                //        var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
-                //        var positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
-
-                //        Vector3 v0 = Vector3.Add(positionWithZoneRotation, triangle.V0.Xyz) * 10000f;
-                //        Vector3 v1 = Vector3.Add(positionWithZoneRotation, triangle.V1.Xyz) * 10000f;
-                //        Vector3 v2 = Vector3.Add(positionWithZoneRotation, triangle.V2.Xyz) * 10000f;
-                //        Vector3 normal_vector = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
-
-                //        // 交差点の位置ベクトルは Ray.org + t * Ray.dir = v0 + u(v1-v0) + v(v2-v0)
-                //        t = (1.0f / Vector3.Dot(Vector3.Cross(rayTest1.Direction, (v2 - v0)), (v1 - v0))) * Vector3.Dot(Vector3.Cross(rayTest1.Origin - v0, v1 - v0), v2 - v0);
-                //        u = (1.0f / Vector3.Dot(Vector3.Cross(rayTest1.Direction, (v2 - v0)), (v1 - v0))) * Vector3.Dot(Vector3.Cross(rayTest1.Direction, v2 - v0), rayTest1.Origin - v0);
-                //        v = (1.0f / Vector3.Dot(Vector3.Cross(rayTest1.Direction, (v2 - v0)), (v1 - v0))) * Vector3.Dot(Vector3.Cross(rayTest1.Origin - v0, v1 - v0), rayTest1.Direction);
-
-                //        // この条件に引っかかればその三角面とは交差していない
-                //        // 三角面を含む平面について，レイと平面の交点は三角面の外側 もしくは レイが三角面の裏面から入射
-                //        if (((u < 0.0f || v < 0.0f) || (u + v > 1.0f)) || (Vector3.Dot(rayTest1.Direction, normal_vector) >= 0.0f))
-                //        {
-                //            //Debug.WriteLine($"DEBUG: the position you clicked is t:{t} u:{u} v:{v}");
-                //            continue;
-                //        }
-
-
-                //        // 三角面とマウスクリックした点におけるカメラの視線は交差している
-
-                //        // これまでの交差点において最も近い交差点を確認する．
-                //        // この条件に引っかかればこれまでの任意の交差点よりも近くの交差点である．
-                //        if(t < nearest_hitpoint_distance)
-                //        {
-                //            nearest_hitpoint_distance = t;
-
-                //            //元のコード
-                //            //nearest_hitpoint_position = rayTest1.Origin + t * rayTest1.Direction;
-                //            nearest_hitpoint_position = new Vector3(Vector3.Add(rayTest1.Origin,Vector3.Multiply(rayTest1.Direction,t))) ;
-                //        }
-                //    }
-
-                //    // nearest_hitpoint_position =: クリックした3次元座標
-
-                //    // if条件: どの三角面とも交差していない場合にif内部に入る(何もしない)
-                //    if (nearest_hitpoint_distance == float.MaxValue)
-                //    {
-                //        MessageBox.Show("交点なし");
-
-                //        Debug.WriteLine("DEBUG★: the position you clicked is " + nearest_hitpoint_position.ToString());
-                //        //return;
-                //    }
-                //    else
-                //    {
-                //        MessageBox.Show("交点あり");
-
-                //        textBox1.Text = "☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString();
-                //        Debug.WriteLine("☆DEBUG☆: the position you clicked is " + nearest_hitpoint_position.ToString());
-                //    }
-
-
-
-                //    if (AddObjectWindow.AddTargetObject != null && nearest_hitpoint_position !=null)
-                //    {
-                //        glLevelView.SwapBuffers();
-
-                //        var raytest2 = ScreenToRay(e.Location);
-                //        //Console.WriteLine($"RayTest::{raytest2.Origin}{raytest2.Direction}");
-
-                //        var objTruePos = obj.mParentZone.mGalaxy.Get_Pos_GlobalOffset(obj.mParentZone.ZoneName);
-                //        var objTrueRot = obj.mParentZone.mGalaxy.Get_Rot_GlobalOffset(obj.mParentZone.ZoneName);
-                //        var positionWithZoneRotation = calc.RotateTransAffine.GetPositionAfterRotation(obj.mTruePosition, objTrueRot, calc.RotateTransAffine.TargetVector.All);
-
-                //        //カメラ位置とオブジェクト原点の距離の中間の座標にオブジェクトをセットします。
-                //        //レイの方向の制御は行っていません
-
-                //        var rayPos = Vector3.Multiply(raytest2.Origin, 10000f);
-                //        var selectedObjGlobalPosition = objTruePos + positionWithZoneRotation;
-
-                //        //距離の計算
-                //        var ToCameraFromObj3d = new Vector3(selectedObjGlobalPosition - rayPos);
-
-                //        ToCameraFromObj3d = new Vector3((float)Math.Pow(Math.Abs(ToCameraFromObj3d.X), 2), (float)Math.Pow(Math.Abs(ToCameraFromObj3d.Y), 2), (float)Math.Pow(Math.Abs(ToCameraFromObj3d.Z), 2));
-
-                //        var ToCameraFromObj = ToCameraFromObj3d.X + ToCameraFromObj3d.Y + ToCameraFromObj3d.Z;
-
-                //        ToCameraFromObj = (float)Math.Sqrt(ToCameraFromObj);
-
-                //        //AddObjectWindow.AddTargetObject.SetPosition((rayPos + Vector3.Multiply(raytest2.Direction/*obj.mTruePosition*/, ToCameraFromObj)) / 2);
-                //        AddObjectWindow.AddTargetObject.SetPosition(new Vector3((float)nearest_hitpoint_position.Value.X, (float)nearest_hitpoint_position.Value.Y,(float)nearest_hitpoint_position.Value.Z/*Vector3.Multiply(raytest2.Direction, ToCameraFromObj) + rayPos*/));
-
-                //        if (AddObjectWindow.IsChanged)
-                //        {
-                //            var objCount = AddObjectWindow.Objects.Count();
-                //            _objects.Add(AddObjectWindow.Objects[objCount - 1]);
-
-
-
-                //            Scenario_ReLoad();
-                //            SelectTreeNodeWithUnique(AddObjectWindow.AddTargetObject.mUnique);
-                //            ChangeToNode(objectsListTreeView.SelectedNode, false);
-
-                //            AddObjectWindow.AddTargetObject = null;
-                //        }
-                //        break;
-                //    }
-                //    if (obj is PathPointObj)
-                //    {
-                //        SelectTreeNodeWithUnique(id);
-                //        break;
-                //    }
-                //    else
-                //    {
-                //        SelectTreeNodeWithUnique(obj.mUnique);
-                //        break;
-                //    }
-
-
-                //}
             }
 
             _mouseDown = MouseButtons.None;
@@ -1681,10 +1511,10 @@ namespace Takochu.ui
                 //objects PropertyGrideSetting
                 //Display the property grid for setting the currently selected object.
                 //Note: These processes are not related to the camera's processing.
-                
+
 
                 ObjectPropertyDataGridView.DataSource = null;
-                
+
                 dataGridViewEdit_Objects = null;
                 _selectedObject = abstractObj;
 
@@ -1696,7 +1526,7 @@ namespace Takochu.ui
                 {
                     case "Objects":
                         if (!(abstractObj is LevelObj))
-                            throw new Exception($"This 「{ typeof(AbstractObj) }」 is not a 「{ typeof(LevelObj) }」 .");
+                            throw new Exception($"This 「{typeof(AbstractObj)}」 is not a 「{typeof(LevelObj)}」 .");
                         LevelObj obj = abstractObj as LevelObj;
                         dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, obj);
                         ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
@@ -1706,7 +1536,7 @@ namespace Takochu.ui
                         //dataGridViewEdit = new EditorWindowSys.DataGridViewEdit(dataGridView1, area);
                         //dataGridView1.DataSource = dataGridViewEdit.GetDataTable();
                         if (!(abstractObj is AreaObj))
-                            throw new Exception($"This 「{ typeof(AbstractObj) }」 is not a 「{ typeof(AreaObj) }」 .");
+                            throw new Exception($"This 「{typeof(AbstractObj)}」 is not a 「{typeof(AreaObj)}」 .");
                         AreaObj areaobj = abstractObj as AreaObj;
                         dataGridViewEdit_Objects = new EditorWindowSys.DataGridViewEdit(ObjectPropertyDataGridView, areaobj);
                         ObjectPropertyDataGridView = dataGridViewEdit_Objects.GetDataTable();
@@ -1944,7 +1774,7 @@ namespace Takochu.ui
                 var Pos_ZoneOffset = _galaxyScenario.Get_Pos_GlobalOffset(_selectedObject.mParentZone.ZoneName);
                 var Rot_ZoneOffset = _galaxyScenario.Get_Rot_GlobalOffset(_selectedObject.mParentZone.ZoneName);
 
-               GL.DeleteLists(_dispLists[0][_selectedObject.mUnique], 1);
+                GL.DeleteLists(_dispLists[0][_selectedObject.mUnique], 1);
                 GL.NewList(_dispLists[0][_selectedObject.mUnique], ListMode.Compile);
 
                 GL.PushMatrix();
@@ -2222,7 +2052,8 @@ namespace Takochu.ui
         /// SMG座標軸でのカメラのグローバル回転行列の取得。
         /// </summary>
         /// <returns></returns>
-        private Matrix3 GetCamRotMatrix3SMGCoord() {
+        private Matrix3 GetCamRotMatrix3SMGCoord()
+        {
             // SMG座標での回転。
             Vector3 rotateRad = new Vector3(0f, _camRotation.X, -_camRotation.Y);
             return GetRotMatrix3SmgCoordZY(rotateRad);
@@ -2233,7 +2064,8 @@ namespace Takochu.ui
         /// </summary>
         /// <param name="mousePos"></param>
         /// <returns></returns>
-        private Vector3 CalculateVectorFromCursorPos(Point mousePos) {
+        private Vector3 CalculateVectorFromCursorPos(Point mousePos)
+        {
             // このプロジェクトのGL.Vertex3()座標はSMG座標互換です。
             // そのため、右手 上y、 手前xでレンダリングされます。
             // また、マウス座標は左上が原点であり、FOVはrad(70度)VFovです。
@@ -2284,6 +2116,28 @@ namespace Takochu.ui
             // SMGグローバル座標でのカメラの収束点の計算
             Vector3 camConvergence = new Vector3(_camDistance, 0.0f, 0.0f) * toGlobal;
             return new Ray((_camTarget + camConvergence) * 10000.0f, CalculateVectorFromCursorPos(mousePos) * toGlobal);
+        }
+
+        private struct ObjCoordinate
+        {
+            public Vector3 pos;
+            public Quaternion rot;
+            public ObjCoordinate(Vector3 p, Quaternion r)
+            {
+                pos = p; rot = r;
+            }
+        };
+
+        private static ObjCoordinate CovertGlobalCoordSmg(AbstractObj obj, Vector3? zonePos, Quaternion? zoneRotQuat)
+        {
+            ObjCoordinate rVal = new ObjCoordinate(obj.mTruePosition, calc.RotateTransAffine.GetQuaternionZYX(obj.mRotation));
+            if (zonePos != null)
+            {
+                var subsZoneRotQuat = (Quaternion)zoneRotQuat;
+                rVal.pos = Vector3.Transform(rVal.pos, subsZoneRotQuat) + (Vector3)zonePos;
+                rVal.rot = subsZoneRotQuat * rVal.rot;
+            }
+            return rVal;
         }
 
         private void lightsTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -2739,8 +2593,8 @@ namespace Takochu.ui
 
 
                 //int b = true & layerItem.Checked;
-                if(layerItem.Checked)
-                _currentLayerMask += 1 << layerIndex;
+                if (layerItem.Checked)
+                    _currentLayerMask += 1 << layerIndex;
                 Debug.WriteLine(_currentLayerMask);
                 layerIndex++;
             }
@@ -2869,6 +2723,6 @@ namespace Takochu.ui
             glLevelView.Refresh();
         }
 
-#endregion
+        #endregion
     }
 }
