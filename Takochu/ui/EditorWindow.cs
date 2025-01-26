@@ -219,9 +219,6 @@ namespace Takochu.ui
             _zonesUsed.Add(mainGalaxyName);
             _zonesUsed.AddRange(mainGalaxyZone.GetZonesUsedOnLayers(layers));
 
-            Dictionary<string, List<Camera>> cameras = new Dictionary<string, List<Camera>>();
-            List<Light> lights = new List<Light>();
-
             List<string> currentLayers = new List<string>();
 
             _objects.AddRange(mainGalaxyZone.GetAllObjectsFromLayers(layers));
@@ -305,8 +302,10 @@ namespace Takochu.ui
 
                 _paths.AddRange(zone.mPaths);
 
+                Dictionary<string, List<Camera>> cameras = new Dictionary<string, List<Camera>>();
                 cameras.Add(zoneName, zone.mCameras);
 
+                List<Light> lights = new List<Light>();
                 if (zone.mLights != null)
                     lights.AddRange(zone.mLights);
 
